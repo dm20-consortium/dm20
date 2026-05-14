@@ -36,7 +36,7 @@
 ## 文書
 * プラットフォームを開発している背景について知りたい方は[こちら](docs/background.md)
 * DM2.0 Platformの優位性や他との違いを知りたい方は[FAQのページへ](docs/faq.md)
-* セキュリティの仕組みを知りたい方は[こちら](docs/security.md)
+* セキュリティの仕組みを知りたい方は[こちら](docs/security_architecture.md)
 
 ## インストール
 * ITS端末間の通信プラットフォームを構築したい場合は、[dm2のインストール](dm2/README.md)を参照して下さい。
