@@ -1,0 +1,2 @@
+SpeedValue value
+SpeedAccuracy accuracy

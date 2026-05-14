@@ -1,0 +1,182 @@
+syntax = "proto3";
+
+message SensingMessage {
+  uint32 message_id = 1;
+  uint32 protocol_version = 2;
+  uint32 message_counter = 3;
+  uint64 sensing_time = 4;
+  optional uint32 error_notification = 5;
+  optional uint32 error_code = 6;
+  repeated SensorInformation sensor_info = 7;
+  repeated ObjectInformation object_infos = 8;
+  repeated PerceivedFreeSpaceInformation freespace_infos = 9;
+}
+
+message SensorInformation {
+  optional SensorType type = 1;
+  sint32 latitude = 2;
+  sint32 longitude = 3;
+  sint32 altitude = 4;
+  repeated DetectCapability detect_capabilities = 5;
+  uint32 sensor_status = 6;
+}
+
+enum SensorType {
+  ST_UNKNOWN = 0;
+  ST_RADAR = 1;
+  ST_LIDAR = 2;
+  ST_MONOVIDEO = 3;
+  ST_STEREOVISION = 4;
+  ST_NIGHTVISION = 5;
+  ST_ULTRASONIC = 6;
+  ST_PMD = 7;
+  ST_FUSION = 8;
+  ST_INDUCTIONLOOP = 9;
+  ST_SPHERICALCAMERA = 10;
+}
+
+message DetectCapability {
+  uint32 detectable_classes = 1;
+  repeated OffsetPointXY poly_points = 2;
+  optional uint32 confidence = 3;
+  optional uint32 detectable_size = 4;
+}
+
+message OffsetPointXY {
+  sint32 dx = 1;
+  sint32 dy = 2;
+}
+
+message ObjectInformation {
+  uint32 object_id = 1;
+  optional sint32 time_of_measurement = 2;
+  repeated ObjectClass object_classes = 3;
+  optional uint32 confidence = 4;
+  Position position = 5;
+  optional RefPoint ref_point = 6;
+  optional uint32 heading = 7;
+  optional uint32 heading_accuracy = 8;
+  optional sint32 speed = 9;
+  optional uint32 speed_accuracy = 10;
+  optional sint32 yaw_rate = 16;
+  optional uint32 yaw_rate_accuracy = 17;
+  optional sint32 acceleration = 18;
+  optional uint32 acceleration_accuracy = 19;
+  optional uint32 orientation = 20;
+  optional uint32 orientation_accuracy = 21;
+  optional uint32 length = 22;
+  optional uint32 length_accuracy = 23;
+  optional uint32 width = 24;
+  optional uint32 width_accuracy = 25;
+  optional uint32 height = 26;
+  optional uint32 height_accuracy = 27;
+  optional uint32 static_status = 11;
+  optional uint32 tracking_status = 12;
+  optional uint32 detection_count = 13;
+  optional uint32 lost_count = 14;
+  optional uint32 object_age = 15;
+}
+
+message ObjectClass {
+  oneof subclass_type {
+    VehicleSubclassType vehicle_subclass_type = 1;
+    TrainSubclassType train_subclass_type = 2;
+    MotorcycleSubclassType motorcycle_subclass_type = 3;
+    LightVehicleSubclassType light_vehicle_subclass_type = 4;
+    PersonSubclassType person_subclass_type = 5;
+    AnimalSubclassType animal_subclass_type = 6;
+    NfoSubclassType nfo_subclass_type = 7;
+    FoSubclassType fo_subclass_type = 8;
+  }
+
+  optional uint32 class_confidence = 9;
+  optional uint32 subclass_confidence = 10;
+}
+
+enum VehicleSubclassType {
+  VSCT_UNKNOWN = 0;
+  VSCT_PASSENGER_CAR = 1;
+  VSCT_BUS = 2;
+  VSCT_LIGHT_TRUCK = 3;
+  VSCT_HEAVY_TRUCK = 4;
+  VSCT_TRAILER = 5;
+  VSCT_SPECIAL_VEHICLES = 6;
+  VSCT_EMERGENCY_VEHICLE = 7;
+  VSCT_AGRICULTURAL = 8;
+  VSCT_GROUP = 9;
+}
+
+enum TrainSubclassType {
+  TSCT_UNKNOWN = 0;
+  TSCT_TRAM = 1;
+  TSCT_OTHER_TRAIN = 2;
+}
+
+enum MotorcycleSubclassType {
+  MSCT_UNKNOWN = 0;
+  MSCT_MOPED = 1;
+  MSCT_MOTORCYCLE = 2;
+  MSCT_GROUP = 3;
+}
+
+enum LightVehicleSubclassType {
+  LVSCT_UNKNOWN = 0;
+  LVSCT_BICYCLE = 1;
+  LVSCT_RICKSHAW = 2;
+  LVSCT_CART = 3;
+  LVSCT_KICKBOARD = 4;
+  LVSCT_GROUP = 5;
+}
+
+enum PersonSubclassType {
+  PSCT_UNKNOWN = 0;
+  PSCT_PEDESTRIAN = 1;
+  PSCT_WHEELCHAIR = 2;
+  PSCT_SENIOR_CAR = 3;
+  PSCT_STROLLER = 4;
+  PSCT_SKATES = 5;
+  PSCT_GROUP = 6;
+}
+
+enum AnimalSubclassType {
+  ASCT_UNKNOWN = 0;
+}
+
+enum NfoSubclassType {
+  NFOSCT_UNKNOWN = 0;
+}
+
+enum FoSubclassType {
+  FOSCT_UNKNOWN = 0;
+}
+
+message Position {
+  sint32 latitude = 1;
+  sint32 longitude = 2;
+  sint32 altitude = 3;
+  optional uint32 semi_major_axis_length = 4;
+  optional uint32 semi_minor_axis_length = 5;
+  optional uint32 semi_major_orientation = 6;
+  optional uint32 altitude_accuracy = 7;
+}
+
+enum RefPoint {
+  RP_UNKNOWN = 0;
+  RP_CENTER_BOTTOM = 1;
+  RP_FRONT_MIDWIDTH_BOTTOM = 2;
+  RP_FRONT_RIGHT_BOTTOM = 3;
+  RP_MIDLENGTH_RIGHT_BOTTOM = 4;
+  RP_REAR_RIGHT_BOTTOM = 5;
+  RP_REAR_MIDWIDTH_BOTTOM = 6;
+  RP_REAR_LEFT_BOTTOM = 7;
+  RP_MIDLENGTH_LEFT_BOTTOM = 8;
+  RP_FRONT_LEFT_BOTTOM = 9;
+}
+
+message PerceivedFreeSpaceInformation {
+  optional sint32 time_of_measurement = 1;
+  Position position = 2;
+  repeated OffsetPointXY poly_points = 3;
+  optional uint32 confidence = 4;
+  optional uint32 detectable_size = 5;
+}

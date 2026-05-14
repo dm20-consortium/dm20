@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<query>
+	<destination>1920000001</destination>
+	<body>MASTER vehicle_position SELECT * FROM vehicle_position [range 100 msec]</body>
+	<!-- <retry life_time="1" /> -->
+</query>

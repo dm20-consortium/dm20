@@ -1,0 +1,156 @@
+array:
+  - id:
+      value: 1
+    time:
+      value: 1001
+    revision:
+      value: 2
+
+    object_class:
+      - id:
+          value: 1          # VEHICLE
+        confidence:
+          value: 80
+        subclass_type:
+          value: 0
+        subclass_confidence:
+          value: 70
+      - id:
+          value: 2          # PERSON
+        confidence:
+          value: 60
+        subclass_type:
+          value: 0
+        subclass_confidence:
+          value: 50
+      
+    existency:
+      value: 3
+
+    object_location:
+      latitude:
+        value: 10
+      longitude:
+        value: 20
+      altitude:
+        value: 30
+
+    ref_point:
+      value: 5
+
+    direction:
+      value:
+        value: 11
+      accuracy:
+        value: 21
+
+    speed:
+      value:
+        value: 12
+      accuracy:
+        value: 22
+
+    yaw_rate:
+      value:
+        value: 13
+      accuracy:
+        value: 23
+
+    acceleration:
+      value:
+        value: 14
+      accuracy:
+        value: 24
+
+    orientation:
+      value:
+        value: 15
+      accuracy:
+        value: 25
+
+    size:
+      length:
+        value:
+          value: 16
+        accuracy:
+          value: 26
+      width:
+        value:
+          value: 17
+        accuracy:
+          value: 27
+      height:
+        value:
+          value: 18
+        accuracy:
+          value: 28
+
+    static_status:
+      value: 100
+
+    shift_position:
+      value: 110
+
+    steering_angle_front:
+      value: 120
+
+    steering_angle_rear:
+      value: 121
+
+    brake_state:
+      value: 140
+
+    auxiliary_brake_state:
+      value: 150
+
+    throttle_position:
+      value: 160
+
+    exterior_lights:
+      value: 170
+
+    control_system_states:
+      adaptive_cruise_control_system:
+        value: 1
+      cooperative_adaptive_cruise_control_system:
+        value: 1
+      pre_crash_safety_system:
+        value: 1
+      antilock_brake_system:
+        value: 1
+      traction_control_system:
+        value: 1
+      electronic_stability_control_system:
+        value: 1
+      lane_keeping_assist_system:
+        value: 1
+      lane_departure_warning_system:
+        value: 1
+
+    vehicle_size_type:
+      value: 180
+
+    vehicle_role:
+      value: 190
+
+    vehicle_extended_info:
+      value: 200
+
+    towing_vehicle:
+      value: 2
+
+    tracking_status:
+      value: 210
+
+    detection_count:
+      value: 220
+
+    lost_count:
+      value: 230
+
+    object_age:
+      value: 240
+
+    information_source_list: 
+    - value: 1
+    - value: 2

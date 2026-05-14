@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<schema>
+  <tablename>object_info_0_8_1_processed</tablename>
+  <copy>object_info_0_8_1</copy>
+</schema>

@@ -1,0 +1,5 @@
+#define tcp_dmi_VERSION_MAJOR @tcp_dmi_VERSION_MAJOR@
+#define tcp_dmi_VERSION_MINOR @tcp_dmi_VERSION_MINOR@
+#define tcp_dmi_VERSION_PATCH @tcp_dmi_VERSION_PATCH@
+
+#define BUFFER_SIZE @BUFFER_SIZE@

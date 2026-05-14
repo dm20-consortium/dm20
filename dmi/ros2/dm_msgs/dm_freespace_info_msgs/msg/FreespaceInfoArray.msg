@@ -1,0 +1,1 @@
+FreespaceInfo[] array

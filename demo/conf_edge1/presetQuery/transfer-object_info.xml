@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<query>
+	<destination>1721910</destination>
+	<body>MASTER object_info_0_8_1 SELECT * FROM object_info_0_8_1 [rows 5]</body>
+</query>
+
+

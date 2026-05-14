@@ -1,0 +1,137 @@
+syntax = "proto3";
+
+package cool4_api_0_8_0;
+
+message Object_info_0_8_1 {
+	// API 仕様案に基づく属性
+	optional fixed64 object_id = 1;
+	optional uint64 time = 2;
+	optional uint64 revision = 3;
+	optional uint32 object_class_id_0 = 8;
+	optional uint32 object_class_confidence_0 = 9;
+	optional uint32 object_class_subclass_type_0 = 10;
+	optional uint32 object_class_subclass_confidence_0 = 11;
+	optional uint32 object_class_id_1 = 12;
+	optional uint32 object_class_confidence_1 = 13;
+	optional uint32 object_class_subclass_type_1 = 14;
+	optional uint32 object_class_subclass_confidence_1 = 15;
+	optional uint32 object_class_id_2 = 16;
+	optional uint32 object_class_confidence_2 = 17;
+	optional uint32 object_class_subclass_type_2 = 18;
+	optional uint32 object_class_subclass_confidence_2 = 19;
+	optional uint32 object_class_id_3 = 20;
+	optional uint32 object_class_confidence_3 = 21;
+	optional uint32 object_class_subclass_type_3 = 22;
+	optional uint32 object_class_subclass_confidence_3 = 23;
+	optional uint32 existency = 24;
+	optional Position_and_movement position_and_movement = 5;
+	optional Vehicle_condition vehicle_condition = 6;
+	optional Tracking_information tracking_information = 7;
+	repeated uint64 information_source_list = 4;
+}
+
+message Object_info_0_8_0 {
+	// API 仕様案に基づく属性
+	optional fixed64 object_id = 1;
+	optional uint64 time = 2;
+	optional uint32 object_class_id_0 = 7;
+	optional uint32 object_class_confidence_0 = 8;
+	optional uint32 object_class_subclass_type_0 = 9;
+	optional uint32 object_class_subclass_confidence_0 = 10;
+	optional uint32 object_class_id_1 = 11;
+	optional uint32 object_class_confidence_1 = 12;
+	optional uint32 object_class_subclass_type_1 = 13;
+	optional uint32 object_class_subclass_confidence_1 = 14;
+	optional uint32 object_class_id_2 = 15;
+	optional uint32 object_class_confidence_2 = 16;
+	optional uint32 object_class_subclass_type_2 = 17;
+	optional uint32 object_class_subclass_confidence_2 = 18;
+	optional uint32 object_class_id_3 = 19;
+	optional uint32 object_class_confidence_3 = 20;
+	optional uint32 object_class_subclass_type_3 = 21;
+	optional uint32 object_class_subclass_confidence_3 = 22;
+	optional uint32 existency = 23;
+	optional Position_and_movement position_and_movement = 4;
+	optional Vehicle_condition vehicle_condition = 5;
+	optional Tracking_information tracking_information = 6;
+	repeated uint64 information_source_list = 3;
+}
+
+//Position_and_movement(位置と移動)
+message Position_and_movement {
+	optional uint32 geodetic_srid = 1;
+	optional sint32 latitude = 2;
+	optional sint32 longitude = 3;
+	optional sint32 altitude = 4;
+	optional uint32 projective_srid = 5;
+	optional sint32 prc_x = 6;
+	optional sint32 prc_y = 7;
+	optional sint32 prc_z = 8;
+	optional uint32 crp_id = 9;
+	optional sint32 dx_crp = 10;
+	optional sint32 dy_crp = 11;
+	optional sint32 dh_crp = 12;
+	optional uint32 lane_count = 13;
+	optional sint32 lane_position = 14;
+	optional uint32 lane_lateral_position = 15;
+	optional uint32 crp_id_begin = 16;
+	optional uint32 crp_id_end = 17;
+	optional uint32 lane_vertical_position = 18;
+	optional uint64 lane_id = 19;
+	optional sint32 dx_lane = 20;
+	optional sint32 dy_lane = 21;
+	optional sint32 dh_lane = 22;
+	optional uint32 semi_axis_length_major = 23;
+	optional uint32 semi_axis_length_minor = 24;
+	optional uint32 ellipse_orientation = 25;
+	optional uint32 altitude_accuracy = 26;
+	optional uint32 reference_point = 27;
+	optional uint32 move_direction_value = 28;
+	optional uint32 move_direction_accuracy = 29;
+	optional sint32 speed_value = 30;
+	optional uint32 speed_accuracy = 31;
+	optional sint32 yaw_rate_value = 32;
+	optional uint32 yaw_rate_accuracy = 33;
+	optional sint32 acceleration_value = 34;
+	optional uint32 acceleration_accuracy = 35;
+}
+
+//Vehicle_condition(車両の状態)
+message Vehicle_condition {
+	optional uint32 orientation_value = 1;
+	optional uint32 orientation_accuracy = 2;
+	optional uint32 length_value = 3;
+	optional uint32 length_accuracy = 4;
+	optional uint32 width_value = 5;
+	optional uint32 width_accuracy = 6;
+	optional uint32 height_value = 7;
+	optional uint32 height_accuracy = 8;
+	optional uint32 static_status = 9;
+	optional uint32 shift_position = 10;
+	optional sint32 steering_angle_front = 11;
+	optional sint32 steering_angle_rear = 12;
+	optional uint32 brake_state = 13;
+	optional uint32 auxiliary_brake_state = 14;
+	optional uint32 throttle_position = 15;
+	optional uint32 exterior_lights = 16;
+	optional uint32 adaptive_cruise_control_system = 17;
+	optional uint32 cooperative_adaptive_cruise_control_system = 18;
+	optional uint32 pre_crash_safety_system = 19;
+	optional uint32 antilock_brake_system = 20;
+	optional uint32 traction_control_system = 21;
+	optional uint32 electronic_stability_control_system = 22;
+	optional uint32 lane_keeping_assist_system = 23;
+	optional uint32 lane_departure_warning_system = 24;
+	optional uint32 vehicle_size_type = 25;
+	optional uint32 vehicle_role = 26;
+	optional uint32 vehicle_extended_info = 27;
+	optional uint64 towing_vehicle = 28;
+}
+
+//Tracking_information(物標のトラッキング情報)
+message Tracking_information {
+	optional uint32 tracking_status = 1;
+	optional uint32 detection_count = 2;
+	optional uint32 lost_count = 3;
+	optional uint32 object_age = 4;
+}

@@ -1,0 +1,74 @@
+syntax = "proto3";
+
+package cool4_api_0_8_0;
+
+message Freespace_info_0_8_1 {
+	// API 仕様案に基づく属性
+	optional fixed64 id = 1;
+	optional uint64 time = 2;
+	optional uint32 revision = 3;
+	optional uint32 detection_method = 5;
+	optional uint32 detactable_classes = 6;
+	optional Location vertices_begin = 13;
+	repeated uint32 vertices_dx_list = 14;
+	repeated uint32 vertices_dy_list = 15;
+	optional Location position_begin = 16;
+	optional Location position_end = 17;
+	optional uint32 length_value = 9;
+	optional uint32 length_accuracy = 10;
+	optional uint64 id_begin = 7;
+	optional uint64 id_end = 8;
+	optional uint32 existency = 11;
+	optional uint32 minimal_detectable_size = 12;
+	repeated uint64 information_source_list = 4;
+}
+
+message Freespace_info_0_8_0 {
+	// API 仕様案に基づく属性
+	optional fixed64 id = 1;
+	optional uint64 time = 2;
+	optional uint32 detection_method = 4;
+	optional uint32 detactable_classes = 5;
+	optional Location vertices_begin = 12;
+	repeated uint32 vertices_dx_list = 13;
+	repeated uint32 vertices_dy_list = 14;
+	optional Location position_begin = 15;
+	optional Location position_end = 16;
+	optional uint32 length_value = 8;
+	optional uint32 length_accuracy = 9;
+	optional uint64 id_begin = 6;
+	optional uint64 id_end = 7;
+	optional uint32 existency = 10;
+	optional uint32 minimal_detectable_size = 11;
+	repeated uint64 information_source_list = 3;
+}
+
+//Location(位置)
+message Location {
+	optional uint32 geodetic_srid = 1;
+	optional sint32 latitude = 2;
+	optional sint32 longitude = 3;
+	optional sint32 altitude = 4;
+	optional uint32 projective_srid = 5;
+	optional sint32 prc_x = 6;
+	optional sint32 prc_y = 7;
+	optional sint32 prc_z = 8;
+	optional uint32 crp_id = 9;
+	optional sint32 dx_crp = 10;
+	optional sint32 dy_crp = 11;
+	optional sint32 dh_crp = 12;
+	optional uint32 lane_count = 13;
+	optional sint32 lane_position = 14;
+	optional uint32 lane_lateral_position = 15;
+	optional uint32 crp_id_begin = 16;
+	optional uint32 crp_id_end = 17;
+	optional uint32 lane_vertical_position = 18;
+	optional uint64 lane_id = 19;
+	optional sint32 dx_lane = 20;
+	optional sint32 dy_lane = 21;
+	optional sint32 dh_lane = 22;
+	optional uint32 semi_axis_length_major = 23;
+	optional uint32 semi_axis_length_minor = 24;
+	optional uint32 ellipse_orientation = 25;
+	optional uint32 altitude_accuracy = 26;
+}

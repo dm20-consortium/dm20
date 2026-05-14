@@ -1,0 +1,64 @@
+syntax = "proto3";
+
+package dm2_proto;
+
+import "object_info_0_6_0.proto";
+import "object_info_0_8_0.proto";
+import "freespace_info_0_6_0.proto";
+import "freespace_info_0_8_0.proto";
+import "signal_info_0_6_0.proto";
+import "sensor_info_0_8_0.proto";
+
+message Object_info_0_6_0_dm2is {
+	repeated cool4_api_0_6_0.Object_info object_info = 1;
+	repeated Is_tuple_info is_tuple_info = 2;
+}
+
+message Object_info_0_8_0_dm2is {
+	repeated cool4_api_0_8_0.Object_info_0_8_0 object_info = 1;
+	repeated Is_tuple_info is_tuple_info = 2;
+}
+
+message Object_info_0_8_1_dm2is {
+	repeated cool4_api_0_8_0.Object_info_0_8_1 object_info = 1;
+	repeated Is_tuple_info is_tuple_info = 2;
+}
+
+message Freespace_info_0_6_0_dm2is {
+	repeated cool4_api_0_6_0.Freespace_info freespace_info = 1;
+	repeated Is_tuple_info is_tuple_info = 2;
+}
+
+message Freespace_info_0_8_0_dm2is {
+	repeated cool4_api_0_8_0.Freespace_info_0_8_0 freespace_info = 1;
+	repeated Is_tuple_info is_tuple_info = 2;
+}
+
+message Freespace_info_0_8_1_dm2is {
+	repeated cool4_api_0_8_0.Freespace_info_0_8_1 freespace_info = 1;
+	repeated Is_tuple_info is_tuple_info = 2;
+}
+
+message Signal_info_0_6_0_dm2is {
+	repeated cool4_api_0_6_0.Signal_info signal_info = 1;
+	repeated Is_tuple_info is_tuple_info = 2;
+}
+
+message Sensor_info_0_8_0_dm2is {
+	repeated cool4_api_0_8_0.Sensor_info_0_8_0 sensor_info = 1;
+	repeated Is_tuple_info is_tuple_info = 2;
+}
+
+message Sensor_info_0_8_1_dm2is {
+	repeated cool4_api_0_8_0.Sensor_info_0_8_1 sensor_info = 1;
+	repeated Is_tuple_info is_tuple_info = 2;
+}
+
+message Is_tuple_info {
+	// DBシステムがタプル毎に付与する属性
+	optional sint64 dm2_create_ts = 1;
+	optional string dm2_creator_id = 4;
+	optional string dm2_ip_addr = 5;
+	uint64 dm2_hash = 2;
+	repeated uint64 dm2_ts_group = 3;
+}

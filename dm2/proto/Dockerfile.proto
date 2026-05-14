@@ -1,0 +1,26 @@
+arg IMAGE_TAG=20.04
+from ubuntu:${IMAGE_TAG}
+
+# avoid hunging up
+env TZ=Asia/Tokyo
+run ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
+run apt-get update \
+  && apt-get install -y \
+    wget \
+    build-essential \
+    cmake \
+    python3-pip \
+  && rm -rf /var/lib/apt/lists/*
+
+# install protobuf
+workdir /
+run wget https://github.com/protocolbuffers/protobuf/releases/download/v21.12/protobuf-cpp-3.21.12.tar.gz && \
+  tar zxvf protobuf-cpp-3.21.12.tar.gz && \
+  rm protobuf-cpp-3.21.12.tar.gz
+run mkdir protoc
+workdir /protobuf-3.21.12
+run ./configure --prefix=/usr/local --enable-python
+run pip install protobuf==3.20.3
+run make -j4
+run make install

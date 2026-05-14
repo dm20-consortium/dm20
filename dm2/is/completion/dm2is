@@ -1,0 +1,43 @@
+_have dm2is && \
+__dm2is_bash_completion()
+{
+  local cur prev words cword
+  _init_completion || return
+
+  local used_schema=0
+
+  local word
+  for word in ${words[@]}; do
+    case ${word} in
+      -S) used_schema=1;;
+      -m) used_schema=2;;
+    esac
+  done
+ 
+  local args
+  case "${prev}" in
+    -S)
+      args="current_global_path_plan dynamic_map_info freespace_info freespace_info_0_8_0 garbage_trucks gs_predict_info message_info mobile_users object_info object_info_0_8_0 object_info_0_8_1 parking_lot_info passing_the_way_plan pcp_info pole_info scheduled_global_path_plan scheduled_local_path_plan signal_info sensor_info sensor_info_0_8_1"
+      ;;
+    -d)
+      args="../conf ~/dm2/conf"
+      ;;
+    *)
+      #[ ${used_schema} -eq 0 ] && args="${args} -S"
+      ;;
+  esac
+
+  #if [ -z "${cur}"]; then
+    #COMPREPLY=(${args})
+  #else
+    local arg compreply=""
+
+    for arg in ${args}; do
+      if [ "${arg#${cur}}" != "${arg}" ]; then
+        compreply="${arg} ${compreply}"
+      fi
+    done
+    COMPREPLY=(${compreply})
+  #fi
+} && \
+complete -F __dm2is_bash_completion dm2is

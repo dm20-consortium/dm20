@@ -1,0 +1,194 @@
+version: '3.4'
+
+services:
+  # Cloud ---------------------------------------------------------------------
+  cloud_rdb:
+    image: dm2/rdb:20.04
+    networks:
+      cloud:
+        ipv4_address: 172.19.1.2
+    environment:
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+  cloud_is:
+    image: dm2/is:20.04
+    networks:
+      cloud:
+        ipv4_address: 172.19.1.3
+    volumes:
+      - ${DEMO_SAMPLE_PATH}/conf_cloud:/dm_conf
+    command: >
+      sh -c "
+      sleep 10;
+      dm2is -d /dm_conf
+      "
+  cloud_cs_recv:
+    image: dm2/cs:20.04
+    networks:
+      cloud:
+        ipv4_address: 172.19.1.4
+      platform:
+        ipv4_address: 172.19.0.2
+    volumes:
+      - ${DEMO_SAMPLE_PATH}/conf_cloud:/dm_conf
+    command:
+      dm2cs_recv -d /dm_conf
+  cloud_cs_send:
+    image: dm2/cs:20.04
+    networks:
+      cloud:
+        ipv4_address: 172.19.1.5
+      platform:
+        ipv4_address: 172.19.0.3
+    volumes:
+      - ${DEMO_SAMPLE_PATH}/conf_cloud:/dm_conf
+    command:
+      dm2cs_send -d /dm_conf
+  # Edge1 ---------------------------------------------------------------------
+  edge1_rdb:
+    image: dm2/rdb:20.04
+    networks:
+      edge1:
+        ipv4_address: 172.19.2.2
+    environment:
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+  edge1_is:
+    image: dm2/is:20.04
+    networks:
+      edge1:
+        ipv4_address: 172.19.2.3
+    volumes:
+      - ${DEMO_SAMPLE_PATH}/conf_edge1:/dm_conf
+    command: >
+      sh -c "
+      sleep 10;
+      dm2is -d /dm_conf
+      "
+  edge1_cs_send:
+    image: dm2/cs:20.04
+    networks:
+      edge1:
+        ipv4_address: 172.19.2.5
+      platform:
+        ipv4_address: 172.19.0.5
+    volumes:
+      - ${DEMO_SAMPLE_PATH}/conf_edge1:/dm_conf
+    command:
+      dm2cs_send -d /dm_conf
+  edge1_object_recognizer:
+    image: dm2/protobufdmi:20.04
+    networks:
+      edge1:
+        ipv4_address: 172.19.2.6
+    command: ccam_cool4_sensor_io_sample_send_msg --ipaddr 172.19.2.3
+  # Edge2 ---------------------------------------------------------------------
+  edge2_rdb:
+    image: dm2/rdb:20.04
+    networks:
+      edge2:
+        ipv4_address: 172.19.3.2
+    environment:
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+  edge2_is:
+    image: dm2/is:20.04
+    networks:
+      edge2:
+        ipv4_address: 172.19.3.3
+    volumes:
+      - ${DEMO_SAMPLE_PATH}/conf_edge2:/dm_conf
+    command: >
+      sh -c "
+      sleep 10;
+      dm2is -d /dm_conf
+      "
+  edge2_cs_send:
+    image: dm2/cs:20.04
+    networks:
+      edge2:
+        ipv4_address: 172.19.3.5
+      platform:
+        ipv4_address: 172.19.0.7
+    volumes:
+      - ${DEMO_SAMPLE_PATH}/conf_edge2:/dm_conf
+    command:
+      dm2cs_send -d /dm_conf
+  edge2_object_recognizer:
+    image: dm2/protobufdmi:20.04
+    networks:
+      edge2:
+        ipv4_address: 172.19.3.6
+    command: ccam_cool4_sensor_io_sample_send_msg --ipaddr 172.19.3.3
+  # Vehicle ---------------------------------------------------------------------
+  vehicle_rdb:
+    image: dm2/rdb:20.04
+    networks:
+      vehicle:
+        ipv4_address: 172.19.4.2
+    environment:
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+  vehicle_is:
+    image: dm2/is:20.04
+    networks:
+      vehicle:
+        ipv4_address: 172.19.4.3
+    volumes:
+      - ${DEMO_SAMPLE_PATH}/conf_vehicle:/dm_conf
+    command: >
+      sh -c "
+      sleep 10;
+      dm2is -d /dm_conf
+      "
+  vehicle_cs_recv:
+    image: dm2/cs:20.04
+    networks:
+      vehicle:
+        ipv4_address: 172.19.4.4
+      platform:
+        ipv4_address: 172.19.0.8
+    volumes:
+      - ${DEMO_SAMPLE_PATH}/conf_vehicle:/dm_conf
+    command:
+      dm2cs_recv -d /dm_conf
+  vehicle_received_object_info:
+    image: dm2/dm2mes:20.04
+    command: >
+      sh -c "
+      sleep 15;
+      dm2mes -i 172.19.4.3 -u ${RDB_USER_NAME:-dm2sampleuser} -p ${RDB_USER_PASS:-dm2samplepassword} -r -S object_info_0_8_1
+      "
+    networks:
+      vehicle:
+        ipv4_address: 172.19.4.102
+
+
+
+networks:
+  platform:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.19.0.0/24
+  cloud:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.19.1.0/24
+  edge1:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.19.2.0/24
+  edge2:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.19.3.0/24
+  vehicle:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.19.4.0/24

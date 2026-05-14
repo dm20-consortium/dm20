@@ -1,0 +1,112 @@
+MODULE_NAME = dm2is
+#MEASURE_MODE(0[default]:Disable, 1:Enable)
+MEASURE_MODE  = 0
+
+#COMPILER_SWITCH(0[default]:g++, 1:Intel compiler)
+COMPILER_SWITCH = 0
+
+USE_ROS2DMI = 0
+USE_UDP_DMI = 0
+ROS2_WORKSPACE_DIR = "\"/home/dm2/ros2_ws\""
+
+ifeq ($(COMPILER_SWITCH), 1)
+  COMPILER = icc
+endif
+#/etc/os-releaseの下記XXの箇所を抽出し、メジャーバージョンを判定する
+#VERSION_ID="XX.YY"
+ifeq ($(shell cat /etc/os-release | grep VERSION_ID | sed -e "s/^[A-Z]*\_[A-Z]*\=\"\([0-9]*\)\.[0-9]*\"/\1/"),18)
+  COMPILER = g++-5
+else
+  COMPILER = g++
+endif
+
+ifeq ($(shell cat /etc/os-release | grep VERSION_ID | sed -e "s/^[A-Z]*\_[A-Z]*\=\"\([0-9]*\)\.[0-9]*\"/\1/"),24)
+  CPLUS_VER    = c++17
+else
+  CPLUS_VER    = c++14
+endif
+
+#DEBUGS = -g
+CFLAGS    = -DMEASURE_MODE=${MEASURE_MODE} -DCOMPILER_SWITCH=${COMPILER_SWITCH} -DUSE_UDP_DMI=${USE_UDP_DMI} -DUSE_ROS2DMI=${USE_ROS2DMI} -DROS2_WORKSPACE_DIR=$(ROS2_WORKSPACE_DIR) -DPQXX_VER=${PQXX_VER} -std=${CPLUS_VER} $(DEBUGS) -MMD -MP -Wall -O3 -Wextra -Winit-self -Wno-missing-field-initializers -Wno-unused-parameter -Wno-shift-count-overflow
+
+ifeq "$(shell getconf LONG_BIT)" "64"
+  LDFLAGS = -L../commonLib/lib
+else
+  LDFLAGS = -L../commonLib/lib
+endif
+LIBS      = -lpthread -ldl -lpqxx -lpq -lxerces-c -ldm2SocketInterface -llog4cxx -lgeos_c -luuid -lssl -lcrypto -lm -ltuple -lz -lzstd -lyaml-cpp
+INCLUDE   = -I./include -I./../csLib/include -I./../commonLib/include/dm2SocketInterface -I../../protoc/include -I/usr/local/include/is
+#TARGET    = ./bin/$(shell basename `readlink -f .`)
+TARGET    = ./bin/$(MODULE_NAME)
+SRCDIR    = ./source
+
+# ディレクトリパスに含まれる空白文字をコロンに変換する関数
+# 使用方法）$(call space_to_colon, string)
+#   注意）環境によっては、$(space)を半角スペースとして認識しない場合がある。
+#       対処法）空文字を挟む事で半角スペースを認識させる
+#            $(subst $() ,:,$(1))
+space_to_colon = $(subst $() ,:,$(1))
+space :=
+space +=
+
+# Protobuf定義ファイルのターゲット設定
+PROTO_DIR     = ../proto
+PROTO_OUT_DIR = ./include
+PROTO_INCLUDE = $(wildcard $(PROTO_DIR)/*)
+PROTO_INCLUDE_COLON = $(call space_to_colon,$(PROTO_INCLUDE))
+PROTOS        = $(wildcard $(PROTO_DIR)/*/*.proto)
+# 昇順（api, is）にソート
+# 理由）is側のprotoファイルがapi側をインポートしているため
+SORTED_PROTOS = $(sort $(PROTOS))
+PROTOS_OUTS   = $(addprefix $(SRCDIR)/, $(notdir $(SORTED_PROTOS:.proto=.pb.cc)))
+
+ifeq "$(strip $(SRCDIR))" ""
+  SRCDIR  = .
+endif
+SOURCES   = $(wildcard $(SRCDIR)/*.cpp)
+OBJDIR    = ./obj
+ifeq "$(strip $(OBJDIR))" ""
+  OBJDIR  = .
+endif
+OBJECTS   = $(addprefix $(OBJDIR)/, $(notdir $(PROTOS_OUTS:.pb.cc=.pb.o))) $(addprefix $(OBJDIR)/, $(notdir $(SOURCES:.cpp=.o)))
+DEPENDS   = $(OBJECTS:.o=.d)
+
+# Protobufの実行パス・ライブラリリンク方法の設定
+ifeq ($(shell cat /etc/os-release | grep VERSION_ID | sed -e "s/^[A-Z]*\_[A-Z]*\=\"\([0-9]*\)\.[0-9]*\"/\1/"),24)
+  PROTOLIB_OPT1 = 
+  PROTOLIB_OPT2 = -lprotobuf
+  PROTOC_PATH = protoc
+else
+  # 全オブジェクトファイルが、protobufの静的ライブラリ（libprotobuf.a）にリンクされるように設定
+  PROTOLIB_OPT1 = -Wl,--whole-archive ../../protoc/lib/libprotobuf.a -Wl,--no-whole-archive
+  PROTOLIB_OPT2 = 
+  PROTOC_PATH = ../../protoc/bin/protoc
+endif
+$(TARGET): bin $(OBJECTS) $(LIBS) 
+	$(COMPILER) $(DEBUGS) -o $@ $(PROTOLIB_OPT1) $(OBJECTS) $(LDFLAGS) $(LIBS) $(PROTOLIB_OPT2) 
+	rm -f /usr/local/bin/$(MODULE_NAME)
+	cp bin/$(MODULE_NAME) /usr/local/bin/
+	cp completion/dm2is  /usr/share/bash-completion/completions/
+
+$(OBJDIR)/%.pb.o: $(SRCDIR)/%.pb.cc
+	$(COMPILER) $(CFLAGS) $(INCLUDE) -o $@ -c $<
+
+$(OBJDIR)/%.o: $(SRCDIR)/%.cpp
+	$(COMPILER) $(CFLAGS) $(INCLUDE) -o $@ -c $<
+
+$(SRCDIR)/%.pb.cc: $(PROTO_DIR)/*/%.proto
+	$(PROTOC_PATH) -I=$(PROTO_INCLUDE_COLON) --cpp_out=$(PROTO_OUT_DIR) $<
+	mv $(PROTO_OUT_DIR)/*.pb.cc $(SRCDIR)
+
+proto: $(PROTOS_OUTS)
+
+all: clean $(TARGET)
+
+bin:
+	install -d bin obj
+
+clean:
+	-rm -f $(OBJECTS) $(DEPENDS) $(TARGET)
+	-rm -f $(SRCDIR)/*.pb.cc include/*.pb.h
+
+-include $(DEPENDS)

@@ -1,0 +1,14 @@
+# DE_車両サイズ種別
+
+uint8 LARGE=0
+uint8 SEMI_LARGE=1
+uint8 NORMAL=2
+uint8 MORTOR_CYCLE=3
+uint8 BICYCLE=4
+uint8 LIGHT_VEHICLE=5
+uint8 PEDESTRIAN=6
+uint8 TRAM=7
+uint8 OTHERS=15
+uint8 UNKNOWN=15
+
+uint8 value 15

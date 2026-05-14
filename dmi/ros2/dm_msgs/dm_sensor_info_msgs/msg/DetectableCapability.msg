@@ -1,0 +1,4 @@
+dm_freespace_info_msgs/DetectableClasses detectable_classes
+dm_freespace_info_msgs/OffsetPointXy[16] detectable_domain
+dm_object_info_msgs/ExistenceConfidence confidence
+dm_object_info_msgs/ObjectDimensionValue minimal_detectable_size

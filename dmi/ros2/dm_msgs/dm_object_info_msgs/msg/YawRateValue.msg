@@ -1,0 +1,7 @@
+# 0.01 deg/s
+int16 MIN=-32766
+int16 MAX=32766
+
+int16 UNKNOWN=32767
+
+int16 value 32767

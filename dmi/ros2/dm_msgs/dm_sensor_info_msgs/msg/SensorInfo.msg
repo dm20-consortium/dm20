@@ -1,0 +1,14 @@
+# 観測機器ID
+dm_object_info_msgs/ObjectId unit_id
+# センサーID
+uint8 sensor_id
+# センサータイプ
+SensorType sensor_type
+# センサー設置位置
+dm_object_info_msgs/Location position
+# 情報取得時刻
+dm_object_info_msgs/TimestampIts time
+# 検知性能情報
+DetectableCapability[8] detectable_capabilities
+# センサー状態
+SensorStatus sensor_status

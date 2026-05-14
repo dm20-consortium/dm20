@@ -1,0 +1,43 @@
+
+
+ifeq ($(shell cat /etc/os-release | grep VERSION_ID | sed -e "s/^[A-Z]*\_[A-Z]*\=\"\([0-9]*\)\.[0-9]*\"/\1/"),24)
+  CFLAGS  =  -std=c++17 -shared -fPIC
+else
+  CFLAGS  =  -std=c++14 -shared -fPIC
+endif
+
+LIBS           =  -I../../../tupleLib/include
+
+all:
+	g++ $(CFLAGS) UF_CURRENT_TIMESTAMP.cpp $(LIBS) -o UF_CURRENT_TIMESTAMP.so
+	g++ $(CFLAGS) UF_TO_DATETIME.cpp $(LIBS) -o UF_TO_DATETIME.so
+	g++ $(CFLAGS) UF_MAKE_TIMESTAMP.cpp $(LIBS) -o UF_MAKE_TIMESTAMP.so
+	g++ $(CFLAGS) UF_GET_DATE.cpp $(LIBS) -o UF_GET_DATE.so
+	g++ $(CFLAGS) UF_GET_TIME.cpp $(LIBS) -o UF_GET_TIME.so
+	g++ $(CFLAGS) UF_GET_YEAR.cpp $(LIBS) -o UF_GET_YEAR.so
+	g++ $(CFLAGS) UF_GET_MONTH.cpp $(LIBS) -o UF_GET_MONTH.so
+	g++ $(CFLAGS) UF_GET_DAY.cpp $(LIBS) -o UF_GET_DAY.so
+	g++ $(CFLAGS) UF_GET_WEEKDAY.cpp $(LIBS) -o UF_GET_WEEKDAY.so
+	g++ $(CFLAGS) UF_GET_HOUR.cpp $(LIBS) -o UF_GET_HOUR.so
+	g++ $(CFLAGS) UF_GET_MINUTE.cpp $(LIBS) -o UF_GET_MINUTE.so
+	g++ $(CFLAGS) UF_GET_SECOND.cpp $(LIBS) -o UF_GET_SECOND.so
+	g++ $(CFLAGS) UF_GET_MICROSECOND.cpp $(LIBS) -o UF_GET_MICROSECOND.so
+	g++ $(CFLAGS) UF_CURRENT_ITS_TIMESTAMP.cpp $(LIBS) -o UF_CURRENT_ITS_TIMESTAMP.so
+	g++ $(CFLAGS) UF_MAKE_ITS_TIMESTAMP.cpp $(LIBS) -o UF_MAKE_ITS_TIMESTAMP.so
+	g++ $(CFLAGS) UF_UNIX_TO_ITS_TIMESTAMP.cpp $(LIBS) -o UF_UNIX_TO_ITS_TIMESTAMP.so
+	g++ $(CFLAGS) UF_ITS_TO_UNIX_TIMESTAMP.cpp $(LIBS) -o UF_ITS_TO_UNIX_TIMESTAMP.so
+	g++ $(CFLAGS) UF_TO_ITS_DATETIME.cpp $(LIBS) -o UF_TO_ITS_DATETIME.so
+	g++ $(CFLAGS) UF_GET_ITS_DATE.cpp $(LIBS) -o UF_GET_ITS_DATE.so
+	g++ $(CFLAGS) UF_GET_ITS_TIME.cpp $(LIBS) -o UF_GET_ITS_TIME.so
+	g++ $(CFLAGS) UF_GET_ITS_YEAR.cpp $(LIBS) -o UF_GET_ITS_YEAR.so
+	g++ $(CFLAGS) UF_GET_ITS_MONTH.cpp $(LIBS) -o UF_GET_ITS_MONTH.so
+	g++ $(CFLAGS) UF_GET_ITS_DAY.cpp $(LIBS) -o UF_GET_ITS_DAY.so
+	g++ $(CFLAGS) UF_GET_ITS_WEEKDAY.cpp $(LIBS) -o UF_GET_ITS_WEEKDAY.so
+	g++ $(CFLAGS) UF_GET_ITS_HOUR.cpp $(LIBS) -o UF_GET_ITS_HOUR.so
+	g++ $(CFLAGS) UF_GET_ITS_MINUTE.cpp $(LIBS) -o UF_GET_ITS_MINUTE.so
+	g++ $(CFLAGS) UF_GET_ITS_SECOND.cpp $(LIBS) -o UF_GET_ITS_SECOND.so
+	g++ $(CFLAGS) UF_GET_ITS_MICROSECOND.cpp $(LIBS) -o UF_GET_ITS_MICROSECOND.so
+
+clean:
+	rm -f *.o *.so
+

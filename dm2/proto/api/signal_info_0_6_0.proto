@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package cool4_api_0_6_0;
+
+message Signal_info {
+	// API 仕様案に基づく属性
+	uint32 crp_id = 1;
+	repeated uint32 id = 2;
+	uint64 time = 3;
+	optional uint32 state = 5;
+	optional uint32 specific_control_flags = 6;
+	optional uint32 event_count = 7;
+	optional uint32 count_down_stop_flag = 8;
+	repeated Light_info light_info = 4;
+}
+
+//Light_info(灯色情報)
+message Light_info {
+	optional uint32 main = 1;
+	optional uint32 arrow = 2;
+	optional uint32 min_time_to_change = 3;
+	optional uint32 max_time_to_change = 4;
+}

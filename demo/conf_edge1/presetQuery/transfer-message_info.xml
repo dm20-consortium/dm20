@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<query>
+	<destination>1721910</destination>
+	<body>MASTER message_info SELECT * FROM message_info [rows 1]</body>
+	<!--retry life_time="60" /> -->
+</query>
+
+

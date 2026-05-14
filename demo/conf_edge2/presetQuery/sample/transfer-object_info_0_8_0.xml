@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<query>
+	<destination>1901000002</destination>
+	<body>MASTER object_info_0_8_0 SELECT * FROM object_info_0_8_0 [rows 50]</body>
+	<!-- retry life_time="60" /> -->
+</query>
+
+

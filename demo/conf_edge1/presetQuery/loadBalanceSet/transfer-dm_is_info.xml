@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<query>
+	<destination>1920100021</destination>
+	<body>MASTER dm_is_info SELECT * FROM dm_is_info [rows 1]</body>
+	<retry life_time="10" />
+</query>

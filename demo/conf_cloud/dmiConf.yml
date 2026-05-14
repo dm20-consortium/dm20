@@ -1,0 +1,101 @@
+common:
+  user: dm2sampleuser
+  ipAddr: 127.0.0.1
+dmi:
+# protobuf:
+#   - message_type: SensingMessage
+#     type: receiver
+#     receive_port: 31876
+#     rsu_id: 0x12345678
+#     sensor_id: 0x1
+#   - message_type: SensingMessageArray
+#     type: receiver
+#     receive_port: 31877
+#     rsu_id: 0x12341234
+#     sensor_id: 0x1
+# ros2:
+#   subscriber:
+#     object_info:
+#       targetTable: object_info_0_8_1
+#       topicName: /object_info/local
+#       topicType: ObjectInfoArray
+#       logIntervalMilliSecond: 300000
+#     freespace_info:
+#       targetTable: freespace_info_0_8_1
+#       topicName: /freespace_info/local
+#       topicType: FreespaceInfoArray
+#       logIntervalMilliSecond: 300000
+#     signal_info:
+#       targetTable: signal_info
+#       topicName: /signal_info/local
+#       topicType: SignalInfoArray
+#       logIntervalMilliSecond: 300000
+#     sensor_info:
+#       targetTable: sensor_info_0_8_1
+#       topicName: /sensor_info/local
+#       topicType: SensorInfoArray
+#       logIntervalMilliSecond: 300000
+#   publisher:
+#     object_info:
+#       targetTable: object_info_0_8_1
+#       topicName: /object_info/dm
+#       topicType: ObjectInfoArray
+#       logIntervalMilliSecond: 300000
+#       query: master object_info_0_8_1 select * from object_info_0_8_1 [range 300 msec]
+#     freespace_info:
+#       targetTable: freespace_info_0_8_1
+#       topicName: /freespace_info/dm
+#       topicType: FreespaceInfoArray
+#       logIntervalMilliSecond: 300000
+#       query: master freespace_info_0_8_1 select * from freespace_info_0_8_1 [range 300 msec]
+#     signal_info:
+#       targetTable: signal_info
+#       topicName: /signal_info/dm
+#       topicType: SignalInfoArray
+#       logIntervalMilliSecond: 300000
+#       query: master signal_info select * from signal_info [range 300 msec]
+#     sensor_info:
+#       targetTable: sensor_info_0_8_1
+#       topicName: /sensor_info/dm
+#       topicType: SensorInfoArray
+#       logIntervalMilliSecond: 300000
+#       query: master sensor_info_0_8_1 select * from sensor_info_0_8_1 [range 300 msec]
+# udp:
+#   receiver:
+#     object_info:
+#       targetTable: object_info_0_8_1
+#       receptionPort: 54345
+#     freespace_info:
+#       targetTable: freespace_info_0_8_1
+#       receptionPort: 54346
+#     signal_info:
+#       targetTable: signal_info
+#       receptionPort: 54347
+#     sensor_info:
+#       targetTable: sensor_info_0_8_1
+#       receptionPort: 54348
+#   sender:
+#     object_info_0_8_1:
+#       targetIpAddr: 127.0.0.1
+#       targetPort: 44345
+#       frameRateMaxMilsec: 33
+#       dataNumPerFrame: 6
+#       query: master sysTimer100msec select * from object_info_0_8_1 [range 300 msec]
+#     freespace_info_0_8_1:
+#       targetIpAddr: 127.0.0.1
+#       targetPort: 44346
+#       frameRateMaxMilsec: 33
+#       dataNumPerFrame: 3
+#       query: master sysTimer100msec select * from freespace_info_0_8_1 [range 300 msec]
+#     signal_info:
+#       targetIpAddr: 127.0.0.1
+#       targetPort: 44347
+#       frameRateMaxMilsec: 33
+#       dataNumPerFrame: 6
+#       query: master signal_info select * from signal_info [range 300 msec] duplication
+#     sensor_info_0_8_1:
+#       targetIpAddr: 127.0.0.1
+#       targetPort: 44348
+#       frameRateMaxMilsec: 33
+#       dataNumPerFrame: 1
+#       query: master sysTimer100msec select * from sensor_info_0_8_1 [range 300 msec]

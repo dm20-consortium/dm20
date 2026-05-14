@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<query>
+	<destination>1901000033</destination>
+	<body>MASTER dynamic_map_info SELECT * FROM dynamic_map_info[rows 1]</body>
+	<retry life_time="60" />
+</query>
+
+

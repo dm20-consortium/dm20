@@ -1,0 +1,2 @@
+YawRateValue value
+YawRateAccuracy accuracy

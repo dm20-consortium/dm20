@@ -1,0 +1,44 @@
+syntax = "proto3";
+
+package cool4_api_0_6_0;
+
+message Freespace_info {
+	// API 仕様案に基づく属性
+	optional fixed64 id = 1;
+	optional uint64 time = 2;
+	optional uint32 existency = 6;
+	optional uint32 minimal_detectable_size = 7;
+	optional Location position_begin = 8;
+	optional Location position_end = 9;
+	optional uint32 length_value = 10;
+	optional uint32 length_accuracy = 11;
+	optional uint64 id_begin = 4;
+	optional uint64 id_end = 5;
+	repeated uint64 information_source_list = 3;
+}
+
+//Location(位置)
+message Location {
+	optional uint32 geodetic_system = 1;
+	optional sint32 latitude = 2;
+	optional sint32 longitude = 3;
+	optional sint32 altitude = 4;
+	optional uint32 crp_id = 5;
+	optional sint32 dx_crp = 6;
+	optional sint32 dy_crp = 7;
+	optional sint32 dh_crp = 8;
+	optional uint32 lane_count = 9;
+	optional sint32 lane_position = 10;
+	optional uint32 lane_lateral_position = 11;
+	optional uint32 crp_id_begin = 12;
+	optional uint32 crp_id_end = 13;
+	optional uint32 lane_vertical_position = 14;
+	optional uint64 lane_id = 15;
+	optional sint32 dx_lane = 16;
+	optional sint32 dy_lane = 17;
+	optional sint32 dh_lane = 18;
+	optional uint32 semi_axis_length_major = 19;
+	optional uint32 semi_axis_length_minor = 20;
+	optional uint32 ellipse_orientation = 21;
+	optional uint32 altitude_accuracy = 22;
+}

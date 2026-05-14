@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<query>
+	<destination>1920100021</destination>
+	<body>MASTER dm_load_info SELECT * FROM dm_load_info [rows 1]</body>
+</query>

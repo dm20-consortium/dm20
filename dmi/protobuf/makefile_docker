@@ -1,0 +1,11 @@
+IMAGE_PREFIX := dm2
+IMAGE_TAG := 20.04
+
+DOCKER_BUILD := docker build
+DOCKER_RMI := docker rmi -f
+
+images:
+	${DOCKER_BUILD} -f ./Dockerfile -t ${IMAGE_PREFIX}/protobufdmi:${IMAGE_TAG} .
+
+clean:
+	${DOCKER_RMI} ${IMAGE_PREFIX}/protobufdmi:${IMAGE_TAG}

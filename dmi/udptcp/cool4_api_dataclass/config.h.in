@@ -1,0 +1,3 @@
+#define cool4_api_dataclass_VERSION_MAJOR @cool4_api_dataclass_VERSION_MAJOR@
+#define cool4_api_dataclass_VERSION_MINOR @cool4_api_dataclass_VERSION_MINOR@
+#define cool4_api_dataclass_VERSION_PATCH @cool4_api_dataclass_VERSION_PATCH@

@@ -1,0 +1,8 @@
+# DE_Longitude
+# 0.1 micro deg
+int32 MIN=-1800000000
+int32 MAX=1800000000
+
+int32 UNKNOWN=1800000001
+
+int32 value 1800000001
