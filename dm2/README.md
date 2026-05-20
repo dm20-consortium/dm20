@@ -149,8 +149,7 @@ sudo ldconfig
 
 ### log4cxx
 
-- std::shared_mutexからboost::shared_mutexへの切り替えのため、下記ファイルの修正が必要です。
-`/usr/include/log4cxx/boost-std-configuration.h`
+- std::shared_mutexからboost::shared_mutexへの切り替えのため、log4cxxの設定ファイル`/usr/include/log4cxx/boost-std-configuration.h`の修正が必要です。
 
 ```cpp
 #define STD_SHARED_MUTEX_FOUND 1
