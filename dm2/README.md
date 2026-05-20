@@ -116,7 +116,7 @@ mkdir _build && cd _build
 cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local ..
 make -j$(nproc)
 sudo make install
-cd ..
+cd ../..
 
 wget https://github.com/protocolbuffers/protobuf/releases/download/v21.12/protobuf-cpp-3.21.12.tar.gz
 tar zxvf protobuf-cpp-3.21.12.tar.gz
