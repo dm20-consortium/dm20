@@ -18,7 +18,22 @@
 ```
 
 ---
-- 送信側・受信側それぞれで、リポジトリのルートディレクトリ/dm2/confディレクトリにある[dm2.conf](../../../dm2/conf/dm2.conf), [send_list_v4.csv](../../../dm2/conf/send_list_v4.csv)を編集します。
+- 受信側で、リポジトリのルートディレクトリ/dm2/confディレクトリにある[dm2.conf](../../../dm2/conf/dm2.conf)を編集します。
+
+
+### 受信側のconf/dm2.conf
+MY_STATION_IDは、送信側のMY_STATION_IDと異なる値を入れて下さい。
+INTERFACE_NAME_1は、受信側のNIC名をセットして下さい。
+
+```text
+MY_STATION_ID = 2
+INTERFACE_NAME_1 = eth0
+INTERFACE_IP_VER_1 = 4
+UDP_PORT_NUMBER_1 = 55555
+SOCKET_TYPE_1 = udp
+```
+
+- 送信側で、リポジトリのルートディレクトリ/dm2/confディレクトリにある[dm2.conf](../../../dm2/conf/dm2.conf), [send_list_v4.csv](../../../dm2/conf/send_list_v4.csv), [transfer-object_info_0_8_1.xml](../../../dm2/conf/presetQuery/sample/transfer-object_info_0_8_1.xml)を編集します。
 
 ### 送信側のconf/dm2.conf
 MY_STATION_IDは、受信側のMY_STATION_IDと異なる値を入れて下さい。
@@ -38,17 +53,17 @@ SOCKET_TYPE_1 = udp
 2, 192.168.1.2
 ```
 
-### 受信側のconf/dm2.conf
-MY_STATION_IDは、送信側のMY_STATION_IDと異なる値を入れて下さい。
-INTERFACE_NAME_1は、受信側のNIC名をセットして下さい。
-
+### 送信側のconf/presetQuery/sample/transfer-object_info_0_8_1.xml
+`<destination>`タグに受信側のMY_STATION_IDを設定して下さい。
 ```text
-MY_STATION_ID = 2
-INTERFACE_NAME_1 = eth0
-INTERFACE_IP_VER_1 = 4
-UDP_PORT_NUMBER_1 = 55555
-SOCKET_TYPE_1 = udp
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<query>
+	<destination>2</destination>
+	<body>MASTER object_info_0_8_1 SELECT * FROM object_info_0_8_1 [rows 50]</body>
+	<!-- retry life_time="60" /> -->
+</query>
 ```
+編集後は、`conf/presetQuery/sample/transfer-object_info_0_8_1.xml`を`conf/presetQuery`直下に移動して下さい。
 
 - DBシステムと通信部を起動します。引数にはリポジトリのルートディレクトリ/dm2/confディレクトリを指定するか、環境変数DM2_CONF_DIR_PATHを設定して下さい。環境変数の設定方法について詳しく知りたい場合は[こちら](../01_dm2is_to_dm2mes/README.md#環境変数の設定)
 
