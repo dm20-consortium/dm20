@@ -69,7 +69,7 @@ colcon build --symlink-install
 source install/setup.bash 
 cd python
 pip install pyyaml
-python3 yaml2publish.py
+python3 yaml_publish_object_info.py
 ```
 
 ### 3.5 物標情報のROSトピック確認（DM端末側）
