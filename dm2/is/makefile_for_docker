@@ -9,25 +9,20 @@ USE_ROS2DMI = 0
 USE_UDP_DMI = 0
 ROS2_WORKSPACE_DIR = "\"/home/dm2/ros2_ws\""
 
-ifeq ($(COMPILER_SWITCH), 1)
-  COMPILER = icc
-endif
-#/etc/os-releaseの下記XXの箇所を抽出し、メジャーバージョンを判定する
-#VERSION_ID="XX.YY"
-ifeq ($(shell cat /etc/os-release | grep VERSION_ID | sed -e "s/^[A-Z]*\_[A-Z]*\=\"\([0-9]*\)\.[0-9]*\"/\1/"),18)
-  COMPILER = g++-5
-else
-  COMPILER = g++
-endif
+COMPILER = g++
+#/etc/os-releaseからメジャーバージョンを判定する
+UBUNTU_VERSION := $(shell . /etc/os-release && echo $$VERSION_ID | cut -d. -f1)
 
-ifeq ($(shell cat /etc/os-release | grep VERSION_ID | sed -e "s/^[A-Z]*\_[A-Z]*\=\"\([0-9]*\)\.[0-9]*\"/\1/"),24)
-  CPLUS_VER    = c++17
-else
-  CPLUS_VER    = c++14
+CPLUS_VER=c++17
+ifeq ($(shell [ $(UBUNTU_VERSION) -le 22 ] && echo yes),yes)
+  ROS_DISTRO := $(shell echo $$ROS_DISTRO)
+  ifneq ($(ROS_DISTRO),humble)
+    CPLUS_VER=c++14
+  endif
 endif
 
 #DEBUGS = -g
-CFLAGS    = -DMEASURE_MODE=${MEASURE_MODE} -DCOMPILER_SWITCH=${COMPILER_SWITCH} -DUSE_UDP_DMI=${USE_UDP_DMI} -DUSE_ROS2DMI=${USE_ROS2DMI} -DROS2_WORKSPACE_DIR=$(ROS2_WORKSPACE_DIR) -DPQXX_VER=${PQXX_VER} -std=${CPLUS_VER} $(DEBUGS) -MMD -MP -Wall -O3 -Wextra -Winit-self -Wno-missing-field-initializers -Wno-unused-parameter -Wno-shift-count-overflow
+CFLAGS    = -DMEASURE_MODE=${MEASURE_MODE} -DCOMPILER_SWITCH=${COMPILER_SWITCH} -DUSE_UDP_DMI=${USE_UDP_DMI} -DUSE_ROS2DMI=${USE_ROS2DMI} -DROS2_WORKSPACE_DIR=$(ROS2_WORKSPACE_DIR) -std=${CPLUS_VER} $(DEBUGS) -MMD -MP -Wall -O3 -Wextra -Winit-self -Wno-missing-field-initializers -Wno-unused-parameter -Wno-shift-count-overflow
 
 ifeq "$(shell getconf LONG_BIT)" "64"
   LDFLAGS = -L../commonLib/lib

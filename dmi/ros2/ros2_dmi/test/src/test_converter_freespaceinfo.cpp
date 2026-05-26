@@ -10,6 +10,7 @@
 #include "ros2_dmi/freespace_info_converter.hpp"
 #include "resultset_freespace_info.hpp"
 #include "rosmsg_freespace_info.hpp"
+#include "test_optional_helper.hpp"
 
 namespace ros2_dmi {
 namespace test {
@@ -141,59 +142,59 @@ TEST(TestConverterFreespaceInfo, RsToRosNormal) {
           test_in).get();
 
   // verify
-  EXPECT_EQ(test_out.id.value, 12341234UL);
-  EXPECT_EQ(test_out.time.value, 5000000UL);
-  EXPECT_EQ(test_out.existency.value, 27U);
-  EXPECT_EQ(test_out.minimal_detectable_size.value, 123U);
-  EXPECT_EQ(test_out.position_begin.geodetic_srid.value, 456U);
-  EXPECT_EQ(test_out.position_begin.latitude.value, 789);
-  EXPECT_EQ(test_out.position_begin.longitude.value, 3322);
-  EXPECT_EQ(test_out.position_begin.altitude.value, 125);
-  EXPECT_EQ(test_out.position_begin.crp_id.value, 523U);
-  EXPECT_EQ(test_out.position_begin.dx_crp.value, 633);
-  EXPECT_EQ(test_out.position_begin.dy_crp.value, 454);
-  EXPECT_EQ(test_out.position_begin.dh_crp.value, 963);
-  EXPECT_EQ(test_out.position_begin.lane_count.value, 84U);
-  EXPECT_EQ(test_out.position_begin.lane_position.value, -27);
-  EXPECT_EQ(test_out.position_begin.lane_lateral_position.value, 159U);
-  EXPECT_EQ(test_out.position_begin.crp_id_begin.value, 753U);
-  EXPECT_EQ(test_out.position_begin.crp_id_end.value, 486U);
-  EXPECT_EQ(test_out.position_begin.lane_vertical_position.value, 426U);
-  EXPECT_EQ(test_out.position_begin.lane_id.value, 6314UL);
-  EXPECT_EQ(test_out.position_begin.dx_lane.value, 842);
-  EXPECT_EQ(test_out.position_begin.dy_lane.value, 862);
-  EXPECT_EQ(test_out.position_begin.dh_lane.value, 9852);
-  EXPECT_EQ(test_out.position_begin.semi_axis_length_major.value, 336U);
-  EXPECT_EQ(test_out.position_begin.semi_axis_length_minor.value, 4567U);
-  EXPECT_EQ(test_out.position_begin.orientation.value, 7654U);
-  EXPECT_EQ(test_out.position_begin.altitude_accuracy.value, 987U);
-  EXPECT_EQ(test_out.position_end.geodetic_srid.value, 654U);
-  EXPECT_EQ(test_out.position_end.latitude.value, 321);
-  EXPECT_EQ(test_out.position_end.longitude.value, 12541);
-  EXPECT_EQ(test_out.position_end.altitude.value, 6652);
-  EXPECT_EQ(test_out.position_end.crp_id.value, 1100U);
-  EXPECT_EQ(test_out.position_end.dx_crp.value, 120);
-  EXPECT_EQ(test_out.position_end.dy_crp.value, 3698);
-  EXPECT_EQ(test_out.position_end.dh_crp.value, 8563);
-  EXPECT_EQ(test_out.position_end.lane_count.value, 10U);
-  EXPECT_EQ(test_out.position_end.lane_position.value, -72);
-  EXPECT_EQ(test_out.position_end.lane_lateral_position.value, 73U);
-  EXPECT_EQ(test_out.position_end.crp_id_begin.value, 6521U);
-  EXPECT_EQ(test_out.position_end.crp_id_end.value, 4589U);
-  EXPECT_EQ(test_out.position_end.lane_vertical_position.value, 3214U);
-  EXPECT_EQ(test_out.position_end.lane_id.value, 74523UL);
-  EXPECT_EQ(test_out.position_end.dx_lane.value, 652);
-  EXPECT_EQ(test_out.position_end.dy_lane.value, 8521);
-  EXPECT_EQ(test_out.position_end.dh_lane.value, 6332);
-  EXPECT_EQ(test_out.position_end.semi_axis_length_major.value, 1225U);
-  EXPECT_EQ(test_out.position_end.semi_axis_length_minor.value, 63268U);
-  EXPECT_EQ(test_out.position_end.orientation.value, 9633U);
-  EXPECT_EQ(test_out.position_end.altitude_accuracy.value, 1202U);
-  EXPECT_EQ(test_out.length.value.value, 1010U);
-  EXPECT_EQ(test_out.length.accuracy.value, 2022U);
-  EXPECT_EQ(test_out.id_begin.value, 652UL);
-  EXPECT_EQ(test_out.id_end.value, 98563UL);
-  EXPECT_EQ(test_out.information_source_list[0].value, 321654UL);
+  test_util::ExpectValueEq(test_out.id.value, 12341234UL);
+  test_util::ExpectValueEq(test_out.time.value, 5000000UL);
+  test_util::ExpectValueEq(test_out.existency.value, 27U);
+  test_util::ExpectValueEq(test_out.minimal_detectable_size.value, 123U);
+  test_util::ExpectValueEq(test_out.position_begin.geodetic_srid.value, 456U);
+  test_util::ExpectValueEq(test_out.position_begin.latitude.value, 789);
+  test_util::ExpectValueEq(test_out.position_begin.longitude.value, 3322);
+  test_util::ExpectValueEq(test_out.position_begin.altitude.value, 125);
+  test_util::ExpectValueEq(test_out.position_begin.crp_id.value, 523U);
+  test_util::ExpectValueEq(test_out.position_begin.dx_crp.value, 633);
+  test_util::ExpectValueEq(test_out.position_begin.dy_crp.value, 454);
+  test_util::ExpectValueEq(test_out.position_begin.dh_crp.value, 963);
+  test_util::ExpectValueEq(test_out.position_begin.lane_count.value, 84U);
+  test_util::ExpectValueEq(test_out.position_begin.lane_position.value, -27);
+  test_util::ExpectValueEq(test_out.position_begin.lane_lateral_position.value, 159U);
+  test_util::ExpectValueEq(test_out.position_begin.crp_id_begin.value, 753U);
+  test_util::ExpectValueEq(test_out.position_begin.crp_id_end.value, 486U);
+  test_util::ExpectValueEq(test_out.position_begin.lane_vertical_position.value, 426U);
+  test_util::ExpectValueEq(test_out.position_begin.lane_id.value, 6314UL);
+  test_util::ExpectValueEq(test_out.position_begin.dx_lane.value, 842);
+  test_util::ExpectValueEq(test_out.position_begin.dy_lane.value, 862);
+  test_util::ExpectValueEq(test_out.position_begin.dh_lane.value, 9852);
+  test_util::ExpectValueEq(test_out.position_begin.semi_axis_length_major.value, 336U);
+  test_util::ExpectValueEq(test_out.position_begin.semi_axis_length_minor.value, 4567U);
+  test_util::ExpectValueEq(test_out.position_begin.orientation.value, 7654U);
+  test_util::ExpectValueEq(test_out.position_begin.altitude_accuracy.value, 987U);
+  test_util::ExpectValueEq(test_out.position_end.geodetic_srid.value, 654U);
+  test_util::ExpectValueEq(test_out.position_end.latitude.value, 321);
+  test_util::ExpectValueEq(test_out.position_end.longitude.value, 12541);
+  test_util::ExpectValueEq(test_out.position_end.altitude.value, 6652);
+  test_util::ExpectValueEq(test_out.position_end.crp_id.value, 1100U);
+  test_util::ExpectValueEq(test_out.position_end.dx_crp.value, 120);
+  test_util::ExpectValueEq(test_out.position_end.dy_crp.value, 3698);
+  test_util::ExpectValueEq(test_out.position_end.dh_crp.value, 8563);
+  test_util::ExpectValueEq(test_out.position_end.lane_count.value, 10U);
+  test_util::ExpectValueEq(test_out.position_end.lane_position.value, -72);
+  test_util::ExpectValueEq(test_out.position_end.lane_lateral_position.value, 73U);
+  test_util::ExpectValueEq(test_out.position_end.crp_id_begin.value, 6521U);
+  test_util::ExpectValueEq(test_out.position_end.crp_id_end.value, 4589U);
+  test_util::ExpectValueEq(test_out.position_end.lane_vertical_position.value, 3214U);
+  test_util::ExpectValueEq(test_out.position_end.lane_id.value, 74523UL);
+  test_util::ExpectValueEq(test_out.position_end.dx_lane.value, 652);
+  test_util::ExpectValueEq(test_out.position_end.dy_lane.value, 8521);
+  test_util::ExpectValueEq(test_out.position_end.dh_lane.value, 6332);
+  test_util::ExpectValueEq(test_out.position_end.semi_axis_length_major.value, 1225U);
+  test_util::ExpectValueEq(test_out.position_end.semi_axis_length_minor.value, 63268U);
+  test_util::ExpectValueEq(test_out.position_end.orientation.value, 9633U);
+  test_util::ExpectValueEq(test_out.position_end.altitude_accuracy.value, 1202U);
+  test_util::ExpectValueEq(test_out.length.value.value, 1010U);
+  test_util::ExpectValueEq(test_out.length.accuracy.value, 2022U);
+  test_util::ExpectValueEq(test_out.id_begin.value, 652UL);
+  test_util::ExpectValueEq(test_out.id_end.value, 98563UL);
+  test_util::ExpectValueEq(test_out.information_source_list[0].value, 321654UL);
 
   // teardown
 }
@@ -220,7 +221,7 @@ TEST(TestConverterFreespaceInfo, RsToRosAbnormal) {
           test_in);
 
   // verify
-  EXPECT_EQ(test_out_ros2msg_abnormal, boost::none);
+  EXPECT_FALSE(test_out_ros2msg_abnormal);
 
   // teardown
 }

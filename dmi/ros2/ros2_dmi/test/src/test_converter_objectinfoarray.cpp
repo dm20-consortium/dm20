@@ -9,6 +9,8 @@
 #include "ros2_dmi/object_info_converter.hpp"
 #include "resultset_object_info.hpp"
 #include "rosmsg_object_info.hpp"
+#include "any_compat.hpp"
+#include "test_optional_helper.hpp"
 
 namespace ros2_dmi {
 namespace test {
@@ -25,9 +27,9 @@ TEST(TestConverterObjectInfo, RsToRosNormal) {
   const auto test_out = Converter<ObjectInfoArray>::ResultSetToRos(test_in).get();
 
   // verify
-  EXPECT_EQ(test_out.array[0].id.value, 12341234UL);
-  EXPECT_EQ(test_out.array[0].time.value, 5000000UL);
-  EXPECT_EQ(test_out.array[0].information_source_list[0].value, 56785678U);
+  test_util::ExpectValueEq(test_out.array[0].id.value, 12341234UL);
+  test_util::ExpectValueEq(test_out.array[0].time.value, 5000000UL);
+  test_util::ExpectValueEq(test_out.array[0].information_source_list[0].value, 56785678U);
 
   // teardown
 }
@@ -51,7 +53,7 @@ TEST(TestConverterObjectInfo, RsToRosAbnormal) {
   const auto test_out_ros2msg_abnormal = Converter<ObjectInfoArray>::ResultSetToRos(test_in);
 
   // verify
-  EXPECT_EQ(test_out_ros2msg_abnormal, boost::none);
+  EXPECT_FALSE(test_out_ros2msg_abnormal);
 
   // teardown
 }
@@ -85,19 +87,19 @@ TEST(TestConverterObjectInfo, RosToTupleNormal) {
   }
 
   for (int i = 0; i < data_nums; i++) {
-    EXPECT_EQ(0, timestamp1.at(i));
-    EXPECT_EQ(0, timestamp2.at(i));
+    test_util::ExpectValueEq(0, timestamp1.at(i));
+    test_util::ExpectValueEq(0, timestamp2.at(i));
   }
 
-  EXPECT_EQ(std::experimental::any_cast<unsigned long long>(val1.at(0)), 305402420);
-  EXPECT_EQ(std::experimental::any_cast<long>(val1.at(1)), 5000000L);
-  EXPECT_EQ(std::experimental::any_cast<std::vector<unsigned long long>>(val1.at(87)).at(0),
+  test_util::ExpectValueEq(dm_any::any_cast<unsigned long long>(val1.at(0)), 305402420);
+  test_util::ExpectValueEq(dm_any::any_cast<long>(val1.at(1)), 5000000L);
+  test_util::ExpectValueEq(dm_any::any_cast<std::vector<unsigned long long>>(val1.at(87)).at(0),
             1450727032UL);
 
 
-  EXPECT_EQ(std::experimental::any_cast<unsigned long long>(val2.at(0)), 305402421);
-  EXPECT_EQ(std::experimental::any_cast<long>(val2.at(1)), 5000001L);
-  EXPECT_EQ(std::experimental::any_cast<std::vector<unsigned long long>>(val2.at(87)).at(0),
+  test_util::ExpectValueEq(dm_any::any_cast<unsigned long long>(val2.at(0)), 305402421);
+  test_util::ExpectValueEq(dm_any::any_cast<long>(val2.at(1)), 5000001L);
+  test_util::ExpectValueEq(dm_any::any_cast<std::vector<unsigned long long>>(val2.at(87)).at(0),
             1450727033UL);
 
   // teardown

@@ -14,28 +14,21 @@ COMPLETIONS_DIR = /usr/share/bash-completion/completions
 #MEASURE_MODE(0[default]:Disable, 1:Enable)
 MEASURE_MODE  = 0
 
-#COMPILER_SWITCH(0[default]:g++, 1:Intel compiler)
-COMPILER_SWITCH = 0
-ifeq ($(COMPILER_SWITCH), 1)
-  COMPILER = icc
-endif
-#/etc/os-releaseの下記XXの箇所を抽出し、メジャーバージョンを判定する
-VERSION_ID := $(shell sed -n 's/^VERSION_ID="\([0-9]*\)\..*"/\1/p' /etc/os-release)
-ifeq ($(VERSION_ID),18)
-  COMPILER = g++-5
-else
-  COMPILER = g++
-endif
+COMPILER = g++
+#/etc/os-releaseからメジャーバージョンを判定する
+UBUNTU_VERSION := $(shell . /etc/os-release && echo $$VERSION_ID | cut -d. -f1)
 
-ifeq ($(VERSION_ID),24)
-  CPLUS_VER=c++17
-else
-  CPLUS_VER=c++14
+CPLUS_VER=c++17
+ifeq ($(shell [ $(UBUNTU_VERSION) -le 22 ] && echo yes),yes)
+  ROS_DISTRO := $(shell echo $$ROS_DISTRO)
+  ifneq ($(ROS_DISTRO),humble)
+    CPLUS_VER=c++14
+  endif
 endif
 
 USER_HOME := $(shell eval echo ~$(SUDO_USER))
 #DEBUGS = -g -O0
-CFLAGS    = -DMEASURE_MODE=${MEASURE_MODE} -DCOMPILER_SWITCH=${COMPILER_SWITCH} -DUSE_UDP_DMI=${USE_UDP_DMI} -DUSE_ROS2DMI=${USE_ROS2DMI} -DROS2_WORKSPACE_DIR=$(ROS2_WORKSPACE_DIR) -DUSE_KOITO_DMI=${USE_KOITO_DMI} -DUSE_ASMOBI_DMI=${USE_ASMOBI_DMI} -DPQXX_VER=${PQXX_VER} -std=${CPLUS_VER} $(DEBUGS) -MMD -MP -Wall -O3 -Wextra -Winit-self -Wno-missing-field-initializers -Wno-unused-parameter -Wno-shift-count-overflow
+CFLAGS    = -DMEASURE_MODE=${MEASURE_MODE} -DCOMPILER_SWITCH=${COMPILER_SWITCH} -DUSE_UDP_DMI=${USE_UDP_DMI} -DUSE_ROS2DMI=${USE_ROS2DMI} -DROS2_WORKSPACE_DIR=$(ROS2_WORKSPACE_DIR) -DUSE_KOITO_DMI=${USE_KOITO_DMI} -DUSE_ASMOBI_DMI=${USE_ASMOBI_DMI} -std=${CPLUS_VER} $(DEBUGS) -MMD -MP -Wall -O3 -Wextra -Winit-self -Wno-missing-field-initializers -Wno-unused-parameter -Wno-shift-count-overflow
 
 LDFLAGS   = -L../commonLib/lib -L../tupleLib/lib -L../secLib/lib 
 LIBS      = -lpthread -ldl -lpqxx -lpq -lxerces-c -ldm2SocketInterface -llog4cxx -lgeos_c -luuid -lssl -lcrypto -lm -ltuple -lz -lzstd -lyaml-cpp -lrt -ldm2security

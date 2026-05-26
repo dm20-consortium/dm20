@@ -4,7 +4,8 @@
   <name>ros2_dmi</name>
   <version>0.0.0</version>
   <description>TODO: Package description</description>
-  <license>T.B.D</license>
+  <maintainer email="dm2apps2021@gmail.com">DM2.0 Consortium</maintainer>
+  <license>MIT License</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 

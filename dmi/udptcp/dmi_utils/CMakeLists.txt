@@ -1,7 +1,7 @@
 cmake_minimum_required (VERSION 3.5)
 project (dmi_utils CXX)
 
-set(CMAKE_CXX_FLAGS "-std=c++14 -Wall -Wno-cpp")
+include(${CMAKE_CURRENT_LIST_DIR}/../cmake/CompilerSettings.cmake)
 set(CMAKE_INCLUDE_CURRENT_DIR_IN_INTERFACE ON)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake)
 
@@ -64,6 +64,17 @@ install(EXPORT ${PROJECT_NAME}
   DESTINATION share/cmake/${PROJECT_NAME}/
   EXPORT_LINK_INTERFACE_LIBRARIES
 )
+
+if(NOT TARGET uninstall)
+  configure_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/cmake_uninstall.cmake.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake"
+    IMMEDIATE @ONLY)
+
+  add_custom_target(uninstall
+    COMMAND ${CMAKE_COMMAND} -P
+            "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake")
+endif()
 
 if (TEST)
   find_package(GTest REQUIRED)

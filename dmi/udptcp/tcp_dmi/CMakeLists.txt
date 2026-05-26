@@ -9,9 +9,9 @@ set(BUFFER_SIZE 2048)
 
 configure_file(
   "${PROJECT_SOURCE_DIR}/config.h.in"
-  "${PROJECT_SOURCE_DIR}/include/tcp_dmi/config.h")
+  "${PROJECT_BINARY_DIR}/generated/tcp_dmi/config.h")
 
-set(CMAKE_CXX_FLAGS "-std=c++14 -Wall -Wno-cpp")
+include(${CMAKE_CURRENT_LIST_DIR}/../cmake/CompilerSettings.cmake)
 set(CMAKE_INCLUDE_CURRENT_DIR_IN_INTERFACE ON)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake)
 
@@ -39,6 +39,15 @@ add_library(${PROJECT_NAME} SHARED
   src/${PROJECT_NAME}/system/server.cpp
 )
 
+target_include_directories(${PROJECT_NAME}
+  PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/generated>
+    $<INSTALL_INTERFACE:include>
+
+  PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+)
 target_link_libraries(${PROJECT_NAME}
   PUBLIC
     ${Boost_LIBRARIES}
@@ -93,6 +102,17 @@ install(EXPORT ${PROJECT_NAME}
   DESTINATION share/cmake/${PROJECT_NAME}/
   EXPORT_LINK_INTERFACE_LIBRARIES
 )
+
+if(NOT TARGET uninstall)
+  configure_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/cmake_uninstall.cmake.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake"
+    IMMEDIATE @ONLY)
+
+  add_custom_target(uninstall
+    COMMAND ${CMAKE_COMMAND} -P
+            "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake")
+endif()
 
 if (TEST)
   find_package(GTest REQUIRED)

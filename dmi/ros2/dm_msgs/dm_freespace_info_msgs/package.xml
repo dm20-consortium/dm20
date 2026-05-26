@@ -4,7 +4,8 @@
   <name>dm_freespace_info_msgs</name>
   <version>0.8.0</version>
   <description>ROS message format of freespace information in DM2.0</description>
-  <license>T.B.D</license>
+  <maintainer email="dm2apps2021@gmail.com">DM2.0 Consortium</maintainer>
+  <license>MIT License</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
   <buildtool_depend>rosidl_default_generators</buildtool_depend>

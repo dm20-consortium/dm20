@@ -5,6 +5,7 @@ arg ROS_APT_SOURCE_VERSION=1.1.0
 
 copy ./dm_msgs /opt/ws/src/dm_msgs
 copy ./ros2_dmi /opt/ws/src/ros2_dmi
+copy ./cmake /opt/ws/src/cmake
 
 copy --from=dmclient-image /usr/local/include/is /usr/local/include/is
 copy --from=dmclient-image /usr/local/lib/*.a /usr/local/lib/

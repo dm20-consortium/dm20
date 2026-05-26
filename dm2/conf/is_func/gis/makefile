@@ -1,16 +1,16 @@
+UBUNTU_VERSION := $(shell . /etc/os-release && echo $$VERSION_ID | cut -d. -f1)
 
-
-ifeq ($(shell cat /etc/os-release | grep VERSION_ID | sed -e "s/^[A-Z]*\_[A-Z]*\=\"\([0-9]*\)\.[0-9]*\"/\1/"),24)
-  CFLAGS  =  -std=c++17 -shared -fPIC
-  GEOS_VER = 312
-else
-  CFLAGS  =  -std=c++14 -shared -fPIC
-  ifeq ($(shell cat /etc/os-release | grep VERSION_ID | sed -e "s/^[A-Z]*\_[A-Z]*\=\"\([0-9]*\)\.[0-9]*\"/\1/"),18)
-    GEOS_VER = 36
-  else
-    GEOS_VER = 38
+CPLUS_VER=c++17
+GEOS_VER = 312
+ifeq ($(shell [ $(UBUNTU_VERSION) -le 22 ] && echo yes),yes)
+  ROS_DISTRO := $(shell echo $$ROS_DISTRO)
+  ifneq ($(ROS_DISTRO),humble)
+    CPLUS_VER=c++14
   endif
+  GEOS_VER = 38
 endif
+
+CFLAGS  =  -std=$(CPLUS_VER) -shared -fPIC
 
 LIBS           =  -I../../../tupleLib/include -I../../../dmClientLib/include
 

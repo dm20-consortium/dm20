@@ -8,6 +8,7 @@
 #include "cool4_api_dataclass/bytearray.hpp"
 
 #include <iostream>
+#include <algorithm>
 
 namespace cool4_api_dataclass {
 
