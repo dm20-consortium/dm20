@@ -50,7 +50,7 @@ UDP端末（UDPデータを送信/受信する端末）とDM端末（DM2.0をイ
        query: master sysTimer100msec select * from object_info_0_8_1 [range 300 msec]
 ```
 
-DM2.0 PlatformのDBシステムを起動します。Dockerイメージで構築した場合のROS2DMIは、DBシステム内から動的ライブラリとして呼び出されるため、起動コマンドはありません。
+DM2.0 PlatformのDBシステムを起動します。Dockerイメージで構築した場合のUDP_DMIは、DBシステム内から動的ライブラリとして呼び出されるため、起動コマンドはありません。
 
 ```bash
 dm2is 
