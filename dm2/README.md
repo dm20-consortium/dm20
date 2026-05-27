@@ -173,11 +173,26 @@ sudo make install
 sudo ldconfig
 ```
 
-- RDB (postgreSQL) にDM2.0 Platform専用のデータベースを設定します。
+### RDBの設定
+
+- RDB (postgreSQL) にDM2.0 Platform専用のデータベースを設定します。[init.sh](rdb/init.sh)内部で、IDに`dm2sampleuser`、パスワードに`dm2samplepassword`を設定しています。
 
 ```bash
 sudo -u postgres bash rdb/init.sh 
 ```
+
+### Ubuntu 22.04でROS2 HumbleとDM2.0 Platformを連携する場合
+
+dm2をビルドする前に、[ROS2 Humble](https://docs.ros.org/en/humble/Installation/Ubuntu-Install-Debs.html) をインストールしておく必要があります。
+
+ROS2 Humbleおよびcolcon buildではC++17が使用されるため、dm2およびdmiもC++17でビルドする必要があります。
+
+dm2をビルドした後にROS2 Humbleをインストールした場合は、dm2を以下の通り、再ビルドしてください。自動でC++17に切り替わったビルドが行われます。
+
+```bash
+make clean
+```
+上記後に[ビルド](#ビルド)
 
 ## 例
 [一般的な使用例は、こちら](../example/README.md)

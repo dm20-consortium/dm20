@@ -3,18 +3,17 @@ PREFIX ?= /usr/local
 INCLUDEDIR := $(PREFIX)/include/is
 LIBDIR     := $(PREFIX)/lib
 
-#/etc/os-releaseの下記XXの箇所を抽出し、メジャーバージョンを判定する
-VERSION_ID := $(shell sed -n 's/^VERSION_ID="\([0-9]*\)\..*"/\1/p' /etc/os-release)
-ifeq ($(VERSION_ID),18)
-  COMPILER = g++-5
-else
-  COMPILER = g++
-endif
+COMPILER = g++
 
-ifeq ($(VERSION_ID),24)
-  CPLUS_VER=c++17
-else
-  CPLUS_VER=c++14
+#/etc/os-releaseからメジャーバージョンを判定する
+UBUNTU_VERSION := $(shell . /etc/os-release && echo $$VERSION_ID | cut -d. -f1)
+
+CPLUS_VER=c++17
+ifeq ($(shell [ $(UBUNTU_VERSION) -le 22 ] && echo yes),yes)
+  ROS_DISTRO := $(shell echo $$ROS_DISTRO)
+  ifneq ($(ROS_DISTRO),humble)
+    CPLUS_VER=c++14
+  endif
 endif
 
 CFLAGS    = -std=$(CPLUS_VER) -shared -fPIC -O3 -pthread

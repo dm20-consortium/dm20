@@ -23,7 +23,15 @@ UDP端末（UDPデータを送信/受信する端末）とDM端末（DM2.0をイ
 
 - [dmiのインストール](../../dmi/README.md#dockerイメージの構築)を参照
 
-### 3.2 udpdmiの設定
+
+### 3.2 DBシステム・DMIの起動
+
+下記２パターンで起動方法が分かれます。
+
+- [a. DBシステム・DMIをDockerイメージで構築した場合](#32a-dockerイメージで構築した場合の-dbシステムdmiの起動方法)
+- [b. 手動インストールした場合（非Dockerの場合）](#32b-手動インストールでdbシステムとudp_dmiをインストールした場合の-dbシステムdmiの起動方法)
+
+### 3.2.a Dockerイメージで構築した場合の DBシステム・DMIの起動方法
 - [リポジトリのルートディレクトリ/dm2/conf/dmiConf.yml](../../dm2/conf/dmiConf.yml)を編集します。
 疎通確認するだけであれば、下記の通り、コメントアウトを外すだけで問題ありません。
 
@@ -42,15 +50,34 @@ UDP端末（UDPデータを送信/受信する端末）とDM端末（DM2.0をイ
        query: master sysTimer100msec select * from object_info_0_8_1 [range 300 msec]
 ```
 
-### 3.3 DM2.0 PlatformのDBシステムの起動
-
-DM2.0 PlatformのDBシステムを起動します。
+DM2.0 PlatformのDBシステムを起動します。Dockerイメージで構築した場合のUDP_DMIは、DBシステム内から動的ライブラリとして呼び出されるため、起動コマンドはありません。
 
 ```bash
 dm2is 
 ```
+### 3.2.b 手動インストールでDBシステムとUDP_DMIをインストールした場合の DBシステム・DMIの起動方法
 
-### 3.4 UDPデータ生成・送信（UDP端末 - 送信側）
+DM2.0 PlatformのDBシステムを起動します。引数にはリポジトリのルートディレクトリ/dm2/confディレクトリを指定して下さい。
+
+```bash
+dm2is -d ~/dm20/dm2/conf
+```
+
+別ターミナルでUDP_DMIのUDP-Sender（DM2.0-downloader）を起動します。
+
+`dm_user`と`dm_pass`は、[dm2インストール時の初期設定](../../dm2/README.md#rdbの設定)の値です。
+
+```bash
+udp_dmi_sender_object_info --dm_user dm2sampleuser --dm_pass dm2samplepassword --target_port 44345
+```
+
+別ターミナルでUDP_DMIのUDP-Receiver（DM2.0-uploader）を起動します。
+
+```bash
+udp_dmi_receiver_object_info --dm_user dm2sampleuser --dm_pass dm2samplepassword --receive_port 54345
+```
+
+### 3.3 UDPデータ生成・送信（UDP端末 - 送信側）
 
 UDPデータを生成・送信する[サンプルスクリプト](python)をUDP端末（送信側）にコピーして、起動します。
 
@@ -59,7 +86,7 @@ pip install scapy
 python3 udp_sender.py  --port 54345 --ip <DM端末のIPアドレス> --format udp_object_info_format.csv --mode csv --value_csv udp_object_info_value.csv --output udp
 ```
 
-### 3.5 UDPデータ受信確認（DM端末側）
+### 3.4 UDPデータ受信確認（DM端末側）
 
 DM端末側で、物標情報が受信できている事を確認します。
 
@@ -67,7 +94,7 @@ DM端末側で、物標情報が受信できている事を確認します。
 dm2mes -r -S object_info_0_8_1
 ```
 
-### 3.6 UDPデータの受信確認（UDP端末 - 受信側）
+### 3.5 UDPデータの受信確認（UDP端末 - 受信側）
 
 UDPデータを受信する[サンプルスクリプト](python)をUDP端末（受信側）にコピーして、起動します。
 

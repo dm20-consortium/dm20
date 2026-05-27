@@ -10,6 +10,8 @@
 #include "ros2_dmi/signal_info_converter.hpp"
 #include "resultset_signal_info.hpp"
 #include "rosmsg_signal_info.hpp"
+#include "any_compat.hpp"
+#include "test_optional_helper.hpp"
 
 
 namespace ros2_dmi {
@@ -143,62 +145,62 @@ TEST(TestConverterSignalInfo, RsToRosNomal) {
   // exercise
   const auto test_out = Converter<SignalInfo>::ResultSetToRos(test_in).get();
 
-  EXPECT_EQ(test_out.crp_id.value, 123U);
-  EXPECT_EQ(test_out.signal_id_list[0].value, 200U);
-  EXPECT_EQ(test_out.signal_id_list[1].value, 201U);
-  EXPECT_EQ(test_out.time.value, 789UL);
-  EXPECT_EQ(test_out.state.value, 110);
-  EXPECT_EQ(test_out.specific_control_flags.value, 120);
-  EXPECT_EQ(test_out.event_count.value, 130);
-  EXPECT_EQ(test_out.count_down_stop_flag.value, 219);
-  EXPECT_EQ(test_out.signal_light_info_list[0].main_light.value, 142);
-  EXPECT_EQ(test_out.signal_light_info_list[0].arrow_light.value, 65);
-  EXPECT_EQ(test_out.signal_light_info_list[0].min_time_to_change.value, 741);
-  EXPECT_EQ(test_out.signal_light_info_list[0].max_time_to_change.value, 852);
-  EXPECT_EQ(test_out.signal_light_info_list[1].main_light.value, 195);
-  EXPECT_EQ(test_out.signal_light_info_list[1].arrow_light.value, 147);
-  EXPECT_EQ(test_out.signal_light_info_list[1].min_time_to_change.value, 258);
-  EXPECT_EQ(test_out.signal_light_info_list[1].max_time_to_change.value, 369);
-  EXPECT_EQ(test_out.signal_light_info_list[2].main_light.value, 159);
-  EXPECT_EQ(test_out.signal_light_info_list[2].arrow_light.value, 241);
-  EXPECT_EQ(test_out.signal_light_info_list[2].min_time_to_change.value, 963);
-  EXPECT_EQ(test_out.signal_light_info_list[2].max_time_to_change.value, 852);
-  EXPECT_EQ(test_out.signal_light_info_list[3].main_light.value, 229);
-  EXPECT_EQ(test_out.signal_light_info_list[3].arrow_light.value, 189);
-  EXPECT_EQ(test_out.signal_light_info_list[3].min_time_to_change.value, 4546);
-  EXPECT_EQ(test_out.signal_light_info_list[3].max_time_to_change.value, 7879);
-  EXPECT_EQ(test_out.signal_light_info_list[4].main_light.value, 25);
-  EXPECT_EQ(test_out.signal_light_info_list[4].arrow_light.value, 133);
-  EXPECT_EQ(test_out.signal_light_info_list[4].min_time_to_change.value, 9876);
-  EXPECT_EQ(test_out.signal_light_info_list[4].max_time_to_change.value, 4321);
-  EXPECT_EQ(test_out.signal_light_info_list[5].main_light.value, 56);
-  EXPECT_EQ(test_out.signal_light_info_list[5].arrow_light.value, 153);
-  EXPECT_EQ(test_out.signal_light_info_list[5].min_time_to_change.value, 486);
-  EXPECT_EQ(test_out.signal_light_info_list[5].max_time_to_change.value, 9632);
-  EXPECT_EQ(test_out.signal_light_info_list[6].main_light.value, 73);
-  EXPECT_EQ(test_out.signal_light_info_list[6].arrow_light.value, 245);
-  EXPECT_EQ(test_out.signal_light_info_list[6].min_time_to_change.value, 5632);
-  EXPECT_EQ(test_out.signal_light_info_list[6].max_time_to_change.value, 8965);
-  EXPECT_EQ(test_out.signal_light_info_list[7].main_light.value, 174);
-  EXPECT_EQ(test_out.signal_light_info_list[7].arrow_light.value, 169);
-  EXPECT_EQ(test_out.signal_light_info_list[7].min_time_to_change.value, 1379);
-  EXPECT_EQ(test_out.signal_light_info_list[7].max_time_to_change.value, 3791);
-  EXPECT_EQ(test_out.signal_light_info_list[8].main_light.value, 233);
-  EXPECT_EQ(test_out.signal_light_info_list[8].arrow_light.value, 177);
-  EXPECT_EQ(test_out.signal_light_info_list[8].min_time_to_change.value, 4862);
-  EXPECT_EQ(test_out.signal_light_info_list[8].max_time_to_change.value, 8624);
-  EXPECT_EQ(test_out.signal_light_info_list[9].main_light.value, 104);
-  EXPECT_EQ(test_out.signal_light_info_list[9].arrow_light.value, 182);
-  EXPECT_EQ(test_out.signal_light_info_list[9].min_time_to_change.value, 6539);
-  EXPECT_EQ(test_out.signal_light_info_list[9].max_time_to_change.value, 8579);
-  EXPECT_EQ(test_out.signal_light_info_list[10].main_light.value, 27);
-  EXPECT_EQ(test_out.signal_light_info_list[10].arrow_light.value, 3);
-  EXPECT_EQ(test_out.signal_light_info_list[10].min_time_to_change.value, 6135);
-  EXPECT_EQ(test_out.signal_light_info_list[10].max_time_to_change.value, 4321);
-  EXPECT_EQ(test_out.signal_light_info_list[11].main_light.value, 154);
-  EXPECT_EQ(test_out.signal_light_info_list[11].arrow_light.value, 203);
-  EXPECT_EQ(test_out.signal_light_info_list[11].min_time_to_change.value, 12365);
-  EXPECT_EQ(test_out.signal_light_info_list[11].max_time_to_change.value, 18589);
+  test_util::ExpectValueEq(test_out.crp_id.value, 123U);
+  test_util::ExpectValueEq(test_out.signal_id_list[0].value, 200U);
+  test_util::ExpectValueEq(test_out.signal_id_list[1].value, 201U);
+  test_util::ExpectValueEq(test_out.time.value, 789UL);
+  test_util::ExpectValueEq(test_out.state.value, 110);
+  test_util::ExpectValueEq(test_out.specific_control_flags.value, 120);
+  test_util::ExpectValueEq(test_out.event_count.value, 130);
+  test_util::ExpectValueEq(test_out.count_down_stop_flag.value, 219);
+  test_util::ExpectValueEq(test_out.signal_light_info_list[0].main_light.value, 142);
+  test_util::ExpectValueEq(test_out.signal_light_info_list[0].arrow_light.value, 65);
+  test_util::ExpectValueEq(test_out.signal_light_info_list[0].min_time_to_change.value, 741);
+  test_util::ExpectValueEq(test_out.signal_light_info_list[0].max_time_to_change.value, 852);
+  test_util::ExpectValueEq(test_out.signal_light_info_list[1].main_light.value, 195);
+  test_util::ExpectValueEq(test_out.signal_light_info_list[1].arrow_light.value, 147);
+  test_util::ExpectValueEq(test_out.signal_light_info_list[1].min_time_to_change.value, 258);
+  test_util::ExpectValueEq(test_out.signal_light_info_list[1].max_time_to_change.value, 369);
+  test_util::ExpectValueEq(test_out.signal_light_info_list[2].main_light.value, 159);
+  test_util::ExpectValueEq(test_out.signal_light_info_list[2].arrow_light.value, 241);
+  test_util::ExpectValueEq(test_out.signal_light_info_list[2].min_time_to_change.value, 963);
+  test_util::ExpectValueEq(test_out.signal_light_info_list[2].max_time_to_change.value, 852);
+  test_util::ExpectValueEq(test_out.signal_light_info_list[3].main_light.value, 229);
+  test_util::ExpectValueEq(test_out.signal_light_info_list[3].arrow_light.value, 189);
+  test_util::ExpectValueEq(test_out.signal_light_info_list[3].min_time_to_change.value, 4546);
+  test_util::ExpectValueEq(test_out.signal_light_info_list[3].max_time_to_change.value, 7879);
+  test_util::ExpectValueEq(test_out.signal_light_info_list[4].main_light.value, 25);
+  test_util::ExpectValueEq(test_out.signal_light_info_list[4].arrow_light.value, 133);
+  test_util::ExpectValueEq(test_out.signal_light_info_list[4].min_time_to_change.value, 9876);
+  test_util::ExpectValueEq(test_out.signal_light_info_list[4].max_time_to_change.value, 4321);
+  test_util::ExpectValueEq(test_out.signal_light_info_list[5].main_light.value, 56);
+  test_util::ExpectValueEq(test_out.signal_light_info_list[5].arrow_light.value, 153);
+  test_util::ExpectValueEq(test_out.signal_light_info_list[5].min_time_to_change.value, 486);
+  test_util::ExpectValueEq(test_out.signal_light_info_list[5].max_time_to_change.value, 9632);
+  test_util::ExpectValueEq(test_out.signal_light_info_list[6].main_light.value, 73);
+  test_util::ExpectValueEq(test_out.signal_light_info_list[6].arrow_light.value, 245);
+  test_util::ExpectValueEq(test_out.signal_light_info_list[6].min_time_to_change.value, 5632);
+  test_util::ExpectValueEq(test_out.signal_light_info_list[6].max_time_to_change.value, 8965);
+  test_util::ExpectValueEq(test_out.signal_light_info_list[7].main_light.value, 174);
+  test_util::ExpectValueEq(test_out.signal_light_info_list[7].arrow_light.value, 169);
+  test_util::ExpectValueEq(test_out.signal_light_info_list[7].min_time_to_change.value, 1379);
+  test_util::ExpectValueEq(test_out.signal_light_info_list[7].max_time_to_change.value, 3791);
+  test_util::ExpectValueEq(test_out.signal_light_info_list[8].main_light.value, 233);
+  test_util::ExpectValueEq(test_out.signal_light_info_list[8].arrow_light.value, 177);
+  test_util::ExpectValueEq(test_out.signal_light_info_list[8].min_time_to_change.value, 4862);
+  test_util::ExpectValueEq(test_out.signal_light_info_list[8].max_time_to_change.value, 8624);
+  test_util::ExpectValueEq(test_out.signal_light_info_list[9].main_light.value, 104);
+  test_util::ExpectValueEq(test_out.signal_light_info_list[9].arrow_light.value, 182);
+  test_util::ExpectValueEq(test_out.signal_light_info_list[9].min_time_to_change.value, 6539);
+  test_util::ExpectValueEq(test_out.signal_light_info_list[9].max_time_to_change.value, 8579);
+  test_util::ExpectValueEq(test_out.signal_light_info_list[10].main_light.value, 27);
+  test_util::ExpectValueEq(test_out.signal_light_info_list[10].arrow_light.value, 3);
+  test_util::ExpectValueEq(test_out.signal_light_info_list[10].min_time_to_change.value, 6135);
+  test_util::ExpectValueEq(test_out.signal_light_info_list[10].max_time_to_change.value, 4321);
+  test_util::ExpectValueEq(test_out.signal_light_info_list[11].main_light.value, 154);
+  test_util::ExpectValueEq(test_out.signal_light_info_list[11].arrow_light.value, 203);
+  test_util::ExpectValueEq(test_out.signal_light_info_list[11].min_time_to_change.value, 12365);
+  test_util::ExpectValueEq(test_out.signal_light_info_list[11].max_time_to_change.value, 18589);
 }
 
 /**
@@ -219,7 +221,7 @@ TEST(TestConverterSignalInfo, RsToRosAbnomal) {
   const auto test_out = Converter<SignalInfo>::ResultSetToRos(test_in);
 
   // verify
-  EXPECT_EQ(test_out, boost::none);
+  EXPECT_FALSE(test_out);
 
   // teardown
 }
@@ -363,65 +365,65 @@ TEST(TestConverterSignalInfo, RosToTupleNormal) {
   }
 
   for (int i = 0; i < data_nums; i++) {
-    EXPECT_EQ(0, timestamp.at(i));
+    test_util::ExpectValueEq(0, timestamp.at(i));
   }
 
-  EXPECT_EQ(std::experimental::any_cast<int>(val.at(0)), 123);
-  EXPECT_EQ(std::experimental::any_cast<std::vector<int>>(val.at(1)).at(0), 200);
-  EXPECT_EQ(std::experimental::any_cast<std::vector<int>>(val.at(1)).at(1), 201);
-  EXPECT_EQ(std::experimental::any_cast<long>(val.at(2)), 789);
-  EXPECT_EQ(std::experimental::any_cast<int>(val.at(3)), 110);
-  EXPECT_EQ(std::experimental::any_cast<int>(val.at(4)), 120);
-  EXPECT_EQ(std::experimental::any_cast<int>(val.at(5)), 130);
-  EXPECT_EQ(std::experimental::any_cast<int>(val.at(6)), 219);
-  EXPECT_EQ(std::experimental::any_cast<int>(val.at(7)), 142);
-  EXPECT_EQ(std::experimental::any_cast<int>(val.at(8)), 65);
-  EXPECT_EQ(std::experimental::any_cast<int>(val.at(9)), 741);
-  EXPECT_EQ(std::experimental::any_cast<int>(val.at(10)), 852);
-  EXPECT_EQ(std::experimental::any_cast<int>(val.at(11)), 195);
-  EXPECT_EQ(std::experimental::any_cast<int>(val.at(12)), 147);
-  EXPECT_EQ(std::experimental::any_cast<int>(val.at(13)), 258);
-  EXPECT_EQ(std::experimental::any_cast<int>(val.at(14)), 369);
-  EXPECT_EQ(std::experimental::any_cast<int>(val.at(15)), 159);
-  EXPECT_EQ(std::experimental::any_cast<int>(val.at(16)), 241);
-  EXPECT_EQ(std::experimental::any_cast<int>(val.at(17)), 963);
-  EXPECT_EQ(std::experimental::any_cast<int>(val.at(18)), 852);
-  EXPECT_EQ(std::experimental::any_cast<int>(val.at(19)), 229);
-  EXPECT_EQ(std::experimental::any_cast<int>(val.at(20)), 189);
-  EXPECT_EQ(std::experimental::any_cast<int>(val.at(21)), 4546);
-  EXPECT_EQ(std::experimental::any_cast<int>(val.at(22)), 7879);
-  EXPECT_EQ(std::experimental::any_cast<int>(val.at(23)), 25);
-  EXPECT_EQ(std::experimental::any_cast<int>(val.at(24)), 133);
-  EXPECT_EQ(std::experimental::any_cast<int>(val.at(25)), 9876);
-  EXPECT_EQ(std::experimental::any_cast<int>(val.at(26)), 4321);
-  EXPECT_EQ(std::experimental::any_cast<int>(val.at(27)), 56);
-  EXPECT_EQ(std::experimental::any_cast<int>(val.at(28)), 153);
-  EXPECT_EQ(std::experimental::any_cast<int>(val.at(29)), 486);
-  EXPECT_EQ(std::experimental::any_cast<int>(val.at(30)), 9632);
-  EXPECT_EQ(std::experimental::any_cast<int>(val.at(31)), 73);
-  EXPECT_EQ(std::experimental::any_cast<int>(val.at(32)), 245);
-  EXPECT_EQ(std::experimental::any_cast<int>(val.at(33)), 5632);
-  EXPECT_EQ(std::experimental::any_cast<int>(val.at(34)), 8965);
-  EXPECT_EQ(std::experimental::any_cast<int>(val.at(35)), 174);
-  EXPECT_EQ(std::experimental::any_cast<int>(val.at(36)), 169);
-  EXPECT_EQ(std::experimental::any_cast<int>(val.at(37)), 1379);
-  EXPECT_EQ(std::experimental::any_cast<int>(val.at(38)), 3791);
-  EXPECT_EQ(std::experimental::any_cast<int>(val.at(39)), 233);
-  EXPECT_EQ(std::experimental::any_cast<int>(val.at(40)), 177);
-  EXPECT_EQ(std::experimental::any_cast<int>(val.at(41)), 4862);
-  EXPECT_EQ(std::experimental::any_cast<int>(val.at(42)), 8624);
-  EXPECT_EQ(std::experimental::any_cast<int>(val.at(43)), 104);
-  EXPECT_EQ(std::experimental::any_cast<int>(val.at(44)), 182);
-  EXPECT_EQ(std::experimental::any_cast<int>(val.at(45)), 6539);
-  EXPECT_EQ(std::experimental::any_cast<int>(val.at(46)), 8579);
-  EXPECT_EQ(std::experimental::any_cast<int>(val.at(47)), 27);
-  EXPECT_EQ(std::experimental::any_cast<int>(val.at(48)), 3);
-  EXPECT_EQ(std::experimental::any_cast<int>(val.at(49)), 6135);
-  EXPECT_EQ(std::experimental::any_cast<int>(val.at(50)), 4321);
-  EXPECT_EQ(std::experimental::any_cast<int>(val.at(51)), 154);
-  EXPECT_EQ(std::experimental::any_cast<int>(val.at(52)), 203);
-  EXPECT_EQ(std::experimental::any_cast<int>(val.at(53)), 12365);
-  EXPECT_EQ(std::experimental::any_cast<int>(val.at(54)), 18589);
+  test_util::ExpectValueEq(dm_any::any_cast<int>(val.at(0)), 123);
+  test_util::ExpectValueEq(dm_any::any_cast<std::vector<int>>(val.at(1)).at(0), 200);
+  test_util::ExpectValueEq(dm_any::any_cast<std::vector<int>>(val.at(1)).at(1), 201);
+  test_util::ExpectValueEq(dm_any::any_cast<long>(val.at(2)), 789);
+  test_util::ExpectValueEq(dm_any::any_cast<int>(val.at(3)), 110);
+  test_util::ExpectValueEq(dm_any::any_cast<int>(val.at(4)), 120);
+  test_util::ExpectValueEq(dm_any::any_cast<int>(val.at(5)), 130);
+  test_util::ExpectValueEq(dm_any::any_cast<int>(val.at(6)), 219);
+  test_util::ExpectValueEq(dm_any::any_cast<int>(val.at(7)), 142);
+  test_util::ExpectValueEq(dm_any::any_cast<int>(val.at(8)), 65);
+  test_util::ExpectValueEq(dm_any::any_cast<int>(val.at(9)), 741);
+  test_util::ExpectValueEq(dm_any::any_cast<int>(val.at(10)), 852);
+  test_util::ExpectValueEq(dm_any::any_cast<int>(val.at(11)), 195);
+  test_util::ExpectValueEq(dm_any::any_cast<int>(val.at(12)), 147);
+  test_util::ExpectValueEq(dm_any::any_cast<int>(val.at(13)), 258);
+  test_util::ExpectValueEq(dm_any::any_cast<int>(val.at(14)), 369);
+  test_util::ExpectValueEq(dm_any::any_cast<int>(val.at(15)), 159);
+  test_util::ExpectValueEq(dm_any::any_cast<int>(val.at(16)), 241);
+  test_util::ExpectValueEq(dm_any::any_cast<int>(val.at(17)), 963);
+  test_util::ExpectValueEq(dm_any::any_cast<int>(val.at(18)), 852);
+  test_util::ExpectValueEq(dm_any::any_cast<int>(val.at(19)), 229);
+  test_util::ExpectValueEq(dm_any::any_cast<int>(val.at(20)), 189);
+  test_util::ExpectValueEq(dm_any::any_cast<int>(val.at(21)), 4546);
+  test_util::ExpectValueEq(dm_any::any_cast<int>(val.at(22)), 7879);
+  test_util::ExpectValueEq(dm_any::any_cast<int>(val.at(23)), 25);
+  test_util::ExpectValueEq(dm_any::any_cast<int>(val.at(24)), 133);
+  test_util::ExpectValueEq(dm_any::any_cast<int>(val.at(25)), 9876);
+  test_util::ExpectValueEq(dm_any::any_cast<int>(val.at(26)), 4321);
+  test_util::ExpectValueEq(dm_any::any_cast<int>(val.at(27)), 56);
+  test_util::ExpectValueEq(dm_any::any_cast<int>(val.at(28)), 153);
+  test_util::ExpectValueEq(dm_any::any_cast<int>(val.at(29)), 486);
+  test_util::ExpectValueEq(dm_any::any_cast<int>(val.at(30)), 9632);
+  test_util::ExpectValueEq(dm_any::any_cast<int>(val.at(31)), 73);
+  test_util::ExpectValueEq(dm_any::any_cast<int>(val.at(32)), 245);
+  test_util::ExpectValueEq(dm_any::any_cast<int>(val.at(33)), 5632);
+  test_util::ExpectValueEq(dm_any::any_cast<int>(val.at(34)), 8965);
+  test_util::ExpectValueEq(dm_any::any_cast<int>(val.at(35)), 174);
+  test_util::ExpectValueEq(dm_any::any_cast<int>(val.at(36)), 169);
+  test_util::ExpectValueEq(dm_any::any_cast<int>(val.at(37)), 1379);
+  test_util::ExpectValueEq(dm_any::any_cast<int>(val.at(38)), 3791);
+  test_util::ExpectValueEq(dm_any::any_cast<int>(val.at(39)), 233);
+  test_util::ExpectValueEq(dm_any::any_cast<int>(val.at(40)), 177);
+  test_util::ExpectValueEq(dm_any::any_cast<int>(val.at(41)), 4862);
+  test_util::ExpectValueEq(dm_any::any_cast<int>(val.at(42)), 8624);
+  test_util::ExpectValueEq(dm_any::any_cast<int>(val.at(43)), 104);
+  test_util::ExpectValueEq(dm_any::any_cast<int>(val.at(44)), 182);
+  test_util::ExpectValueEq(dm_any::any_cast<int>(val.at(45)), 6539);
+  test_util::ExpectValueEq(dm_any::any_cast<int>(val.at(46)), 8579);
+  test_util::ExpectValueEq(dm_any::any_cast<int>(val.at(47)), 27);
+  test_util::ExpectValueEq(dm_any::any_cast<int>(val.at(48)), 3);
+  test_util::ExpectValueEq(dm_any::any_cast<int>(val.at(49)), 6135);
+  test_util::ExpectValueEq(dm_any::any_cast<int>(val.at(50)), 4321);
+  test_util::ExpectValueEq(dm_any::any_cast<int>(val.at(51)), 154);
+  test_util::ExpectValueEq(dm_any::any_cast<int>(val.at(52)), 203);
+  test_util::ExpectValueEq(dm_any::any_cast<int>(val.at(53)), 12365);
+  test_util::ExpectValueEq(dm_any::any_cast<int>(val.at(54)), 18589);
 
   // teardown
 }

@@ -9,6 +9,7 @@
 
 #include "ros2_dmi/converter_util.hpp"
 #include "resultset_objectid.hpp"
+#include "any_compat.hpp"
 
 
 namespace ros2_dmi {
@@ -77,8 +78,8 @@ TEST(TestGetterObjectId, RosToTuple) {
   long timestamp;
   test_out.getValue(0, val, timestamp);
 
-  EXPECT_EQ(std::experimental::any_cast<std::vector<unsigned long long>>(val).at(0), 13579);
-  EXPECT_EQ(std::experimental::any_cast<std::vector<unsigned long long>>(val).at(1), 24680);
+  EXPECT_EQ(dm_any::any_cast<std::vector<unsigned long long>>(val).at(0), 13579);
+  EXPECT_EQ(dm_any::any_cast<std::vector<unsigned long long>>(val).at(1), 24680);
 }
 
 
