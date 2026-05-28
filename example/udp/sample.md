@@ -33,7 +33,7 @@ UDP端末（UDPデータを送信/受信する端末）とDM端末（DM2.0をイ
 
 ### 3.2.a Dockerイメージで構築した場合の DBシステム・DMIの起動方法
 - [リポジトリのルートディレクトリ/dm2/conf/dmiConf.yml](../../dm2/conf/dmiConf.yml)を編集します。
-疎通確認するだけであれば、下記の通り、コメントアウトを外すだけで問題ありません。
+下記の通り、コメントアウトを外し、`targetIpAddr`にUDP端末（受信側）のIPアドレスを設定して下さい。
 
 ```text
  udp:
@@ -43,7 +43,7 @@ UDP端末（UDPデータを送信/受信する端末）とDM端末（DM2.0をイ
        receptionPort: 54345
    sender:
      object_info_0_8_1:
-       targetIpAddr: 127.0.0.1
+       targetIpAddr: <UDP端末（受信側）のIPアドレス>
        targetPort: 44345
        frameRateMaxMilsec: 33
        dataNumPerFrame: 6
@@ -68,7 +68,7 @@ dm2is -d ~/dm20/dm2/conf
 `dm_user`と`dm_pass`は、[dm2インストール時の初期設定](../../dm2/README.md#rdbの設定)の値です。
 
 ```bash
-udp_dmi_sender_object_info --dm_user dm2sampleuser --dm_pass dm2samplepassword --target_port 44345
+udp_dmi_sender_object_info --dm_user dm2sampleuser --dm_pass dm2samplepassword --target_port 44345 --target_ipaddr <UDP端末（受信側）のIPアドレス>
 ```
 
 別ターミナルでUDP_DMIのUDP-Receiver（DM2.0-uploader）を起動します。
