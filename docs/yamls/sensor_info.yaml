@@ -1,0 +1,96 @@
+message:
+  name: sensor_info
+
+  header:
+    type: struct
+    fields:
+      major_version: uint8
+      minor_version: uint8
+      patch_version: uint8
+      frame_id: uint8
+      split_id: uint8
+      split_size: uint8
+      data_count: uint8
+
+  body:
+    type: array
+    count: header.data_count
+    max_count: 1
+
+    item:
+      type: struct
+
+      fields:
+
+        unit_id: uint64
+        sensor_id: uint8
+        sensor_type: uint8
+
+        geodetic_srid: uint32
+        latitude: int32
+        longitude: int32
+        altitude: int32
+
+        projective_srid: uint32
+        prc_x: int32
+        prc_y: int32
+        prc_z: int32
+
+        crp_id: uint32
+        dx_crp: int32
+        dy_crp: int32
+        dh_crp: int32
+
+        lane_count: uint8
+        lane_position: int8
+        lane_lateral_position: uint8
+
+        crp_id_begin: uint32
+        crp_id_end: uint32
+
+        lane_vertical_position: uint16
+        lane_id: uint64
+
+        dx_lane: int32
+        dy_lane: int32
+        dh_lane: int32
+
+        semi_axis_length_major: uint16
+        semi_axis_length_minor: uint16
+        ellipse_orientation: uint16
+        altitude_accuracy: uint16
+
+        time: uint64
+
+        detectable_information_size: uint8
+
+      detectable_information:
+
+        count: detectable_information_size
+        max_count: 8
+
+        item:
+
+          fields:
+
+            detectable_classes: uint8
+
+            detectable_classes_xy_list_size: uint8
+
+            detectable_domain_x_list:
+              type: int32[]
+              count: detectable_classes_xy_list_size
+              max_count: 16
+
+            detectable_domain_y_list:
+              type: int32[]
+              count: detectable_classes_xy_list_size
+              max_count: 16
+
+            confidence: uint8
+
+            minimal_detectable_size: uint16
+
+      fields_after_detectable_information:
+
+        sensor_status: uint8

@@ -4,6 +4,7 @@
 readonly dirs=(
   ros2
   udptcp
+  protobuf
 )
 cd dmi
 for dir in ${dirs[@]}

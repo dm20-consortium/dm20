@@ -2,7 +2,7 @@ import argparse
 import csv
 import socket
 import struct
-
+import yaml
 
 # --------------------------
 # 型定義
@@ -20,19 +20,24 @@ TYPE_MAP = {
 
 
 # --------------------------
-# フォーマット読み込み
+# フォーマットyaml読み込み
 # --------------------------
-def load_format_csv(path):
-    with open(path) as f:
-        reader = list(csv.reader(f))
+def load_format_yaml(path):
+    with open(path, "r") as f:
+        y = yaml.safe_load(f)
 
-    header = reader[:7]
-    data = reader[7:]
+    header_fields = list(
+        y["message"]["header"]["fields"].items()
+    )
 
-    header_fields = [(r[0], r[1]) for r in header]
-    data_fields = [(r[0], r[1]) for r in data]
+    data_fields = list(
+        y["message"]["body"]["item"]["fields"].items()
+    )
 
-    return header_fields, data_fields
+    max_count = y["message"]["body"].get(
+        "max_count", 1
+    )
+    return header_fields, data_fields, max_count
 
 
 # --------------------------
@@ -58,7 +63,7 @@ def decode_packet(packet, header_fields, data_fields):
             fmt, size = TYPE_MAP[ftype]
             value = struct.unpack_from(fmt, packet, offset)[0]
             result[f"{name}_{i}"] = value
-            print("name:" + name + " / value: " + str(value))
+            print(str(i) + ":name:" + name + " / value: " + str(value))
             offset += size
 
     return result
@@ -87,19 +92,21 @@ def main():
     parser.add_argument("--format", required=True)
     parser.add_argument("--output_csv", required=True)
 
-    parser.add_argument("--max_count", type=int, default=10,
+    parser.add_argument("--max_count", type=int, default=0,
                         help="max data_count for CSV columns")
 
     args = parser.parse_args()
 
-    header_fields, data_fields = load_format_csv(args.format)
-
+    header_fields, data_fields, max_count = load_format_yaml(args.format)
+    if args.max_count > 0:
+        max_count = args.max_count
+    
     # UDP受信
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.bind(("0.0.0.0", args.port))
 
     # CSV準備
-    csv_header = build_csv_header(header_fields, data_fields, args.max_count)
+    csv_header = build_csv_header(header_fields, data_fields, max_count)
 
     with open(args.output_csv, "w", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=csv_header)

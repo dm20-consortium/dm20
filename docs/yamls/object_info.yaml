@@ -15,6 +15,7 @@ message:
   body:
     type: array
     count: header.data_count
+    max_count: 6
     item:
       type: struct
       fields:

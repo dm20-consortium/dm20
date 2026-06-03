@@ -1,0 +1,144 @@
+header:
+  major_version: 1
+  minor_version: 0
+  patch_version: 0
+  frame_id: 1
+  split_id: 0
+  split_size: 1
+  data_count: 1
+
+body:
+
+  - id: 1001
+    time: 123456789
+    revision: 1
+    detection_method: 1
+    detectable_classes: 1
+
+    vertices_begin_geodetic_srid: 4326
+    vertices_begin_latitude: 350000000
+    vertices_begin_longitude: 1390000000
+    vertices_begin_altitude: 100
+
+    vertices_begin_projective_srid: 6677
+    vertices_begin_prc_x: 100
+    vertices_begin_prc_y: 200
+    vertices_begin_prc_z: 0
+
+    vertices_begin_crp_id: 1
+    vertices_begin_dx_crp: 10
+    vertices_begin_dy_crp: 20
+    vertices_begin_dh_crp: 0
+
+    vertices_begin_lane_count: 2
+    vertices_begin_lane_position: 1
+    vertices_begin_lane_lateral_position: 50
+
+    vertices_begin_crp_id_begin: 1
+    vertices_begin_crp_id_end: 2
+
+    vertices_begin_lane_vertical_position: 100
+    vertices_begin_lane_id: 1234
+
+    vertices_begin_dx_lane: 1
+    vertices_begin_dy_lane: 2
+    vertices_begin_dh_lane: 0
+
+    vertices_begin_semi_axis_length_major: 10
+    vertices_begin_semi_axis_length_minor: 5
+    vertices_begin_ellipse_orientation: 0
+    vertices_begin_altitude_accuracy: 1
+
+    vertices_dxdy_list_size: 3
+
+    vertices_dx_list:
+      - 100
+      - 200
+      - 300
+
+    vertices_dy_list:
+      - 10
+      - 20
+      - 30
+
+    position_begin_geodetic_srid: 4326
+    position_begin_latitude: 350000001
+    position_begin_longitude: 1390000001
+    position_begin_altitude: 100
+
+    position_begin_projective_srid: 6677
+    position_begin_prc_x: 0
+    position_begin_prc_y: 0
+    position_begin_prc_z: 0
+
+    position_begin_crp_id: 1
+    position_begin_dx_crp: 0
+    position_begin_dy_crp: 0
+    position_begin_dh_crp: 0
+
+    position_begin_lane_count: 1
+    position_begin_lane_position: 1
+    position_begin_lane_lateral_position: 50
+
+    position_begin_crp_id_begin: 1
+    position_begin_crp_id_end: 2
+
+    position_begin_lane_vertical_position: 100
+    position_begin_lane_id: 1
+
+    position_begin_dx_lane: 0
+    position_begin_dy_lane: 0
+    position_begin_dh_lane: 0
+
+    position_begin_semi_axis_length_major: 10
+    position_begin_semi_axis_length_minor: 5
+    position_begin_ellipse_orientation: 0
+    position_begin_altitude_accuracy: 1
+
+    position_end_geodetic_srid: 4326
+    position_end_latitude: 350000010
+    position_end_longitude: 1390000010
+    position_end_altitude: 100
+
+    position_end_projective_srid: 6677
+    position_end_prc_x: 0
+    position_end_prc_y: 0
+    position_end_prc_z: 0
+
+    position_end_crp_id: 1
+    position_end_dx_crp: 0
+    position_end_dy_crp: 0
+    position_end_dh_crp: 0
+
+    position_end_lane_count: 1
+    position_end_lane_position: 1
+    position_end_lane_lateral_position: 50
+
+    position_end_crp_id_begin: 1
+    position_end_crp_id_end: 2
+
+    position_end_lane_vertical_position: 100
+    position_end_lane_id: 2
+
+    position_end_dx_lane: 0
+    position_end_dy_lane: 0
+    position_end_dh_lane: 0
+
+    position_end_semi_axis_length_major: 10
+    position_end_semi_axis_length_minor: 5
+    position_end_ellipse_orientation: 0
+    position_end_altitude_accuracy: 1
+
+    length_value: 100
+    length_accuracy: 1
+
+    id_begin: 111
+    id_end: 222
+
+    existency: 100
+    minimal_detectable_size: 50
+
+    information_source_list_0: 1
+    information_source_list_1: 2
+    information_source_list_2: 3
+    information_source_list_3: 4

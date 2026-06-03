@@ -2,7 +2,7 @@
 
 ## 概要
 
-ROS2とDM2.0の間に立ち，データの相互変換を行います。
+UDP送受信プログラムとDM2.0の間に立ち，データの相互変換を行います。
 
 - Uploader
 
@@ -12,7 +12,7 @@ ROS2とDM2.0の間に立ち，データの相互変換を行います。
 
   DM2.0からデータストリームを受信し、バイナリ型のUDPパケットに変換し送信します。
 
-<img src="doc/image/udp-dmi-overview.png" width="50%">
+<img src="docs/images/udp-dmi-overview.png" width="50%">
 
 
 対応するバイナリ型のUDPパケットは、[CooL4 API仕様](https://www.road-to-the-l4.go.jp/activity/theme04/pdf/CooL4_DataIntegrationPF_API_Spec_v100.pdf)に基づき作成されています。
@@ -34,6 +34,10 @@ API仕様上での情報名、DM2.0上で流れるデータストリーム、対
 ## 動作確認環境
 
 Ubuntu 20.04, Ubuntu 22.04, Ubuntu 24.04
+
+### dm2 のインストール
+
+- [dm2のインストール](../../dm2/README.md)が必要になります。
 
 ### UDP_DMI 依存ライブラリのインストール
 
@@ -72,5 +76,5 @@ Install the project...
 
 下記を参考にして下さい。
 
-- [UDPのサンプルデータ生成ツールを使って、DM2.0 Platformとの連携を確認する](../../../example/udp/sample.md)
+- [UDPのサンプルデータ生成ツールを使って、DM2.0 Platformとの連携を確認する](../../../example/udp/README.md)
 

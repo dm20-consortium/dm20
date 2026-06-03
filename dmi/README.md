@@ -60,7 +60,7 @@ function dm2mes () {
 
 - まずは[dm2のインストール](../dm2/README.md)を実施して下さい。
 
-## Step 2. DM Interfaceのインストール
+### Step 2. DM Interfaceの手動インストール
 
 下記の表のインタフェースをサポートしています。インストール対象を選択し、参照先の手順に従って下さい。
 
@@ -68,11 +68,13 @@ function dm2mes () {
 |---|---|
 | ROS2 | [ROS2DMI](ros2/README.md) |
 | UDP Binary | [UDP_DMI](udptcp/udp_dmi/README.md) |
-| UDP Protobuf | Protobuf_DMI |
-| TCP Binary | TCP_DMI |
+| TCP Binary | [TCP_DMI](udptcp/tcp_dmi/README.md) |
+| UDP Protobuf | [PROTOBUF_DMI](protobuf/protobuf_dmi/README.md) |
 
 
 ## 例
 
 - [ROS2トピックとDM2.0 Platformを連携する方法の例は、こちら](../example/ros2/object_info.md)
-- [UDPデータとDM2.0 Platformを連携する方法の例は、こちら](../example/udp/sample.md)
+- [UDPデータとDM2.0 Platformを連携する方法の例は、こちら](../example/udp/README.md)
+- [TCPデータとDM2.0 Platformを連携する方法の例は、こちら](../example/tcp/README.md)
+- [ProtobufデータとDM2.0 Platformを連携する方法の例は、こちら](../example/protobuf/README.md)

@@ -145,11 +145,12 @@ def main():
     header_fields, data_fields = load_format_yaml(args.format)
 
     # UDPソケット
-    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
     count = 0
 
     try:
+        sock.connect((args.ip, args.port))
         while True:
             if args.mode == "csv":
                 rows = load_value_csv(args.value_csv)
@@ -158,7 +159,8 @@ def main():
 
             for row in rows:
                 packet = build_packet(header_fields, data_fields, row)
-                sock.sendto(packet, (args.ip, args.port))
+                sock.sendall(struct.pack("!I", len(packet)))
+                sock.sendall(packet)
                 count += 1
                 print(f"sent: {count}", end="\r")
                 time.sleep(args.interval)
@@ -169,6 +171,12 @@ def main():
 
     except KeyboardInterrupt:
         print("\nInterrupted by user")
+
+    except ConnectionRefusedError:
+        print(f'Connection Refused: {args.ip}, {args.port}')
+
+    except:
+        print(f'Connection Error: {args.ip}, {args.port}')
 
     finally:
         if sock:

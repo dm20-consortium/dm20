@@ -35,6 +35,8 @@ demo/conf_cloud/schema/copy/
 demo/conf_edge1/schema/copy/
 demo/conf_edge2/schema/copy/
 demo/conf_vehicle/schema/copy/
+example/udp/python/received*.csv
+example/udp/python/received*.yaml
 
 # =========================================================
 # ROS2 / colcon
