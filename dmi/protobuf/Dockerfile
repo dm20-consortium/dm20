@@ -25,6 +25,7 @@ from base as builder
 
 copy ./ccam_cool4_sensor_io /tmp/dmi/ccam_cool4_sensor_io
 copy ./protobuf_dmi /tmp/dmi/protobuf_dmi
+copy ./cmake /tmp/dmi/cmake
 
 workdir /tmp/dmi/
 run set -e && \
