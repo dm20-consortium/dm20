@@ -6,8 +6,6 @@ ROS2端末とDM端末（DM2.0をインストールした端末）との連携動
 
 ![入出力の仕組み](images/ros2dmi.png)
 
-ROS2端末は、[ros2 foxy](https://docs.ros.org/en/foxy/Installation/Ubuntu-Install-Debians.html)がインストールされている事が前提です。
-
 ---
 
 ## 2 DM2.0 Platformの動作確認環境
