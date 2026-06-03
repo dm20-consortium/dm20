@@ -58,7 +58,7 @@ openssl x509 -req -in server.csr -CA ca-cert.pem -CAkey ca_private.key -CAcreate
 
 - ワークディレクトリ上で生成した秘密鍵と、CAから配布された証明書をリポジトリのルートディレクトリ/conf/cs_dtls/certsディレクトリに移動します。
 ```bash
-mkdir ~/dm20/dm2/conf/cs_dtls/certs
+mkdir -p ~/dm20/dm2/conf/cs_dtls/certs
 mv client-key.pem client-cert.pem ca-cert.pem ~/dm20/dm2/conf/cs_dtls/certs
 ```
 
@@ -66,7 +66,7 @@ mv client-key.pem client-cert.pem ca-cert.pem ~/dm20/dm2/conf/cs_dtls/certs
 
 - ワークディレクトリ上で生成した秘密鍵と、CAから配布された証明書をリポジトリのルートディレクトリ/conf/cs_dtls/certsディレクトリに移動します。
 ```bash
-mkdir ~/dm20/dm2/conf/cs_dtls/certs
+mkdir -p ~/dm20/dm2/conf/cs_dtls/certs
 mv server-key.pem server-cert.pem ca-cert.pem ~/dm20/dm2/conf/cs_dtls/certs
 ```
 
