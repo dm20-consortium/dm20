@@ -46,6 +46,9 @@ function dm2is () {
 function dm2mes () {
   docker run -i --rm --net host dm2/dm2mes:20.04 stdbuf -oL dm2mes "$@";
 }
+function tcp_dmi_receiver_signal_info () {
+  docker run -it --init --rm --net host --name tcpdmi dm2/udptcpdmi:20.04 tcp_dmi_receiver_signal_info "$@";
+}
 ```
 
 ### マルチキャストが制限されているネットワーク環境の中でROS2通信を利用したい場合

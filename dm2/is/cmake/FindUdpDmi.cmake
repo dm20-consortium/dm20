@@ -1,7 +1,7 @@
 find_path(
   udp_dmi_INCLUDE_DIR
   NAMES
-    config.h
+    receiver.hpp  sender.hpp  socket_receiver.hpp  socket_sender.hpp
   PATHS
     /usr/local/include
   PATH_SUFFIXES

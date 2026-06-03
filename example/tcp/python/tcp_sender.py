@@ -144,7 +144,7 @@ def main():
 
     header_fields, data_fields = load_format_yaml(args.format)
 
-    # UDPソケット
+    # TCPソケット
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
     count = 0
@@ -159,7 +159,6 @@ def main():
 
             for row in rows:
                 packet = build_packet(header_fields, data_fields, row)
-                sock.sendall(struct.pack("!I", len(packet)))
                 sock.sendall(packet)
                 count += 1
                 print(f"sent: {count}", end="\r")

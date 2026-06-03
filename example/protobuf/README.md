@@ -92,6 +92,8 @@ UDP-Prrotobuf端末に、[ITS Japan 自動運転研究会 CCAM検討SWG共通の
 ccam_cool4_sensor_io_sample_send_msg --port 31876 --rate_msec 100 --ipaddr <DM端末のIPアドレス>
 ```
 
+インストール方法は[こちら](../../dmi/protobuf/ccam_cool4_sensor_io/README.md)
+
 ### 3.5 Protobufデータ受信確認（DM端末側）
 
 受信モードの3つのターミナル上にデータが表示されます。

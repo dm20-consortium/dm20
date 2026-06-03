@@ -90,7 +90,41 @@ udp_dmi_receiver_object_info --dm_user dm2sampleuser --dm_pass dm2samplepassword
 | センサー情報 | udp_dmi_receiver_sensor_info | udp_dmi_sender_sensor_info | 54348 |
 
 
-### 3.3 UDPデータ生成・送信（UDP端末 - 送信側）
+### 3.3 UDPデータの受信待ち（UDP端末 - 受信側）
+
+事前に下記ツールをインストールします。
+
+```bash
+pip install scapy
+```
+
+UDPデータを受信する[サンプルスクリプト](python)をUDP端末（受信側）にコピーして、起動します。
+
+下記は物標情報の例です。起動後は受信待ちの状態になります。
+
+```bash
+python3 udp_receiver.py --port 44345 --format ../../../docs/yamls/object_info.yaml --output_csv received_object_info.csv 
+```
+
+信号情報の場合は、下記の通りになります。
+
+```bash
+python3 udp_receiver.py --port 44347 --format ../../../docs/yamls/signal_info.yaml --output_csv received_signal_info.csv 
+```
+
+フリースペース情報の場合は、下記の通りになります。
+
+```bash
+python3 udp_receiver_yaml.py --port 44346 --format ../../../docs/yamls/freespace_info.yaml --output_yaml received_freespace_info.yaml
+```
+
+センサー情報の場合は、下記の通りになります。
+
+```bash
+python3 udp_receiver_yaml_sensor_info.py --port 44348 --format ../../../docs/yamls/sensor_info.yaml --output_yaml received_sensor_info.yaml
+```
+
+### 3.4 UDPデータ生成・送信（UDP端末 - 送信側）
 
 事前に下記ツールをインストールします。
 
@@ -109,31 +143,68 @@ python3 udp_sender.py  --port 54345 --format ../../../docs/yamls/object_info.yam
 信号情報を送信したい場合は、下記の通りになります。
 
 ```bash
-python3 udp_sender.py  --port 54345 --format ../../../docs/yamls/signal_info.yaml --mode sample --interval 1.0 --ip <DM端末のIPアドレス>
+python3 udp_sender.py  --port 54347 --format ../../../docs/yamls/signal_info.yaml --mode sample --interval 1.0 --ip <DM端末のIPアドレス>
 ```
 
 物標情報と信号情報は、`--mode`に`csv`を指定し、CSVファイルを入力値とする事も可能です。
 
 ```bash
 python3 udp_sender.py  --port 54345 --format ../../../docs/yamls/object_info.yaml --mode csv --value_csv object_info_value.csv --ip <DM端末のIPアドレス>
-python3 udp_sender.py  --port 54345 --format ../../../docs/yamls/signal_info.yaml --mode csv --value_csv signal_info_value.csv --ip <DM端末のIPアドレス>
+```
+```bash
+python3 udp_sender.py  --port 54347 --format ../../../docs/yamls/signal_info.yaml --mode csv --value_csv signal_info_value.csv --ip <DM端末のIPアドレス>
 ```
 
 フリースペース情報を送信したい場合は、下記の通りになります。可変長配列を扱うため、可読性の観点から yaml ファイルを入力値としたスクリプトを使います。
 
 ```bash
-python3 udp_sender_yaml.py  --port 54345 --format ../../../docs/yamls/freespace_info.yaml --value freespace_info_value.yaml --ip <DM端末のIPアドレス>
+python3 udp_sender_yaml.py  --port 54346 --format ../../../docs/yamls/freespace_info.yaml --value freespace_info_value.yaml --ip <DM端末のIPアドレス>
 ```
 
 センサー情報を送信したい場合は、下記の通りになります。センサー情報は2次元可変長配列を扱う事から、専用のスクリプトを使います。
 
 ```bash
-python3 udp_sender_yaml_sensor_info.py --port 54345 --format ../../../docs/yamls/sensor_info.yaml --values sensor_info_value.yaml --ip <DM端末のIPアドレス>
+python3 udp_sender_yaml_sensor_info.py --port 54348 --format ../../../docs/yamls/sensor_info.yaml --values sensor_info_value.yaml --ip <DM端末のIPアドレス>
 ```
 
-### 3.4 UDPデータ受信確認（DM端末側）
+### 3.5 UDPデータの受信確認（UDP端末 - 受信側）
 
-DM端末側で、受信できている事を確認します。
+UDP端末（受信側）のターミナルで受信できているか確認できます。
+
+- 物標情報の場合（抜粋）
+  ```text
+  0:name:information_source_list_0 / value: 1
+  0:name:information_source_list_1 / value: 1
+  0:name:information_source_list_2 / value: 1
+  0:name:information_source_list_3 / value: 1
+  received from ('127.0.0.1', 44027), data_count=1
+  ```
+  `received_object_info.csv`にCSV形式で格納しています。
+
+- 信号情報の場合（抜粋）
+  ```text
+  0:name:light_info_min_time_to_change_11 / value: 17
+  0:name:light_info_max_time_to_change_11 / value: 17
+  received from ('127.0.0.1', 60533), data_count=1
+  ```
+  `received_signal_info.csv`にCSV形式で格納しています。
+
+- フリースペース情報の場合
+  ```text
+  Listening UDP port 44346
+  received 1 from ('127.0.0.1', 43839) data_count=1
+  ```
+  `received_freespace_info.yaml`にyaml形式で格納しています。
+
+- センサー情報の場合
+  ```text
+  received from ('127.0.0.1', 53152)
+  ```
+  `received_sensor_info.yaml`にyaml形式で格納しています。
+
+### 補足）UDPデータ受信確認（DM端末側）
+
+UDP端末間を中継しているDM端末側において、受信できているか確認する事ができます。
 
 `-S`で指定しているのは物標情報のデータストリーム名になります。
 
@@ -150,39 +221,6 @@ dm2mes -r -S object_info_0_8_1
 | 信号情報 | signal_info |
 | センサー情報 | sensor_info_0_8_1 |
 
-### 3.5 UDPデータの受信確認（UDP端末 - 受信側）
-
-事前に下記ツールをインストールします。
-
-```bash
-pip install scapy
-```
-
-UDPデータを受信する[サンプルスクリプト](python)をUDP端末（受信側）にコピーして、起動します。
-
-下記は物標情報の例です。
-
-```bash
-python3 udp_receiver.py --port 54345 --format ../../../docs/yamls/object_info.yaml --output_csv received_object_info.csv 
-```
-
-信号情報を送信したい場合は、下記の通りになります。
-
-```bash
-python3 udp_receiver.py --port 54345 --format ../../../docs/yamls/signal_info.yaml --output_csv received_signal_info.csv 
-```
-
-フリースペース情報を送信したい場合は、下記の通りになります。
-
-```bash
-python3 udp_receiver_yaml.py --port 54345 --format ../../../docs/yamls/freespace_info.yaml --output_yaml received_freespace_info.yaml
-```
-
-センサー情報を送信したい場合は、下記の通りになります。
-
-```bash
-python3 udp_receiver_yaml_sensor_info.py --port 54345 --format ../../../docs/yamls/sensor_info.yaml --output_yaml received_sensor_info.yaml
-```
 
 ### 4 複数台のDMを利用した構成
 
