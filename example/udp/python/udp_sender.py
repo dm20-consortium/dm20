@@ -4,9 +4,9 @@ import random
 import socket
 import struct
 import time
+import yaml
 
-from scapy.all import IP, UDP
-from scapy.utils import PcapWriter
+from scapy.layers.inet import IP, UDP
 
 
 # --------------------------
@@ -25,17 +25,19 @@ TYPE_MAP = {
 
 
 # --------------------------
-# フォーマットCSV読み込み
+# フォーマットyaml読み込み
 # --------------------------
-def load_format_csv(path):
-    with open(path) as f:
-        reader = list(csv.reader(f))
+def load_format_yaml(path):
+    with open(path, "r") as f:
+        y = yaml.safe_load(f)
 
-    header = reader[:7]
-    data = reader[7:]
+    header_fields = list(
+        y["message"]["header"]["fields"].items()
+    )
 
-    header_fields = [(r[0], r[1]) for r in header]
-    data_fields = [(r[0], r[1]) for r in data]
+    data_fields = list(
+        y["message"]["body"]["item"]["fields"].items()
+    )
 
     return header_fields, data_fields
 
@@ -67,26 +69,48 @@ def generate_value(field_type):
 def pack_value(field_type, value):
     return struct.pack(TYPE_MAP[field_type], int(value))
 
+# --------------------------
+# 上限値防止
+# --------------------------
+def safe_sample_value(counter, ftype):
+    if ftype == "uint8":
+        return counter % 256
+
+    if ftype == "int8":
+        return (counter % 256) - 128
+    return counter
+
+# --------------------------
+# サンプルrows生成
+# --------------------------
+def create_sample_row(header_fields, data_fields, value):
+    row = {}
+
+    # ヘッダ
+    for name, ftype in header_fields:
+        if name == "data_count":
+            row[name] = 1
+        else:
+            row[name] = safe_sample_value(value, ftype)
+
+    # data_count=1固定
+    for name, ftype in data_fields:
+        row[f"{name}_0"] = safe_sample_value(value, ftype)
+
+    return row
 
 # --------------------------
 # パケット生成
 # --------------------------
-def build_packet(header_fields, data_fields, mode, row=None):
+def build_packet(header_fields, data_fields, row):
     packet = b''
     header_values = {}
 
     # ヘッダ
     for name, ftype in header_fields:
-        for name, ftype in header_fields:
-            if mode == "csv":
-                val = int(row[name])
-            elif name == "data_count":
-                val = random.randint(1, 5)
-            elif mode == "ones":
-                val = 1
-            else:
-                val = generate_value(ftype)
+        val = int(row[name])
 
+        print(name + ":" + str(val))
         header_values[name] = val
         packet += pack_value(ftype, val)
 
@@ -94,30 +118,11 @@ def build_packet(header_fields, data_fields, mode, row=None):
     # データ部
     for i in range(data_count):
         for name, ftype in data_fields:
-            if mode == "csv":
-                key = f"{name}_{i}" if f"{name}_{i}" in row else name
-                val = int(row.get(key, 0))
-            elif mode == "ones":
-                val = 1
-            else:
-                val = generate_value(ftype)
+            key = f"{name}_{i}" if f"{name}_{i}" in row else name
+            val = int(row.get(key, 0))
             print(str(i) + ":" + name + ":" + str(val))
             packet += pack_value(ftype, val)
     return packet
-
-
-# --------------------------
-# 出力処理
-# --------------------------
-def process_packet(packet, args, sock=None, pcap_writer=None):
-    # UDP送信
-    if args.output in ["udp", "both"]:
-        sock.sendto(packet, (args.ip, args.port))
-
-    # PCAP書き込み（逐次）
-    if args.output in ["pcap", "both"]:
-        pkt = IP(dst=args.ip) / UDP(dport=args.port) / packet
-        pcap_writer.write(pkt)
 
 
 # --------------------------
@@ -130,61 +135,37 @@ def main():
     parser.add_argument("--port", type=int, required=True)
     parser.add_argument("--format", required=True)
 
-    parser.add_argument("--mode", choices=["random", "csv", "ones"], required=True)
+    parser.add_argument("--mode", choices=["sample", "csv"], required=True)
     parser.add_argument("--value_csv")
 
     parser.add_argument("--interval", type=float, default=1.0)
 
-    parser.add_argument("--output", choices=["udp", "pcap", "both"], required=True)
-    parser.add_argument("--pcap", help="pcap output file")
-
-    parser.add_argument("--count", type=int, default=0,
-                        help="number of packets (0=infinite)")
-
     args = parser.parse_args()
 
-    header_fields, data_fields = load_format_csv(args.format)
+    header_fields, data_fields = load_format_yaml(args.format)
 
     # UDPソケット
-    sock = None
-    if args.output in ["udp", "both"]:
-        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-
-    # PCAP
-    pcap_writer = None
-    if args.output in ["pcap", "both"]:
-        if not args.pcap:
-            raise ValueError("--pcap is required for pcap output")
-        pcap_writer = PcapWriter(args.pcap, append=False, sync=True)
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
     count = 0
 
     try:
-        if args.mode == "csv":
-            rows = load_value_csv(args.value_csv)
+        while True:
+            if args.mode == "csv":
+                rows = load_value_csv(args.value_csv)
+            else:
+                rows = [create_sample_row(header_fields, data_fields, count)]
 
             for row in rows:
-                packet = build_packet(header_fields, data_fields, "csv", row)
-                process_packet(packet, args, sock, pcap_writer)
-
+                packet = build_packet(header_fields, data_fields, row)
+                sock.sendto(packet, (args.ip, args.port))
                 count += 1
                 print(f"sent: {count}", end="\r")
-
-                if args.count > 0 and count >= args.count:
-                    break
-
-        else:
-            while True:
-                packet = build_packet(header_fields, data_fields, args.mode)
-                process_packet(packet, args, sock, pcap_writer)
-
-                count += 1
-                print(f"sent: {count}", end="\r")
-
-                if args.count > 0 and count >= args.count:
-                    break
-
                 time.sleep(args.interval)
+
+            if args.mode == "sample":
+                continue
+            break
 
     except KeyboardInterrupt:
         print("\nInterrupted by user")
@@ -192,8 +173,6 @@ def main():
     finally:
         if sock:
             sock.close()
-        if pcap_writer:
-            pcap_writer.close()
         print(f"\nFinished. total packets: {count}")
 
 

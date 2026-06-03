@@ -1,0 +1,97 @@
+message:
+  name: signal_info
+
+  header:
+    type: struct
+    fields:
+      major_version: uint8
+      minor_version: uint8
+      patch_version: uint8
+      frame_id: uint8
+      split_id: uint8
+      split_size: uint8
+      data_count: uint8
+
+  body:
+    type: array
+    count: header.data_count
+    max_count: 15
+    item:
+      type: struct
+      fields:
+        crp_id: uint32
+
+        signal_id_0: uint8
+        signal_id_1: uint8
+        signal_id_2: uint8
+        signal_id_3: uint8
+        signal_id_4: uint8
+        signal_id_5: uint8
+        signal_id_6: uint8
+        signal_id_7: uint8
+
+        time: uint64
+        state: uint8
+        specific_control_flags: uint8
+        event_count: uint8
+        count_down_stop_flag: uint8
+
+        light_info_main_0: uint8
+        light_info_arrow_0: uint8
+        light_info_min_time_to_change_0: uint16
+        light_info_max_time_to_change_0: uint16
+
+        light_info_main_1: uint8
+        light_info_arrow_1: uint8
+        light_info_min_time_to_change_1: uint16
+        light_info_max_time_to_change_1: uint16
+
+        light_info_main_2: uint8
+        light_info_arrow_2: uint8
+        light_info_min_time_to_change_2: uint16
+        light_info_max_time_to_change_2: uint16
+
+        light_info_main_3: uint8
+        light_info_arrow_3: uint8
+        light_info_min_time_to_change_3: uint16
+        light_info_max_time_to_change_3: uint16
+
+        light_info_main_4: uint8
+        light_info_arrow_4: uint8
+        light_info_min_time_to_change_4: uint16
+        light_info_max_time_to_change_4: uint16
+
+        light_info_main_5: uint8
+        light_info_arrow_5: uint8
+        light_info_min_time_to_change_5: uint16
+        light_info_max_time_to_change_5: uint16
+
+        light_info_main_6: uint8
+        light_info_arrow_6: uint8
+        light_info_min_time_to_change_6: uint16
+        light_info_max_time_to_change_6: uint16
+
+        light_info_main_7: uint8
+        light_info_arrow_7: uint8
+        light_info_min_time_to_change_7: uint16
+        light_info_max_time_to_change_7: uint16
+
+        light_info_main_8: uint8
+        light_info_arrow_8: uint8
+        light_info_min_time_to_change_8: uint16
+        light_info_max_time_to_change_8: uint16
+
+        light_info_main_9: uint8
+        light_info_arrow_9: uint8
+        light_info_min_time_to_change_9: uint16
+        light_info_max_time_to_change_9: uint16
+
+        light_info_main_10: uint8
+        light_info_arrow_10: uint8
+        light_info_min_time_to_change_10: uint16
+        light_info_max_time_to_change_10: uint16
+
+        light_info_main_11: uint8
+        light_info_arrow_11: uint8
+        light_info_min_time_to_change_11: uint16
+        light_info_max_time_to_change_11: uint16

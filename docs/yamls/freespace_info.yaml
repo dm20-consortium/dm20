@@ -1,0 +1,156 @@
+message:
+  name: freespace_info
+
+  header:
+    type: struct
+    fields:
+      major_version: uint8
+      minor_version: uint8
+      patch_version: uint8
+      frame_id: uint8
+      split_id: uint8
+      split_size: uint8
+      data_count: uint8
+
+  body:
+    type: array
+    count: header.data_count
+    max_count: 3
+
+    item:
+      type: struct
+      fields:
+
+        id: uint64
+        time: uint64
+        revision: uint8
+        detection_method: uint8
+        detectable_classes: uint8
+
+        vertices_begin_geodetic_srid: uint32
+        vertices_begin_latitude: int32
+        vertices_begin_longitude: int32
+        vertices_begin_altitude: int32
+
+        vertices_begin_projective_srid: uint32
+        vertices_begin_prc_x: int32
+        vertices_begin_prc_y: int32
+        vertices_begin_prc_z: int32
+
+        vertices_begin_crp_id: uint32
+        vertices_begin_dx_crp: int32
+        vertices_begin_dy_crp: int32
+        vertices_begin_dh_crp: int32
+
+        vertices_begin_lane_count: uint8
+        vertices_begin_lane_position: int8
+        vertices_begin_lane_lateral_position: uint8
+
+        vertices_begin_crp_id_begin: uint32
+        vertices_begin_crp_id_end: uint32
+
+        vertices_begin_lane_vertical_position: uint16
+        vertices_begin_lane_id: uint64
+
+        vertices_begin_dx_lane: int32
+        vertices_begin_dy_lane: int32
+        vertices_begin_dh_lane: int32
+
+        vertices_begin_semi_axis_length_major: uint16
+        vertices_begin_semi_axis_length_minor: uint16
+        vertices_begin_ellipse_orientation: uint16
+        vertices_begin_altitude_accuracy: uint16
+
+        vertices_dxdy_list_size: uint8
+
+        vertices_dx_list:
+          type: int32[]
+          count: vertices_dxdy_list_size
+          max_count: 15
+
+        vertices_dy_list:
+          type: int32[]
+          count: vertices_dxdy_list_size
+          max_count: 15
+
+        position_begin_geodetic_srid: uint32
+        position_begin_latitude: int32
+        position_begin_longitude: int32
+        position_begin_altitude: int32
+
+        position_begin_projective_srid: uint32
+        position_begin_prc_x: int32
+        position_begin_prc_y: int32
+        position_begin_prc_z: int32
+
+        position_begin_crp_id: uint32
+        position_begin_dx_crp: int32
+        position_begin_dy_crp: int32
+        position_begin_dh_crp: int32
+
+        position_begin_lane_count: uint8
+        position_begin_lane_position: int8
+        position_begin_lane_lateral_position: uint8
+
+        position_begin_crp_id_begin: uint32
+        position_begin_crp_id_end: uint32
+
+        position_begin_lane_vertical_position: uint16
+        position_begin_lane_id: uint64
+
+        position_begin_dx_lane: int32
+        position_begin_dy_lane: int32
+        position_begin_dh_lane: int32
+
+        position_begin_semi_axis_length_major: uint16
+        position_begin_semi_axis_length_minor: uint16
+        position_begin_ellipse_orientation: uint16
+        position_begin_altitude_accuracy: uint16
+
+        position_end_geodetic_srid: uint32
+        position_end_latitude: int32
+        position_end_longitude: int32
+        position_end_altitude: int32
+
+        position_end_projective_srid: uint32
+        position_end_prc_x: int32
+        position_end_prc_y: int32
+        position_end_prc_z: int32
+
+        position_end_crp_id: uint32
+        position_end_dx_crp: int32
+        position_end_dy_crp: int32
+        position_end_dh_crp: int32
+
+        position_end_lane_count: uint8
+        position_end_lane_position: int8
+        position_end_lane_lateral_position: uint8
+
+        position_end_crp_id_begin: uint32
+        position_end_crp_id_end: uint32
+
+        position_end_lane_vertical_position: uint16
+        position_end_lane_id: uint64
+
+        position_end_dx_lane: int32
+        position_end_dy_lane: int32
+        position_end_dh_lane: int32
+
+        position_end_semi_axis_length_major: uint16
+        position_end_semi_axis_length_minor: uint16
+        position_end_ellipse_orientation: uint16
+        position_end_altitude_accuracy: uint16
+
+        length_value: uint16
+        length_accuracy: uint16
+
+        id_begin: uint64
+        id_end: uint64
+
+        existency: uint8
+        minimal_detectable_size: uint16
+
+        information_source_list_0: uint64
+        information_source_list_1: uint64
+        information_source_list_2: uint64
+        information_source_list_3: uint64

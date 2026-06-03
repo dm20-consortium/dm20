@@ -20,10 +20,10 @@ __dm2mes_bash_completion()
       args="id,time,information_source_list crp_id,id,time,light_info_main_0,light_info_arrow_0,light_info_min_time_to_change_0,light_info_max_time_to_change_0 latitude,longitude"
       ;;
     -P)
-      args="current_global_path_plan dynamic_map_info freespace_info freespace_info_0_8_0 garbage_trucks gs_predict_info message_info mobile_users object_info object_info_0_8_0 object_info_0_8_1 parking_lot_info passing_the_way_plan pcp_info pole_info scheduled_global_path_plan scheduled_local_path_plan signal_info sensor_info sensor_info_0_8_1"
+      args="current_global_path_plan dynamic_map_info freespace_info_0_8_1 garbage_trucks gs_predict_info message_info mobile_users object_info_0_8_1 parking_lot_info passing_the_way_plan pcp_info pole_info scheduled_global_path_plan scheduled_local_path_plan signal_info sensor_info_0_8_1"
       ;;
     -S)
-      args="current_global_path_plan dynamic_map_info freespace_info freespace_info_0_8_0 garbage_trucks gs_predict_info message_info mobile_users object_info object_info_0_8_0 object_info_0_8_1 parking_lot_info passing_the_way_plan pcp_info pole_info scheduled_global_path_plan scheduled_local_path_plan signal_info sensor_info sensor_info_0_8_1"
+      args="current_global_path_plan dynamic_map_info freespace_info_0_8_1 garbage_trucks gs_predict_info message_info mobile_users object_info_0_8_1 parking_lot_info passing_the_way_plan pcp_info pole_info scheduled_global_path_plan scheduled_local_path_plan signal_info sensor_info_0_8_1"
       ;;
     -m)
       args="sysTimer100msec sysTimer1000msec"

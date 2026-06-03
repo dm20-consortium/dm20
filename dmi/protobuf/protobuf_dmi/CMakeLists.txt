@@ -3,7 +3,7 @@ project (protobuf_dmi CXX)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake)
 
-set(CMAKE_CXX_FLAGS "-std=c++14 -Wall")
+include(${CMAKE_CURRENT_LIST_DIR}/../cmake/CompilerSettings.cmake)
 
 find_package(Protobuf REQUIRED)
 find_package(CcamCooL4SensorIo REQUIRED)

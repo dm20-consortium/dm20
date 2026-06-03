@@ -18,6 +18,7 @@ copy ./cool4_api_dataclass /tmp/dmi/cool4_api_dataclass
 copy ./dmi_utils /tmp/dmi/dmi_utils
 copy ./udp_dmi /tmp/dmi/udpdmi
 copy ./tcp_dmi /tmp/dmi/tcpdmi
+copy ./cmake /tmp/dmi/cmake
 
 workdir /tmp/dmi/
 run set -e && \

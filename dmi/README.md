@@ -15,37 +15,14 @@
 
 ## 動作確認環境
 
-### ネイティブ環境（非Docker）
-
-| OS | 状態 |
-|----|------|
-| Ubuntu 20.04 | ✅ 動作確認済み |
-| Ubuntu 22.04 | ⚠ 未検証 |
-| Ubuntu 24.04 | ⚠ 未検証 |
-
----
-
-### Docker環境
-
-| 項目 | 状態 |
-|------|------|
-| Ubuntu 20.04 | ✅ 動作確認済み |
-| Ubuntu 22.04 | ✅ 動作確認済み |
-| Ubuntu 24.04 | ⚠ 未検証 |
-
----
-
-### ROS対応
-
-| ROS | OS | 状態 |
-|-----|----|------|
-| foxy | Ubuntu 20.04 | ✅ 動作確認済み |
+- Ubuntu 20.04, Ubuntu 22.04, Ubuntu 24.04
+- ROS2 Foxy, Humble, Jazzy
 
 ## Dockerイメージの構築
 
-- Ubuntu 20.04環境を用意します。約 20GB 程の空き容量が必要です。
+- 約 20GB 程の空き容量が必要です。容量を抑えたい場合は、[手動インストール](#手動インストール)を推奨します。
 
-- リポジトリのルートディレクトリ上で下記のコマンドを実行して下さい。DMIおよびIS、CS全てがDockerイメージとして構築されます。
+- リポジトリのルートディレクトリ上で下記のコマンドを実行して下さい。DMIおよびIS、CS全てがDockerイメージとして構築されます。Docker内のOSは、Ubuntu 20.04です。
 
 ```bash
 bash build.bash
@@ -75,7 +52,29 @@ function dm2mes () {
 
 - 上記、`docker run dm2/is:20.04`コマンドの中で、`-e`オプションを使って、`CYCLONEDDS_URI` の設定が必要になる場合があります。
 
+## 手動インストール
+
+- Dockerを使用せずにホスト上で動くモジュールをビルドしたい場合は、以下の手順に従って下さい。
+
+### Step 1. DM2.0 の手動インストール
+
+- まずは[dm2のインストール](../dm2/README.md)を実施して下さい。
+
+### Step 2. DM Interfaceの手動インストール
+
+下記の表のインタフェースをサポートしています。インストール対象を選択し、参照先の手順に従って下さい。
+
+| インタフェース | インストール対象 |
+|---|---|
+| ROS2 | [ROS2DMI](ros2/README.md) |
+| UDP Binary | [UDP_DMI](udptcp/udp_dmi/README.md) |
+| TCP Binary | [TCP_DMI](udptcp/tcp_dmi/README.md) |
+| UDP Protobuf | [PROTOBUF_DMI](protobuf/protobuf_dmi/README.md) |
+
+
 ## 例
 
 - [ROS2トピックとDM2.0 Platformを連携する方法の例は、こちら](../example/ros2/object_info.md)
-- [UDPデータとDM2.0 Platformを連携する方法の例は、こちら](../example/udp/sample.md)
+- [UDPデータとDM2.0 Platformを連携する方法の例は、こちら](../example/udp/README.md)
+- [TCPデータとDM2.0 Platformを連携する方法の例は、こちら](../example/tcp/README.md)
+- [ProtobufデータとDM2.0 Platformを連携する方法の例は、こちら](../example/protobuf/README.md)

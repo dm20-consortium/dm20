@@ -9,6 +9,8 @@
 #include "ros2_dmi/object_info_converter.hpp"
 #include "resultset_object_info.hpp"
 #include "rosmsg_object_info.hpp"
+#include "any_compat.hpp"
+#include "test_optional_helper.hpp"
 
 namespace ros2_dmi {
 namespace test {
@@ -29,9 +31,9 @@ TEST(TestConverterObjectInfo, RsToRosNormal) {
       test_in).get();
 
   // verify
-  EXPECT_EQ(test_out.id.value, 12341234UL);
-  EXPECT_EQ(test_out.time.value, 5000000UL);
-  EXPECT_EQ(test_out.information_source_list[0].value, 56785678UL);
+  test_util::ExpectValueEq(test_out.id.value, 12341234UL);
+  test_util::ExpectValueEq(test_out.time.value, 5000000UL);
+  test_util::ExpectValueEq(test_out.information_source_list[0].value, 56785678UL);
 
   // teardown
 }
@@ -57,7 +59,7 @@ TEST(TestConverterObjectInfo, RsToRosAbnormal) {
       Converter<ObjectInfo>::ResultSetToRos(test_in);
 
   // verify
-  EXPECT_EQ(test_out_ros2msg_abnormal, boost::none);
+  EXPECT_FALSE(test_out_ros2msg_abnormal);
 
   // teardown
 }
@@ -80,14 +82,14 @@ TEST(TestConverterObjectInfo, RosToTupleNormal) {
   any val;
   long timestamp = 0;
   out.getValue(0, val, timestamp);
-  EXPECT_EQ(305402420UL, std::experimental::any_cast<unsigned long long>(val));
+  test_util::ExpectValueEq(305402420UL, dm_any::any_cast<unsigned long long>(val));
 
   out.getValue(1, val, timestamp);
-  EXPECT_EQ(5000000, std::experimental::any_cast<long>(val));
+  test_util::ExpectValueEq(5000000, dm_any::any_cast<long>(val));
 
   out.getValue(87, val, timestamp);
-  std::vector<unsigned long long> val1 = std::experimental::any_cast<std::vector<unsigned long long>>(val);
-  EXPECT_EQ(1450727032UL, val1[0]);
+  std::vector<unsigned long long> val1 = dm_any::any_cast<std::vector<unsigned long long>>(val);
+  test_util::ExpectValueEq(1450727032UL, val1[0]);
 
   // teardown
 }

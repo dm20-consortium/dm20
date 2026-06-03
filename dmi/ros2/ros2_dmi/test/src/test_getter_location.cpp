@@ -9,6 +9,7 @@
 
 #include "ros2_dmi/converter_util.hpp"
 #include "resultset_location.hpp"
+#include "any_compat.hpp"
 
 namespace ros2_dmi {
 namespace test {
@@ -110,32 +111,32 @@ TEST(TestGetterLocation, RosToTupleNormal) {
     EXPECT_EQ(0, timestamp.at(i));
   }
 
-  EXPECT_EQ(std::experimental::any_cast<int>(val.at(0)), 456);
-  EXPECT_EQ(std::experimental::any_cast<int>(val.at(1)), 789);
-  EXPECT_EQ(std::experimental::any_cast<int>(val.at(2)), 3322);
-  EXPECT_EQ(std::experimental::any_cast<int>(val.at(3)), 125);
-  EXPECT_EQ(std::experimental::any_cast<int>(val.at(4)), 1523);
-  EXPECT_EQ(std::experimental::any_cast<int>(val.at(5)), 1633);
-  EXPECT_EQ(std::experimental::any_cast<int>(val.at(6)), 1454);
-  EXPECT_EQ(std::experimental::any_cast<int>(val.at(7)), 1963);
-  EXPECT_EQ(std::experimental::any_cast<int>(val.at(8)), 523);
-  EXPECT_EQ(std::experimental::any_cast<int>(val.at(9)), 633);
-  EXPECT_EQ(std::experimental::any_cast<int>(val.at(10)), 454);
-  EXPECT_EQ(std::experimental::any_cast<int>(val.at(11)), 963);
-  EXPECT_EQ(std::experimental::any_cast<int>(val.at(12)), 84);
-  EXPECT_EQ(std::experimental::any_cast<int>(val.at(13)), -27);
-  EXPECT_EQ(std::experimental::any_cast<int>(val.at(14)), 159);
-  EXPECT_EQ(std::experimental::any_cast<int>(val.at(15)), 753);
-  EXPECT_EQ(std::experimental::any_cast<int>(val.at(16)), 486);
-  EXPECT_EQ(std::experimental::any_cast<int>(val.at(17)), 426);
-  EXPECT_EQ(std::experimental::any_cast<unsigned long long>(val.at(18)), 6314);
-  EXPECT_EQ(std::experimental::any_cast<int>(val.at(19)), 842);
-  EXPECT_EQ(std::experimental::any_cast<int>(val.at(20)), 862);
-  EXPECT_EQ(std::experimental::any_cast<int>(val.at(21)), 9852);
-  EXPECT_EQ(std::experimental::any_cast<int>(val.at(22)), 336);
-  EXPECT_EQ(std::experimental::any_cast<int>(val.at(23)), 4567);
-  EXPECT_EQ(std::experimental::any_cast<int>(val.at(24)), 7654);
-  EXPECT_EQ(std::experimental::any_cast<int>(val.at(25)), 987);
+  EXPECT_EQ(dm_any::any_cast<int>(val.at(0)), 456);
+  EXPECT_EQ(dm_any::any_cast<int>(val.at(1)), 789);
+  EXPECT_EQ(dm_any::any_cast<int>(val.at(2)), 3322);
+  EXPECT_EQ(dm_any::any_cast<int>(val.at(3)), 125);
+  EXPECT_EQ(dm_any::any_cast<int>(val.at(4)), 1523);
+  EXPECT_EQ(dm_any::any_cast<int>(val.at(5)), 1633);
+  EXPECT_EQ(dm_any::any_cast<int>(val.at(6)), 1454);
+  EXPECT_EQ(dm_any::any_cast<int>(val.at(7)), 1963);
+  EXPECT_EQ(dm_any::any_cast<int>(val.at(8)), 523);
+  EXPECT_EQ(dm_any::any_cast<int>(val.at(9)), 633);
+  EXPECT_EQ(dm_any::any_cast<int>(val.at(10)), 454);
+  EXPECT_EQ(dm_any::any_cast<int>(val.at(11)), 963);
+  EXPECT_EQ(dm_any::any_cast<int>(val.at(12)), 84);
+  EXPECT_EQ(dm_any::any_cast<int>(val.at(13)), -27);
+  EXPECT_EQ(dm_any::any_cast<int>(val.at(14)), 159);
+  EXPECT_EQ(dm_any::any_cast<int>(val.at(15)), 753);
+  EXPECT_EQ(dm_any::any_cast<int>(val.at(16)), 486);
+  EXPECT_EQ(dm_any::any_cast<int>(val.at(17)), 426);
+  EXPECT_EQ(dm_any::any_cast<unsigned long long>(val.at(18)), 6314);
+  EXPECT_EQ(dm_any::any_cast<int>(val.at(19)), 842);
+  EXPECT_EQ(dm_any::any_cast<int>(val.at(20)), 862);
+  EXPECT_EQ(dm_any::any_cast<int>(val.at(21)), 9852);
+  EXPECT_EQ(dm_any::any_cast<int>(val.at(22)), 336);
+  EXPECT_EQ(dm_any::any_cast<int>(val.at(23)), 4567);
+  EXPECT_EQ(dm_any::any_cast<int>(val.at(24)), 7654);
+  EXPECT_EQ(dm_any::any_cast<int>(val.at(25)), 987);
 
   // teardown
 }

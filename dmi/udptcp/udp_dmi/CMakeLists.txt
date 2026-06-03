@@ -5,9 +5,9 @@ set(BUFFER_SIZE 2048)
 
 configure_file(
   "${PROJECT_SOURCE_DIR}/config.h.in"
-  "${PROJECT_SOURCE_DIR}/include/udp_dmi/config.h")
+  "${PROJECT_BINARY_DIR}/generated/udp_dmi/config.h")
 
-set(CMAKE_CXX_FLAGS "-std=c++14 -Wall -Wno-cpp")
+include(${CMAKE_CURRENT_LIST_DIR}/../cmake/CompilerSettings.cmake)
 set(CMAKE_INCLUDE_CURRENT_DIR_IN_INTERFACE ON)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake)
 
@@ -43,6 +43,7 @@ target_link_libraries(${PROJECT_NAME}
 target_include_directories(${PROJECT_NAME}
   PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/generated>
     $<INSTALL_INTERFACE:include>
   PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src
@@ -55,6 +56,17 @@ install(TARGETS ${PROJECT_NAME}
   RUNTIME DESTINATION bin
   INCLUDES DESTINATION include
 )
+
+if(NOT TARGET uninstall)
+  configure_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/cmake_uninstall.cmake.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake"
+    IMMEDIATE @ONLY)
+
+  add_custom_target(uninstall
+    COMMAND ${CMAKE_COMMAND} -P
+            "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake")
+endif()
 
 # supported types in this package
 set(DMI_TYPES object_info;freespace_info;signal_info;sensor_info)
