@@ -232,7 +232,7 @@ void NwSender::sender(const NwSender* param, const string confDirPath)
 					break;
 				case 10:
 				case 11:
-					res_addr_first_ = ((UdpNwClient*)(me->client))->Init(udp_port_number, ip_address, confDirPath);
+					res_addr_first_ = ((UdpNwClient*)(me->client))->Init_path(udp_port_number, ip_address, confDirPath);
 					break;
 				case 1:
 					res_addr_first_ = ((UdpMcNwClient*)(me->client))->Init(udp_port_number, ip_address, interface_name, "", ip_version);

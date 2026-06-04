@@ -134,7 +134,7 @@ namespace IS {
 		stringUtil.replaceAll(this->operatorTreeXML, "own", mySid);
 
 		UdpSendInterface udpsendinterface;
-		sockaddr_un server_addr = udpsendinterface.Init(fdDirPath + FD_IStoCS);
+		udpsendinterface.Init(fdDirPath + FD_IStoCS);
 		struct send_message buf;
 
 		try {
@@ -207,15 +207,15 @@ namespace IS {
 			long key = DmUtil::getTimeMicrosec();
 			int sendSize = stringUtil.setCompressedBufWithHeader(retXML, outbuf, compressFlg, key);
 			if (sendSize > 0) {
-				udpsendinterface.IsStreamSendtoCs(server_addr, buf.lane_id, buf.src_station_id, buf.dst_station_id, 1, 60, outbuf, sendSize, fdDirPath);
+				udpsendinterface.IsStreamSendtoCs(buf.lane_id, buf.src_station_id, buf.dst_station_id, 1, 60, outbuf, sendSize, fdDirPath);
 			} else {
 				logger->warn("[" + this->type + "] CompressProc is Failed. Retry by Uncompressed Data");
 				string s = "0" + retXML;
-				udpsendinterface.IsStreamSendtoCs(server_addr, buf.lane_id, buf.src_station_id, buf.dst_station_id, 1, 60, retXML, fdDirPath);
+				udpsendinterface.IsStreamSendtoCs(buf.lane_id, buf.src_station_id, buf.dst_station_id, 1, 60, retXML, fdDirPath);
 			}
 		} else {
 			string s = compressFlg + retXML;
-			udpsendinterface.IsStreamSendtoCs(server_addr, buf.lane_id, buf.src_station_id, buf.dst_station_id, 1, 60, retXML, fdDirPath);
+			udpsendinterface.IsStreamSendtoCs(buf.lane_id, buf.src_station_id, buf.dst_station_id, 1, 60, retXML, fdDirPath);
 		}
 		logger->debug("[" + this->type + "] Request by UDP(CS). sendto(dstId):" + std::to_string(buf.dst_station_id) + " srcId:" + std::to_string(buf.src_station_id) + " laneId:" + std::to_string(buf.lane_id) + " size:" + std::to_string(retXML.length()));
 		logger->debug("[" + this->type + "] Send payload:" + retXML);

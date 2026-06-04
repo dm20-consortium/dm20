@@ -129,7 +129,7 @@ namespace CS{
 		return Recvfrom(socket_res_, buf_, ss_, sizeof(buf_));
 	}
 	/**
-	* @fn	Recvfrom(int socket_res_, send_message &buf_, sockaddr_storage &ss_, int recv_size_)
+	* @fn	void Socket::Recvfrom(int socket_res_, send_message &buf_, sockaddr_storage &ss_, int recv_size_)
 	*
 	* @brief	recvfrom受信処理
 	*
@@ -139,7 +139,7 @@ namespace CS{
 	* @param 		  	socket_res_	ソケットID
 	* @param [in,out]	buf_	   	受信メッセージバッファ
 	* @param [in,out]	ss_		   	送信元IPアドレス
-	* @param [in,out]	recv_size_	受信サイズ
+	* @param [in]		recv_size_  受信サイズ
 	* @return   int				recvfromの実行結果 
 	*/
     int Socket::Recvfrom(int socket_res_, send_message &buf_, sockaddr_storage &ss_, int recv_size_){
@@ -204,6 +204,25 @@ namespace CS{
 		return -1;
     }
 
+	/**
+	* @fn	void Socket::Recvfrom(int socket_res_, clientdata &buf_, sockaddr_storage &ss_, int recv_size_)
+	*
+	* @brief	recvfrom受信処理 (CSからISへ電文を受信する場合は、clientdata型)
+	*
+	* @author	Shinichi Kusayama
+	* @date	2026/04/08
+	*
+	* @param 		  	socket_res_	ソケットID
+	* @param [in,out]	buf_	   	受信メッセージバッファ
+	* @param [in,out]	ss_		   	送信元IPアドレス
+	* @param [in]		recv_size_  受信サイズ
+	*/
+    int Socket::Recvfrom(int socket_res_, clientdata &buf_, sockaddr_storage &ss_, int recv_size_){
+		int res = 0;
+		socklen_t sslen = sizeof(ss_);
+		res = recvfrom(socket_res_, &buf_, recv_size_, 0, (struct sockaddr *)&ss_, &sslen);
+		return res;
+    }
 
 	/**
 	* @fn	int Socket::Sendto(send_message &buf_, sockaddr_un &addr_)
@@ -238,6 +257,22 @@ namespace CS{
 	*/
 	int Socket::Sendto(struct clientdata &buf_, sockaddr_un &addr_){
 		return sendto(socket_res_, &buf_, sizeof(buf_), 0, (struct sockaddr *)&addr_, sizeof(addr_));
+	}
+	/**
+	* @fn	int Socket::SendClientData(struct clientdata &buf_, addrinfo &addr_)
+	*
+	* @brief	sendto送信処理(clientdata型)
+	*
+	* @author	Shinichi Kusayama
+	* @date	2026/6/4
+	*
+	* @param [in,out]	buf_ 	送信メッセージバッファ
+	* @param [in,out]	addr_	宛先IPアドレス
+	*
+	* @return	int 標準関数sendtoのリターン値
+	*/
+	int Socket::SendClientData(struct clientdata &buf_, addrinfo &addr_){
+		return sendto(socket_res_, &buf_, sizeof(buf_), 0, addr_.ai_addr, addr_.ai_addrlen);
 	}
 	/**
 	* @fn	int Socket::Sendto(char *buf_, addrinfo &addr_, int send_size_, std::string udp_port_number_)
@@ -300,7 +335,6 @@ namespace CS{
 		std::string buf_str(buf_char, send_size_);
 
 		authenticated_encryption_message ae_message;
-		unsigned char* sign;
 		size_t slen = SEC::I2vSignatureProcessor::makeSignature(buf_str, (unsigned char*)ae_message.sign, conf_dir_path_, buf_.src_station_id);
 		ae_message.signer_station_id = buf_.src_station_id;
 		ae_message.sign_size = slen; //short_size 2

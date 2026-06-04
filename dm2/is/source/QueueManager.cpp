@@ -85,7 +85,7 @@ namespace IS {
 		}
 		if (tableLaneIdNameMap.size() > 0) {
 			// DB接続
-			connection Conn(("dbname=" + settings.getParameter("DATABASE_NAME") + " user=" + settings.getParameter("USER_NAME") + " password=" + settings.getParameter("DB_PASS")  + " hostaddr=" + settings.getParameter("DATABASE_ADDR") + " port=" + settings.getParameter("DATABASE_PORT")));
+			connection Conn(("dbname=" + settings.getParameter("DATABASE_NAME") + " user=" + settings.getParameter("USER_NAME") + " password=" + settings.getParameter("DB_PASS")  + " host=" + settings.getParameter("DATABASE_ADDR") + " port=" + settings.getParameter("DATABASE_PORT")));
 			work T(Conn);
 			string schemeName = settings.getParameter("QUERY_SCHEME_NAME");
 			string srid = settings.getParameter("PLANE_NUMBER_SRID");
@@ -417,7 +417,8 @@ namespace IS {
 				tuples.at(i).getValueByIdx(schema.getAttributeIdx(Schema::COL_HASH), hashval);
 				string hashStr = stringUtil.getAnyString(hashval);
 				if (hashStr == "(null)") {
-					tupleHashes = getTupleHash(data.payload);
+					tupleHashes = getTupleHash(tuples);
+					//tupleHashes = getTupleHash(data.payload);
 					if (tuples.size() == tupleHashes.size()) setHash = true;
 				}
 			}
@@ -480,7 +481,7 @@ namespace IS {
 		// データが存在しない場合は処理終了
 		if (tuples.size() == 0) return;
 
-		vector<string> tupleHashes = getTupleHash(data.payload);
+		vector<string> tupleHashes = getTupleHash(tuples);
 		string ip_addr = inet_ntoa(data.client.sin_addr);
 		// タプルに管理者属性を追加、必要ならSID等の補完を行う。
 		complementTuples(tableName, schema, tuples, user, ip_addr, tupleHashes, false);
@@ -559,7 +560,6 @@ namespace IS {
 		int laneIdIdx = tableLaneIdIdxMap[tableName];
 		int pathVidIdx = pathPlanVidIdxMap[tableName];
 		bool setHash = false;
-		//unsigned long long sampleId = 9223372058635032184;
 		if (tuples.size() == tupleHashes.size()) setHash = true;
 		for (unsigned int i = 0; i < tuples.size(); i++) {
 			if (callDmi) tuples.at(i).resize(schema);
@@ -569,8 +569,6 @@ namespace IS {
 			if (setHash) tuples.at(i).setValue(hashIdx, tupleHashes[i], 0, false);
 
 			// SID補完
-			//if (callDmi) tuples.at(i).updateValueIf(sidIdx, 9223372058635032184, stoull(settings.getParameter("MY_STATION_ID")));
-			// tuples.at(i).updateValueIf(sidIdx, sampleId, stoull(settings.getParameter("MY_STATION_ID")));
 			if (sidIdx != -1) tuples.at(i).updateValueIf(sidIdx, 0, stoull(settings.getParameter("MY_STATION_ID")));
 			// レーンID補完のための経路作成
 			if (pathVidIdx != -1) makeVidPath(tuples.at(i), i, pathVidIdx, pathPlanLaneIdxMap[tableName]);
@@ -592,41 +590,74 @@ namespace IS {
 
 	void QueueManager::recvDataToTuples(const RecvData &data, vector<Tuple> &tuples, Schema &schema, string &tableName)
 	{
-		if (data.schema_name == "") {
+		string schema_name, payload;
+		IS::ProtobufParser &pp = IS::ProtobufParser::get_instance();
+		struct ProtobufHeaderInfo headerInfo;
+		pp.getProtobufHeaderInfo(data.payload, headerInfo);
+		// Protobufヘッダあり
+		if (headerInfo.headerSize != 0)
+		{
+			schema_name = headerInfo.header.table_name;
+			payload = string(headerInfo.payload_p, headerInfo.header.payload_size);
+		}
+		else {
+			schema_name = data.schema_name;
+			payload = data.payload;
+		}
+		recvDataToTuples(schema_name, payload, tuples, schema, tableName, true);
+		// for (int i = 0; i < tuples.size(); i++) tuples[i].dump();
+	}
+	/**
+	* 電文をタプルに変換する
+	*
+	* @author	Shinichi Kusayama
+	* @date	2024/05/02
+	*
+	* @param	schema_name		スキーマ名
+	* @param	payload		電文（本体）
+	* @param	tuples		タプル
+	* @param	schema		スキーマ
+	* @param	tableName	テーブル名
+	* @param	payloadCheck	電文チェックフラグ
+	*/
+
+	void QueueManager::recvDataToTuples(const string &schema_name, const string &payload, vector<Tuple> &tuples, Schema &schema, string &tableName, const bool &payloadCheck)
+	{
+		if (schema_name == "") {
 			// XMLパーサへ電文解析を依頼し、タプルへ変換
 			IS::InformationSourceParser &isp = IS::InformationSourceParser::get_instance();
 			isp.init();
-			isp.getTuplesBySAX(data.payload, tableName, tuples);
+			isp.getTuplesBySAX(payload, tableName, tuples);
 			isp.finalize();
 			getSchema(tableName, schema);
 			//REL_COMMENT logger->trace("[addQueueProc] getTuplesBySAX after");
 			// end
 		} else {
 			// ProtoBufパーサに電文解析を依頼し、タプルへ変換
-			tableName = data.schema_name;
+			tableName = schema_name;
 			getSchema(tableName, schema);
 			// protobufを使ったメッセージ作成
 			IS::ProtobufParser &pp = IS::ProtobufParser::get_instance();
 			if (tableName == "object_info" || tableName == "object_info_processed") {
-				pp.objectInfoDeserializeToTuple_0_6_0(data.payload, tuples, schema);
+				pp.objectInfoDeserializeToTuple_0_6_0(payload, tuples, schema);
 			} else if (tableName == "object_info_0_8_0" || tableName == "object_info_0_8_0_processed") {
-				pp.objectInfoDeserializeToTuple_0_8_0(data.payload, tuples, schema);
+				pp.objectInfoDeserializeToTuple_0_8_0(payload, tuples, schema);
 			} else if (tableName == "object_info_0_8_1" || tableName == "object_info_0_8_1_processed") {
-				pp.objectInfoDeserializeToTuple_0_8_1(data.payload, tuples, schema);
+				pp.objectInfoDeserializeToTuple_0_8_1(payload, tuples, schema);
 			} else if (tableName == "freespace_info") {
-				pp.freespaceInfoDeserializeToTuple_0_6_0(data.payload, tuples, schema);
+				pp.freespaceInfoDeserializeToTuple_0_6_0(payload, tuples, schema);
 			} else if (tableName == "freespace_info_0_8_0") {
-				pp.freespaceInfoDeserializeToTuple_0_8_0(data.payload, tuples, schema);
+				pp.freespaceInfoDeserializeToTuple_0_8_0(payload, tuples, schema);
 			} else if (tableName == "freespace_info_0_8_1") {
-				pp.freespaceInfoDeserializeToTuple_0_8_1(data.payload, tuples, schema);
+				pp.freespaceInfoDeserializeToTuple_0_8_1(payload, tuples, schema);
 			} else if (tableName == "signal_info") {
-				pp.signalInfoDeserializeToTuple_0_6_0(data.payload, tuples, schema);
+				pp.signalInfoDeserializeToTuple_0_6_0(payload, tuples, schema);
 			} else if (tableName == "sensor_info") {
-				pp.sensorInfoDeserializeToTuple_0_8_0(data.payload, tuples, schema);
+				pp.sensorInfoDeserializeToTuple_0_8_0(payload, tuples, schema);
 			} else if (tableName == "sensor_info_0_8_1") {
-				pp.sensorInfoDeserializeToTuple_0_8_1(data.payload, tuples, schema);
+				pp.sensorInfoDeserializeToTuple_0_8_1(payload, tuples, schema);
 			} else {
-				pp.DeserializeToTupleDynamically(data.payload, tuples, schema);
+				pp.DeserializeToTupleDynamically(payload, tuples, schema, payloadCheck);
 			}
 		}
 	}
@@ -1281,7 +1312,7 @@ namespace IS {
 			////REL_COMMENT logger->trace(query);
 
 			// DB接続
-			connection Conn(("dbname=" + settings.getParameter("DATABASE_NAME") + " user=" + settings.getParameter("USER_NAME") + " password=" + settings.getParameter("DB_PASS")  + " hostaddr=" + settings.getParameter("DATABASE_ADDR") + " port=" + settings.getParameter("DATABASE_PORT")));
+			connection Conn(("dbname=" + settings.getParameter("DATABASE_NAME") + " user=" + settings.getParameter("USER_NAME") + " password=" + settings.getParameter("DB_PASS")  + " host=" + settings.getParameter("DATABASE_ADDR") + " port=" + settings.getParameter("DATABASE_PORT")));
 			work T(Conn);
 
 			//// 包含関係からの検索：SQLの実行

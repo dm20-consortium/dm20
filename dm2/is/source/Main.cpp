@@ -7,7 +7,7 @@
 #include "CAMReceiver.h"
 #include "CsReceiver.h"
 #include "UdpSendInterface.h"
-#include "ProtobufParser.h"
+#include "is/ProtobufParser.h"
 #include "ROS2DMIController.h"
 #include "UDPDMIController.h"
 #include "ProtobufDmiController.h"
@@ -261,8 +261,8 @@ int isProc(int argc, char* argv[])
 		csRecv.start();
 
 		// プリセットクエリの登録
-		QeryM.registerPresetQueryUsingPath(settings.getConfigDirectory() + settings.CONF_DIR_PRESET_TIMER);
-		QeryM.registerPresetQueryUsingPath(settings.getConfigDirectory() + settings.CONF_DIR_PRESET_QUERY);
+		QeryM.registerPresetQueryUsingPath(settings.getConfigDirectory() + settings.CONF_DIR_PRESET_TIMER, false);
+		QeryM.registerPresetQueryUsingPath(settings.getConfigDirectory() + settings.CONF_DIR_PRESET_QUERY, true);
 		if (schemaForPresetQuery != "") QeryM.registerPresetQueryUsingSchema(schemaForPresetQuery, windowForPresetQuery);
 
     	// 各種インターフェースの起動

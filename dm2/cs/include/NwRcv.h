@@ -27,6 +27,8 @@ namespace CS {
 		//int my_sid; 								// 自身のStation ID
 		unsigned long long my_sid; 					// 自身のStation ID
 		int network_num;							// ネットワーク数
+		string is_ip_address;						// ISのIPアドレス（送信用）
+		string is_port_number;						// ISのポート番号（送信用）
 		vector<string> interface_names;				// インタフェース名(複数)
 		vector<int> interface_ip_vers;			// IPバージョン(複数)
 		vector<string> udp_port_numbers;							// ポート番号

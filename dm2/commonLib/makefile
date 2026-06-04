@@ -31,6 +31,10 @@ CSLIB_SOURCES = \
 	$(SRC_DIR_CSLIB)/socket/UdpNwServer.cpp \
 	$(SRC_DIR_CSLIB)/socket/UdpProcClient.cpp \
 	$(SRC_DIR_CSLIB)/socket/UdpProcServer.cpp \
+	$(SRC_DIR_CSLIB)/socket/UdpServer.cpp \
+	$(SRC_DIR_CSLIB)/socket/UdpClient.cpp \
+	$(SRC_DIR_CSLIB)/socket/IUdpServer.cpp \
+	$(SRC_DIR_CSLIB)/socket/IUdpClient.cpp \
 	$(SRC_DIR_CSLIB)/container/Queue.cpp \
 	$(SRC_DIR_CSLIB)/container/UnorderedMap.cpp \
 	$(SRC_DIR_CSLIB)/container/Map.cpp \

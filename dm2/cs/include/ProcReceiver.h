@@ -31,6 +31,7 @@ namespace CS{
 		int trace_on;							// トレースログのON/OFFフラグ
 
 		static void receiver(const ProcReceiver* param, const string confDirPath);
+		static void receiveDataToQueue(const ProcReceiver* me, struct send_message &buf, struct clientdata &cdata);
 		vector<Queue<clientdata>*>* p_queues;
 		void sid_update_check(const ProcReceiver* me, const char dm2_payload[]) const;
     	std::function<void(ProcRcvSettings&, uint)> onNewSender;

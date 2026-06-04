@@ -151,6 +151,7 @@ namespace IS {
 	void StreamReceiver::workerProc(BufferQueue& q)
 	{
 		IS::QueueManager &QM = IS::QueueManager::get_instance();
+		IS::ProtobufParser &pp = IS::ProtobufParser::get_instance();
 		IS::InformationSourceParser &isp = IS::InformationSourceParser::get_instance();
 
 		IS::SessionManager &SM = IS::SessionManager::get_instance();
@@ -170,20 +171,35 @@ namespace IS {
 			// if (pos != string::npos) {
 			// data.payload.replace(pos, 11, "sendobj_info");
 			// }
-			//【暫定対策用】getRootTagNameAndKey内のtrancodeでSIGABRTするため
-			if (data.payload.length() > 4100000) {
-				if (doSkipLog) logger->warn("[workerProc] Skip Data<Length Over>:" + data.payload.substr(0,100) + ", ip:" + string(inet_ntoa(data.client.sin_addr)));
-				doSkipLog = false;
-				continue;
-			}
-			isp.init();
-			if (!isp.getRootTagNameAndKey(data.payload, rootTagName, key)) {
-				if (doSkipLog) logger->warn("[workerProc] Skip Data1:" + data.payload + ", ip:" + string(inet_ntoa(data.client.sin_addr)));
+
+			pp.init();
+			
+			struct ProtobufHeaderInfo headerInfo;
+			pp.getProtobufHeaderInfo(data.payload, headerInfo);
+			if (headerInfo.headerSize > 0) {
+				key = headerInfo.header.key;
+			} else {
+				//【暫定対策用】getRootTagNameAndKey内のtrancodeでSIGABRTするため
+				if (data.payload.length() > 4100000) {
+					if (doSkipLog) logger->warn("[workerProc] Skip Data<Length Over>:" + data.payload.substr(0,100) + ", ip:" + string(inet_ntoa(data.client.sin_addr)));
+					doSkipLog = false;
+					continue;
+				}
+				isp.init();
+				if (!isp.getRootTagNameAndKey(data.payload, rootTagName, key)) {
+					if (doSkipLog) logger->warn("[workerProc] Skip Data1:" + data.payload + ", ip:" + string(inet_ntoa(data.client.sin_addr)));
+					isp.finalize();
+					doSkipLog = false;
+					continue;
+				}
 				isp.finalize();
-				doSkipLog = false;
-				continue;
+				if (!SM.checkSession(key, user)) {
+					if (doSkipLog) logger->warn("[workerProc] Skip Data1:" + data.payload + ", ip:" + string(inet_ntoa(data.client.sin_addr)));
+					pp.finalize();
+					doSkipLog = false;
+					continue;
+				}
 			}
-			isp.finalize();
 			// セッション確認（＆ユーザ情報取得）
 			if (!SM.checkSession(key, user)) {
 				if (doSkipLog) logger->warn("[workerProc] Skip Data2:" + data.payload + ", ip:" + string(inet_ntoa(data.client.sin_addr)));

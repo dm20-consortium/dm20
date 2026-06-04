@@ -16,9 +16,11 @@ ifeq ($(shell [ $(UBUNTU_VERSION) -le 22 ] && echo yes),yes)
   endif
 endif
 
+PROTOBUF_CFLAGS := $(shell pkg-config --cflags protobuf)
+
 CFLAGS    = -std=$(CPLUS_VER) -shared -fPIC -O3 -pthread
 LDFLAGS   =
-INCLUDE   = -I./include
+INCLUDE   = -I./include -I../proto/api/include -I../proto/is/include -I/usr/local/include/is/proto $(PROTOBUF_CFLAGS)
 SRCDIR    = ./source
 OBJDIR    = ./obj
 LIBDIR_LOCAL = ./lib

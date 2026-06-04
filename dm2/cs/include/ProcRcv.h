@@ -30,9 +30,10 @@ namespace CS {
 		bool load_dm2conf(const std::string &confDirPath);
 		void make_dm2conf(std::string my_sid, std::string nic, std::string dest_sid, std::string dest_ip, std::string socket_type);
 		//--- confファイル読み込み Start ---
-		// int my_sid; 								// 自身のStation ID
 		unsigned long long my_sid; 					// 自身のStation ID
 		int network_num;							// ネットワーク数
+		string cs_port_number;						// CSポート番号（受信用）
+		string interface_by_is_cs;					// IS・CS間のNIC
 		vector<string> interface_names;				// インタフェース名(複数)
 		vector<string> udp_port_numbers;			// ポート番号
 		vector<string> send_lists;					// cs->bin内、csvファイルのファイル名。SIDからIPに変換するための設定値を記載

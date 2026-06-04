@@ -20,10 +20,14 @@ TARGET    = ./bin/$(MODULE_NAME)
 
 COMPILER  = g++
 SRCDIR    = ./source
-LIBS      = -lxerces-c -ltuple -ldmclient -lcrypto -lssl -lz -lzstd -lgeos_c -ldm2SocketInterface -ldm2security
+
+INCLUDE   = -I./include -I../../dmClientLib/include -I../../tupleLib/include -I../../proto/is/include -I../../proto/api/include -I/usr/local/include/is/proto -I../../commonLib/include/dm2SocketInterface -I../../csLib/include
+
+PROTOBUF_LIBS   := $(shell pkg-config --libs protobuf)
+LDFLAGS   = -L../../dmClientLib/lib -L../../tupleLib/lib -L../../proto/is/lib -L../../proto/api/lib -L../../commonLib/lib -L../../secLib/lib 
+LIBS      = -lxerces-c -ldmclient -ltuple -ldm2proto_is -ldm2proto_api -lcrypto -lssl -lz -lzstd -lgeos_c -ldm2SocketInterface -ldm2security $(PROTOBUF_LIBS)
+
 CFLAGS    = -std=${CPLUS_VER} `pkg-config --cflags libpqxx` -pthread -Wall
-INCLUDE   = -I./include -I../../tupleLib/include -I../../dmClientLib/include -I../../csLib/include -I../../commonLib/include/dm2SocketInterface
-LDFLAGS   = -L../../tupleLib/lib -L../../dmClientLib/lib -L../../commonLib/lib -L../../secLib/lib 
 OFLAGS    = -std=${CPLUS_VER} -pthread `pkg-config --libs libpqxx` `pkg-config --libs libpq`
 SRCDIR    = ./source
 SOURCES   = $(wildcard $(SRCDIR)/*.cpp)

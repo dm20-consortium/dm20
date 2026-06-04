@@ -482,7 +482,8 @@ namespace IS {
 	void StringUtil::getHeaderInfo(string &target, string &key, int &flagment, int &flagmentMax)
 	{
 		vector<string> rows, data, number;
-		string mngId, ct;
+		string mngId = "";
+		string ct = "";
 		bool isFirst = false;
 		split(target, "\n", rows);
 		string line1;
@@ -720,16 +721,6 @@ namespace IS {
 			else if (typeInfo == typeid(void))
 			{
 				valStr = "(null)";
-			}
-			else if (typeInfo == typeid(vector<any>))
-			{
-				vector<any> list = any_cast<vector<any>>(val);
-				valStr.append("[");
-				for (unsigned int i = 0; i < list.size(); i++) {
-					if (i != 0) valStr.append(",");
-					valStr.append(getAnyString(list.at(i)));
-				}
-				valStr.append("]");
 			}
 			else if (typeInfo == typeid(vector<any>))
 			{
@@ -1148,9 +1139,10 @@ namespace IS {
 						val = std::stol(str.c_str());
 					}
 					break;
+				// unsigned long long 型
 				case ULONG:
 					if (isNull) {
-						val = (unsigned long)NULL;
+						val = (unsigned long long)NULL;
 					} else {
 						val = std::stoull(str.c_str());
 					}

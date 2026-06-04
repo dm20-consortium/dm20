@@ -54,12 +54,6 @@ namespace CS{
 
 		std::string SplitSpace(std::string inputstr, int get_number);
 
-		float GetRadwinStatus(std::string radwin_vehicle_antena_ip_address);
-		
-		_iwconfig_status GetWifiStatus(std::string _if_name);
-
-		std::vector<lid_wave_quality> GetLidWaveQualityVector(std::string dm2_payload_str);
-
 		int MakeSharedId(const std::string file_path, int ipc_key_id, int shared_memory_size);
  		int GetSharedId(const std::string file_path, int ipc_key_id, int get_size);
 		void usage(const char *cmd);

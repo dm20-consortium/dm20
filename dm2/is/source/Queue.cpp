@@ -980,7 +980,8 @@ namespace IS {
 		int userIdx = schema.getAttributeIdx(Schema::COL_USERID);
 		tuple.setValue(userIdx, this->createUser, now);
 		int ipIdx   = schema.getAttributeIdx(Schema::COL_IPADDR);
-		tuple.setValue(ipIdx, "127.0.0.1", now);
+		string ip = "127.0.0.1";
+		tuple.setValue(ipIdx, ip, now);
 		int hashIdx = schema.getAttributeIdx(Schema::COL_HASH);
 		std::hash<std::string> hasher;
 		size_t hash1 = hasher(to_string(now));

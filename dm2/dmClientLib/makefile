@@ -25,7 +25,7 @@ endif
 CFLAGS    = -DDEBUG=${DEBUG} -DMEASURE_MODE=${MEASURE_MODE} -DCOMPRESS_MODE=${COMPRESS_MODE} -std=${CPLUS_VER} -shared -fPIC -O3 -pthread
 LDFLAGS   = -L../tupleLib/lib
 LIBS      = -lpthread -ltuple -lgeos_c -lxerces-c -lcrypto -lssl
-INCLUDE   = -I./include -I../tupleLib/include
+INCLUDE   = -I./include -I../tupleLib/include -I../proto/is/include -I../proto/api/include -I/usr/local/include/is/proto
 TARGET    = ./lib/libdmclient.a
 SRCDIR    = ./source
 ifeq "$(strip $(SRCDIR))" ""

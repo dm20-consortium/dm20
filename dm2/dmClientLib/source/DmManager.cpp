@@ -148,8 +148,7 @@ Connection* DmManager::getConnection(const string &ip, const int port, const str
 
 Connection* DmManager::getConnection(const string &ip, const int port, const string &username, const string &pass, bool isTransportMode)
 {
-	struct sockaddr_in addr;
-	int sock = connectSock(ip, port, addr);
+	int sock = connectSock(ip, port);
 	// セッションキーの確認
 	if (sessionMap.count(username + "_" + ip) == 0) {
 		try {
@@ -172,7 +171,7 @@ Connection* DmManager::getConnection(const string &ip, const int port, const str
 	long startTime = DmUtil::getTimeMicrosec();
 #endif
 	
-	Connection *con = new Connection(ip, port, sock, addr, sessionMap[username + "_" + ip], tcpSslTimeoutSec, isTransportMode);
+	Connection *con = new Connection(ip, port, sock, sessionMap[username + "_" + ip], tcpSslTimeoutSec, isTransportMode);
 #if MEASURE_MODE == 1
 	long now = DmUtil::getTimeMicrosec();
 	double msec = (now - startTime) / 1000.0;
@@ -224,11 +223,10 @@ Connection* DmManager::getSSLConnection(const string &ip, const int port, const 
 	int sock;
 	SSL *ssl = NULL;
 	SSL_CTX *ctx = NULL;
-	struct sockaddr_in addr;
 
 	// セッションキーの確認
 	if (sessionMap.count(username + "_" + ip) == 0) {
-		ssl = connectSSLSock(sock, ip, port, addr, ctx);
+		ssl = connectSSLSock(sock, ip, port, ctx);
 		try {
 			createSession(ssl, ip, username, pass);
 		}
@@ -255,7 +253,7 @@ Connection* DmManager::getSSLConnection(const string &ip, const int port, const 
 	long startTime = DmUtil::getTimeMicrosec();
 #endif
 
-	Connection *con = new Connection(ip, port, sock, addr, sessionMap[username + "_" + ip], ssl, ctx, certFilePath, privateKeyFilePath, pemPass, tcpSslTimeoutSec, dtlsTimeoutSec, isTransportMode);
+	Connection *con = new Connection(ip, port, sock, sessionMap[username + "_" + ip], ssl, ctx, certFilePath, privateKeyFilePath, pemPass, tcpSslTimeoutSec, dtlsTimeoutSec, isTransportMode);
 #if MEASURE_MODE == 1
 	long now = DmUtil::getTimeMicrosec();
 	double msec = (now - startTime) / 1000.0;
@@ -378,13 +376,12 @@ DatagramSocket* DmManager::getDatagramSocket(const string &ip, const int port, c
 DatagramSocket* DmManager::getDatagramSocket(const string &ip, const int port, const string &username, const string &pass, const bool isTransportMode)
 {
 	DatagramSocket *ds = NULL;
-	struct sockaddr_in addr;
 
 	// セッションキーの確認
 	if (sessionMap.count(username + "_" + ip) == 0) {
 
 		if (!isSSL) {
-			int sock = connectSock(ip, TCP_PORT, addr);
+			int sock = connectSock(ip, TCP_PORT);
 			try {
 				createSession(sock, ip, username, pass);
 			}
@@ -407,7 +404,7 @@ DatagramSocket* DmManager::getDatagramSocket(const string &ip, const int port, c
 			int sock2 = 0;
 			SSL *ssl = NULL;
 			SSL_CTX *ctx = NULL;
-			ssl = connectSSLSock(sock, ip, SSL_PORT, addr, ctx);
+			ssl = connectSSLSock(sock, ip, SSL_PORT, ctx);
 			try {
 				createSession(ssl, ip, username, pass);
 			}
@@ -435,14 +432,36 @@ DatagramSocket* DmManager::getDatagramSocket(const string &ip, const int port, c
 			if (ctx != NULL) SSL_CTX_free(ctx);
 		}
 	}
-	int sock = socket(AF_INET, SOCK_DGRAM, 0);
-	addr.sin_family = AF_INET;
-	addr.sin_port = htons(port);
-	addr.sin_addr.s_addr = inet_addr(ip.c_str());
+	// UDP用ソケット作成
+	struct addrinfo hints{};
+	struct addrinfo *res = nullptr;
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = AF_UNSPEC;       // IPv4/IPv6
+	hints.ai_socktype = SOCK_DGRAM;    // UDP
+	hints.ai_protocol = IPPROTO_UDP;
+
+	std::string port_str = std::to_string(port);
+	int gai_ret = getaddrinfo(ip.c_str(), port_str.c_str(), &hints, &res);
+	if (gai_ret != 0) {
+		throw ConnectionFailedException("[getDatagramSocket] getaddrinfo failed " + ip + ":" + port_str);
+	}
+	int sock = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+	if (sock < 0) {
+		perror("socket");
+		freeaddrinfo(res);
+		throw ConnectionFailedException("[getDatagramSocket] Faild socket " + ip + ":" + port_str);
+	}
+	freeaddrinfo(res);
 
 	// DatagramSocketオブジェクトの生成
 	if (!isSSL) {
-		ds = new DatagramSocket(ip, port, sock, addr, sessionMap[username + "_" + ip]);
+		if (connect(sock, res->ai_addr, res->ai_addrlen)) {
+			perror("connect");
+			close(sock);
+			freeaddrinfo(res);
+			throw ConnectionFailedException("[getDatagramSocket] Faild Connect to " + ip + ":" + port_str);
+		}
+		ds = new DatagramSocket(ip, port, sock, sessionMap[username + "_" + ip]);
 	}
 	else {
 		// DTLSの手続き処理
@@ -454,11 +473,11 @@ DatagramSocket* DmManager::getDatagramSocket(const string &ip, const int port, c
 		ctx = SSL_CTX_new(DTLSv1_2_client_method());
 		ssl = SSL_new(ctx);
 		bio = BIO_new_dgram(sock, BIO_CLOSE);
-		if (connect(sock, (struct sockaddr *) &addr, sizeof(addr))) {
+		if (connect(sock, res->ai_addr, res->ai_addrlen)) {
 			printf("[getDatagramSocket] Faild Connect to %s:%d\n", ip.c_str(), port);
 			throw ConnectionFailedException("[getDatagramSocket] Faild Connect to " + ip + ":" + to_string(port));
 		}
-		BIO_ctrl(bio, BIO_CTRL_DGRAM_SET_CONNECTED, 0, &addr);
+		BIO_ctrl(bio, BIO_CTRL_DGRAM_SET_CONNECTED, 0, res->ai_addr);
 		SSL_set_bio(ssl, bio, bio);
 
 		if (SSL_connect(ssl) < 0) {
@@ -473,7 +492,7 @@ DatagramSocket* DmManager::getDatagramSocket(const string &ip, const int port, c
 		timeout.tv_usec = 0;
 		BIO_ctrl(bio, BIO_CTRL_DGRAM_SET_RECV_TIMEOUT, 0, &timeout);
 
-		ds = new DatagramSocket(ip, port, sock, addr, sessionMap[username + "_" + ip], ssl, ctx);
+		ds = new DatagramSocket(ip, port, sock, sessionMap[username + "_" + ip], ssl, ctx);
 	}
 	return ds;
 }
@@ -490,37 +509,47 @@ DatagramSocket* DmManager::getDatagramSocket(const string &ip, const int port, c
 *
 * @return	ソケット
 */
-int DmManager::connectSock(const string &ip, const int port, struct sockaddr_in &addr) {
-	int sock;
 
-	/* ソケットの作成 */
-	sock = socket(AF_INET, SOCK_STREAM, 0);
-	/* 接続先指定用構造体の準備 */
-	addr.sin_family = AF_INET;
-	addr.sin_port = htons(port);
-	addr.sin_addr.s_addr = inet_addr(ip.c_str());
+int DmManager::connectSock(const string &ip, const int port) {
+	struct addrinfo hints{};
+	struct addrinfo *res = nullptr;
 
-	//タイムアウト時間設定
+	memset(&hints, 0, sizeof(hints));
+
+	hints.ai_family = AF_UNSPEC;       // IPv4/IPv6両対応
+	hints.ai_socktype = SOCK_STREAM;   // TCP
+	hints.ai_protocol = IPPROTO_TCP;
+
+	std::string port_str = std::to_string(port);
+
+	int gai_ret = getaddrinfo(ip.c_str(), port_str.c_str(),	&hints,	&res);
+	if (gai_ret != 0) {
+		std::cerr << "[connectSock] getaddrinfo failed: "	<< gai_strerror(gai_ret) << std::endl;
+		return -1;
+	}
+
+	/* ソケット作成 */
+	int sock = socket(res->ai_family, res->ai_socktype,	res->ai_protocol);
+	if (sock < 0) {
+		perror("socket");
+		freeaddrinfo(res);
+		return -1;
+	}
+
+	/* タイムアウト設定 */
 	struct timeval timeout;
 	timeout.tv_sec = tcpSslTimeoutSec;
 	timeout.tv_usec = 0;
-	// TCPのタイムアウト設定
-	if (setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)) < 0) {
+	if (setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &timeout,	sizeof(timeout)) < 0) {
 		perror("[connectSock] setsockopt Error");
 	}
 
-	/* サーバに接続 */
-#if DEBUG == 1
-	printf("[connectSock] Server connect START\n");
-	printf("[connectSock] Connect to %s:%d\n", ip.c_str(), port);
-#endif
-	if (connect(sock, (struct sockaddr*)&addr, sizeof(addr))) {
+	/* サーバ接続 */
+	if (connect(sock, res->ai_addr,	res->ai_addrlen)) {
 		printf("[connectSock] Faild Connect to %s:%d\n", ip.c_str(), port);
 		throw ConnectionFailedException("[connectSock] Faild Connect to " + ip + ":" + to_string(port));
 	}
-#if DEBUG == 1
-	printf("[connectSock] Server Connect SUCCESS sock %d\n", sock);
-#endif
+	freeaddrinfo(res);
 	return sock;
 }
 
@@ -536,39 +565,13 @@ int DmManager::connectSock(const string &ip, const int port, struct sockaddr_in 
 *
 * @return	ソケット
 */
-SSL* DmManager::connectSSLSock(int &sock, const string &ip, const int port, struct sockaddr_in &addr, SSL_CTX *ctx) {
+SSL* DmManager::connectSSLSock(int &sock, const string &ip, const int port, SSL_CTX *ctx) {
 	SSL *ssl;
 	if (ctx == NULL) {
 		ctx = SSL_CTX_new(SSLv23_client_method());
 		SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv2);
 	}
-
-	/* ソケットの作成 */
-	sock = socket(AF_INET, SOCK_STREAM, 0);
-
-	/* 接続先指定用構造体の準備 */
-	addr.sin_family = AF_INET;
-	addr.sin_port = htons(port);
-	addr.sin_addr.s_addr = inet_addr(ip.c_str());
-
-	//タイムアウト時間設定
-	struct timeval timeout;
-	timeout.tv_sec = tcpSslTimeoutSec;
-	timeout.tv_usec = 0;
-	// TCPのタイムアウト設定
-	if (setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)) < 0) {
-		perror("[connectSSLSock] setsockopt Error");
-	}
-
-	/* サーバに接続 */
-#if DEBUG == 1
-	printf("[connectSSLSock] Server connect START\n");
-	printf("[connectSSLSock] Connect to %s:%d\n", ip.c_str(), port);
-#endif
-	if (connect(sock, (struct sockaddr*)&addr, sizeof(addr))) {
-		printf("[connectSSLSock] Faild Connect to %s:%d\n", ip.c_str(), port);
-		throw ConnectionFailedException("[connectSSLSock] Faild Connect to " + ip + ":" + to_string(port));
-	}
+	sock = connectSock(ip, port);
 	ssl = SSL_new(ctx);
 	SSL_set_fd(ssl, sock);
 	if (SSL_connect(ssl) < 0) {
@@ -595,22 +598,57 @@ SSL* DmManager::connectSSLSock(int &sock, const string &ip, const int port, stru
 * @return	セッションキー取得成功可否
 */
 bool DmManager::createSession(int &sock, const string &ip, const string &username, const string &pass) {
+	SSL *ssl = NULL;
+	return createSession(sock, ssl, ip, username, pass);
+}
+
+/**
+* セッションキーを取得する
+*
+* @author	Nagoya University
+* @date	2019/07/11
+*
+* @param	ssl  	SSLソケット
+* @param	ip		IPアドレス
+* @param	username  	ユーザ名
+* @param	pass	パスワード
+*
+* @return	セッションキー取得成功可否
+*/
+bool DmManager::createSession(SSL* ssl, const string &ip, const string &username, const string &pass) {
+	int sock = 0;
+	return createSession(sock, ssl, ip, username, pass);
+}
+/**
+* セッションキーを取得する
+*
+* @author	Takashi Ashida
+* @date	2019/07/11
+*
+* @param	sock  	ソケット
+* @param	ssl  	SSLソケット
+* @param	ip		IPアドレス
+* @param	username  	ユーザ名
+* @param	pass	パスワード
+*
+* @return	セッションキー取得成功可否
+*/
+bool DmManager::createSession(int &sock, SSL* ssl, const string &ip, const string &username, const string &pass) {
 	char buffer[BUF_MAX];
 	int data;
-	IS::InformationSourceParser isp;
 	IS::StringUtil stringUtil;
-
-	// DBシステムに対して継続クエリのキャンセル要求を投げる
 	string createSession;
-	isp.createSessionXML(username, getMD5(pass), DmUtil::getPID(), createSession);
-#if DEBUG == 1
-	cout << "[createSession] ---------------- REQUEST XML ----------------" << endl;
-	cout << "[createSession] " << createSession << endl;
-#endif
-	int ret = send(sock, createSession.c_str(), createSession.length(), 0);
-#if DEBUG == 1
-	cout << "[createSession] dataSize: " << createSession.length() << " retSize : " << ret << endl;
-#endif
+	int ret;
+
+	IS::ProtobufParser &pp = IS::ProtobufParser::get_instance();
+	createSession = pp.createCreateSession(username, getMD5(pass));
+
+	//cout << "[createSession] REQUEST: " << createSession << endl;
+	if (ssl == NULL) {
+		ret = send(sock, createSession.c_str(), createSession.length(), 0);
+	} else {
+		ret = SSL_write(ssl, createSession.c_str(), createSession.length());
+	}
 	if (ret < 0) {
 		string errMsg = "[createSession] TCP Connection Timeout";
 		cout << errMsg << endl;
@@ -620,7 +658,12 @@ bool DmManager::createSession(int &sock, const string &ip, const string &usernam
 	/* サーバからデータを受信 */
 	memset(buffer, 0, sizeof(buffer));
 
-	data = read(sock, buffer, sizeof(buffer));
+	if (ssl == NULL) {
+		data = read(sock, buffer, sizeof(buffer));
+	} else {
+		data = SSL_read(ssl, buffer, sizeof(buffer));
+	}
+
 	if (data < 0) {
 		string errMsg = "[createSession] recv TCP Connection Timeout";
 		cout << errMsg << endl;
@@ -630,102 +673,18 @@ bool DmManager::createSession(int &sock, const string &ip, const string &usernam
 		cout << errMsg << endl;
 		throw ConnectionFailedException(errMsg);
     }
-#if DEBUG == 1
-	/*受信したデータを表示*/
-	cout << "[createSession] ---------------- RESULT RECV ----------------" << endl;
-	printf("[createSession] %s\n", buffer);
-	printf("[createSession] size : %d\n", data);
-#endif
+
+	//cout << "[createSession]RESULT RECV buffer: " << dumpBinStr(buffer) << endl;
+	int errCode = 0;
+	string sessionKey, errMsg;
+	pp.createSessionResponseDeserialize(buffer, sessionKey, errCode, errMsg);
 	// エラーのハンドリング
-	if (isp.getErrorCode(buffer) != 0) {
-		cerr << "[createSession] Authentication error, Please confirm. user:" << username << " pass:" << pass << " msg:" << isp.getErrorMessage(buffer) << endl;
-		string errMsg = isp.getErrorMessage(buffer);
+	if (errCode != 0) {
+		cerr << "[createSession] Authentication error, Please confirm. user:" << username << " pass:" << pass << " msg:" << errMsg << endl;
 		throw AuthorityException(errMsg);
 		return false;
-	}
-
-	// sessionKey取得
-	string sessionKey = isp.getSessionKey(buffer);
-	if (sessionKey.length() == 0) {
+	} else if (sessionKey.length() == 0) {
 		cerr << "[createSession] Authentication error, Please confirm. user:" << username << " pass:" << pass << endl;
-		string errMsg = isp.getErrorMessage(buffer);
-		throw AuthorityException(errMsg);
-		return false;
-	}
-	// Mapに保持
-	sessionMap[username + "_" + ip] = sessionKey;
-
-	return true;
-}
-
-/**
-* セッションキーを取得する
-*
-* @author	Nagoya University
-* @date	2019/07/11
-*
-* @param	sock  	ソケット
-* @param	ip		IPアドレス
-* @param	username  	ユーザ名
-* @param	pass	パスワード
-*
-* @return	セッションキー取得成功可否
-*/
-bool DmManager::createSession(SSL* ssl, const string &ip, const string &username, const string &pass) {
-	char buffer[BUF_MAX];
-	int data;
-	IS::InformationSourceParser isp;
-	IS::StringUtil stringUtil;
-
-	// DBシステムに対して継続クエリのキャンセル要求を投げる
-	string createSession;
-	isp.createSessionXML(username, getMD5(pass), DmUtil::getPID(), createSession);
-#if DEBUG == 1
-	cout << "[createSession(SSL)] ---------------- REQUEST XML ---------------- " << endl;
-	cout << "[createSession(SSL)] " << createSession << endl;
-#endif
-	int ret = SSL_write(ssl, createSession.c_str(), createSession.length());
-#if DEBUG == 1
-	cout << "[createSession(SSL)] dataSize: " << createSession.length() << " retSize : " << ret << endl;
-#endif
-	if (ret < 0) {
-		string errMsg = "[createSession(SSL)] TCP Connection Timeout";
-		cout << errMsg << endl;
-		throw ConnectionTimeoutException(errMsg);
-	}
-
-	/* サーバからデータを受信 */
-	memset(buffer, 0, sizeof(buffer));
-
-	data = SSL_read(ssl, buffer, sizeof(buffer));
-	if (data < 0) {
-		string errMsg = "[createSession(SSL)]  recv TCP Connection Timeout";
-		cout << errMsg << endl;
-		throw ConnectionTimeoutException(errMsg);
-	} else if (data == 0) {
-		string errMsg = "[createSession] Connection is Closed";
-		cout << errMsg << endl;
-		throw ConnectionFailedException(errMsg);
-    }
-#if DEBUG == 1
-	/*受信したデータを表示*/
-	cout << "[createSession(SSL)] ---------------- RESULT RECV ----------------" << endl;
-	printf("[createSession(SSL)] %s\n", buffer);
-	printf("[createSession(SSL)] size : %d\n", data);
-#endif
-	// エラーのハンドリング
-	if (isp.getErrorCode(buffer) != 0) {
-		cerr << "[createSession(SSL)] Authentication error, Please confirm. user:" << username << " pass:" << pass << endl;
-		string errMsg = isp.getErrorMessage(buffer);
-		throw AuthorityException(errMsg);
-		return false;
-	}
-
-	// sessionKey取得
-	string sessionKey = isp.getSessionKey(buffer);
-	if (sessionKey.length() == 0) {
-		cerr << "[createSession(SSL)] Authentication error, Please confirm. user:" << username << " pass:" << pass << endl;
-		string errMsg = isp.getErrorMessage(buffer);
 		throw AuthorityException(errMsg);
 		return false;
 	}

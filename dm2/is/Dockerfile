@@ -57,7 +57,8 @@ copy --from=protobufdmi-image /usr/local/include/protobuf_dmi /usr/local/include
 copy --from=protobufdmi-image /usr/local/lib/lib* /usr/local/lib/
 
 run ldconfig
-copy . /dm20/is
+copy conf /dm20/conf
+copy is /dm20/is
 run rm -rf /dm20/is/build
 workdir /dm20/is/build
 run cmake -DROS2_WORKSPACE_DIR=/opt/ws ..

@@ -3,7 +3,7 @@ namespace CS{
 	/**
 	* @fn	addrinfo UdpNwClient::Init(std::string port_no, std::string dst_ip);
 	*
-	* @brief	UPD通信接続シーケンス(IPv4)
+	* @brief	Init 処理
 	*
 	* @author	Nagoya University
 	* @date	2018/03/14
@@ -21,9 +21,9 @@ namespace CS{
 	}
 
 	/**
-	* @fn	addrinfo UdpNwClient::Init(std::string port_no, std::string dst_ip, std::string conf_dir_path);
+	* @fn	addrinfo UdpNwClient::Init_path(std::string port_no, std::string dst_ip, std::string conf_dir_path);
 	*
-	* @brief	UPD通信接続シーケンス(IPv6)
+	* @brief	Init_path 処理（設定ディレクトリパス）
 	*
 	* @author	Nagoya University
 	* @date	2018/03/14
@@ -34,20 +34,49 @@ namespace CS{
 	*
 	* @return	addrinfo構造体
 	*/
-	addrinfo UdpNwClient::Init(std::string port_no, std::string dst_ip, std::string conf_dir_path)
+	addrinfo UdpNwClient::Init_path(std::string port_no, std::string dst_ip, std::string conf_dir_path)
 	{
 		port_no_ = port_no;
 		conf_dir_path_ = conf_dir_path;
 		return InitClient(port_no, dst_ip);
 	}
+	/**
+	* @fn	void UdpNwClient::Init(const std::string& fd_name, const std::string& port, const std::string& ip) 
+	*
+	* @brief	Init 処理（切り替え用）
+	*
+	* @author	Shinichi Kusayama
+	* @date     2026/6/4
+	*
+	* @param [in,out]	fd_name FDファイル名
+	* @param [in,out]	port	宛先ポート番号
+	* @param [in,out]	ip	宛先IPアドレス
+	*
+	*/
+	void UdpNwClient::Init(const std::string& fd_name, const std::string& port, const std::string& ip) 
+	{
+		Init(port, ip); // 既存呼び出し
+	}
 
-	//インタフェース名を引数とする	
+	/**
+	* @fn	addrinfo UdpNwClient::Init(std::string port_no, std::string dst_ip, std::string conf_dir_path);
+	*
+	* @brief	Init 処理 (IPv6)
+	*
+	* @author	Nagoya University
+	* @date	2018/03/14
+	*
+	* @param	port_no	ポート番号
+	* @param	dst_ip 	宛先IPアドレス
+	* @param	if_name 	インタフェース名
+	*
+	* @return	addrinfo構造体
+	*/
 	addrinfo UdpNwClient::Init_v6(std::string port_no, std::string dst_ip, std::string if_name)
 	{
 		port_no_ = port_no;
 		return InitClient_v6(port_no, dst_ip, if_name);
 	}
-
 
 	/**
 	* @fn	addrinfo UdpNwClient::InitClient(std::string port_no, std::string dst_ip);
@@ -63,7 +92,7 @@ namespace CS{
 	* @return	addrinfo構造体
 	*/
 	addrinfo UdpNwClient::InitClient(std::string port_no, std::string dst_ip){
-		hints = {0};
+		memset(&hints, 0, sizeof(hints));
 		// ToDo: IPv6で動作確認
 		//hints.ai_family = AF_UNSPEC; //IPv4/IPv6両方対応
 		hints.ai_socktype = SOCK_DGRAM; //UDP送信
@@ -104,7 +133,7 @@ namespace CS{
 			std::cout  << "LINE:" << __LINE__ << " in UdpNwClient.cpp " << "送信元IPアドレスが不定。dm2.confのインタフェース名の指定を確認してください。" << std::endl;
 		}
 		int sockopt_res=0;		
-		hints = {0};
+		memset(&hints, 0, sizeof(hints));
 		hints.ai_family = AF_UNSPEC; //IPv4/IPv6両方対応
 		hints.ai_socktype = SOCK_DGRAM; //UDP送信
 
@@ -144,6 +173,15 @@ namespace CS{
 		return *res;
 	}
 
+	/**
+	* @fn	void UdpNwClient::CloseSocketFd()
+	*
+	* @brief	ソケットクローズ
+	*
+ 	 * @author	Nagoya University
+     * @date	2018/03/14
+	*
+	*/
 	void UdpNwClient::CloseSocketFd(){
 		CloseSocket();
 	}
@@ -178,6 +216,38 @@ namespace CS{
 	*/
 	int UdpNwClient::Sendto(send_message &buf_, addrinfo &addr_){
 		int ret = Sendto(buf_, addr_, sizeof(buf_));
+		return ret;
+	}
+	/**
+	* @fn	int UdpNwClient::SendClientData(struct clientdata &buf_)
+	*
+	* @brief	sendto送信(clientdata型)
+	*
+	* @author	Shinichi Kusayama
+	* @date	2026/6/4
+	*
+	* @param [in,out]	buf_ 	送信メッセージバッファ
+	*
+	* @return	int sendtoの戻り値
+	*/
+	int UdpNwClient::SendClientData(struct clientdata &buf_) {
+		int ret = Socket::SendClientData(buf_, *res);
+		return ret;
+	}
+	/**
+	* @fn	int UdpNwClient::SendPacket(struct send_message &buf_)
+	*
+	* @brief	sendto送信(send_message型)
+	*
+	* @author	Shinichi Kusayama
+	* @date	2026/6/4
+	*
+	* @param [in,out]	buf_ 	送信メッセージバッファ
+	*
+	* @return	int sendtoの戻り値
+	*/
+	int UdpNwClient::SendPacket(struct send_message &buf_) {
+		int ret = Sendto(buf_, *res);
 		return ret;
 	}
 }

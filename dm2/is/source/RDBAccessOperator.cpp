@@ -242,7 +242,7 @@ namespace IS {
 			bool isCommit = true;
 			try {
 				// DB接続
-				connection Conn(("dbname=" + settings.getParameter("DATABASE_NAME") + " user=" + settings.getParameter("USER_NAME") + " password=" + settings.getParameter("DB_PASS")  + " hostaddr=" + settings.getParameter("DATABASE_ADDR") + " port=" + settings.getParameter("DATABASE_PORT")));
+				connection Conn(("dbname=" + settings.getParameter("DATABASE_NAME") + " user=" + settings.getParameter("USER_NAME") + " password=" + settings.getParameter("DB_PASS")  + " host=" + settings.getParameter("DATABASE_ADDR") + " port=" + settings.getParameter("DATABASE_PORT")));
 				work T(Conn);
 
 #if MEASURE_MODE == 1
@@ -710,7 +710,7 @@ namespace IS {
 	void RDBAccessOperator::createListenThread()
 	{
 		string channel = "dm2_db_update";
-		connection Conn(("dbname=" + settings.getParameter("DATABASE_NAME") + " user=" + settings.getParameter("USER_NAME") + " password=" + settings.getParameter("DB_PASS")  + " hostaddr=" + settings.getParameter("DATABASE_ADDR") + " port=" + settings.getParameter("DATABASE_PORT")));
+		connection Conn(("dbname=" + settings.getParameter("DATABASE_NAME") + " user=" + settings.getParameter("USER_NAME") + " password=" + settings.getParameter("DB_PASS")  + " host=" + settings.getParameter("DATABASE_ADDR") + " port=" + settings.getParameter("DATABASE_PORT")));
 
 		notifyReceiver rec(Conn, channel, std::bind(&RDBAccessOperator::notifyFromRDB, this, std::placeholders::_1));
 		

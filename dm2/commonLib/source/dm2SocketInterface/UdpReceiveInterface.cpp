@@ -26,14 +26,14 @@ namespace CS{
 	 * @param	notify		notify
 	 */
 	void UdpReceiveInterface::run(const char* fd_name, std::function<void(send_message_upper)>notify){
-		UdpProcServer udpprocserver;
-		int res_init = udpprocserver.Init(fd_name);
+		UdpServer udpserver;
+		int res_init = udpserver.Init(fd_name);
 		if(res_init < 0){
 			std::cout << "FILE:" << __FILE__ <<  ", LINE:" << __LINE__ << " " << "udpprocserver.Init fail:" << res_init << std::endl;
 		}
 		while(1)
 		{
-			if(udpprocserver.Recv(buf_) > 0){
+			if(udpserver.RecvClientData(buf_, res_init) > 0){
 				upper_buf_.src_station_id = buf_.msg.src_station_id;
 				upper_buf_.dst_station_id = buf_.msg.dst_station_id;
 				upper_buf_.lane_id = buf_.msg.lane_id;
@@ -55,15 +55,15 @@ namespace CS{
 	 * @param	fd_name   	ファイルディスクリプタ名
 	 * @param	notify		notify
 	 */
-	void UdpReceiveInterface::run_is(const std::string &fd_name, std::function<void(send_message_upper)>notify){
-		UdpProcServer udpprocserver;
-		int res_init = udpprocserver.Init(fd_name.c_str());
+	void UdpReceiveInterface::run_is(const std::string &fd_name, const std::string &nic, const std::string &port, std::function<void(send_message_upper)>notify){
+		UdpServer udpserver;
+		int res_init = udpserver.Init(fd_name.c_str(), nic, port);
 		if(res_init < 0){
 			std::cout << "FILE:" << __FILE__ <<  ", LINE:" << __LINE__ << " " << "udpprocserver.Init fail:" << res_init << std::endl;
 		}
 		while(1)
 		{
-			if(udpprocserver.Recv(buf_) > 0){
+			if(udpserver.RecvClientData(buf_, res_init) > 0){
 				strcpy(upper_buf_.from_ip, buf_.from_ip);
 				upper_buf_.src_station_id = buf_.msg.src_station_id;
 				upper_buf_.dst_station_id = buf_.msg.dst_station_id;
@@ -101,6 +101,7 @@ namespace CS{
 				upper_buf_.lane_id = buf_.msg.lane_id;
 				upper_buf_.dm2_payload = std::string(buf_.msg.dm2_payload, MSGSIZE);
 				notify(upper_buf_);
+				return;
 			}
 		}
 	}

@@ -30,7 +30,6 @@ namespace IS {
 		const string MyName = "Response";
 		LoggerPtr logger = Logger::getLogger("ResponseOperator");
 		StringUtil stringUtil;
-		//IS::InformationSourceParser &isp = IS::InformationSourceParser::get_instance();
 		IS::Settings &settings = IS::Settings::get_instance();
 		int sock = 0;
 		struct sockaddr_in addr;
@@ -45,6 +44,7 @@ namespace IS {
 		bool exit_flag = false;
 		ErrorCode code = IS::ErrorCode::NO_ERR;
 		string msg;
+		bool isDynamicColumn = false;
 		// レスポンスなし時間
 		double totalProcessNoResTimeAVG = 0;
 		double totalProcessNoResTimeSlowest = 0;
@@ -66,8 +66,16 @@ namespace IS {
 		void terminate(unsigned int mngId);
 		bool isSslShutdown(SSL *ssl);
 	public:
+		// 返信種別
+		enum responseType {
+			QUERY_RESULT,		// 継続クエリ結果送信
+			RESPONSE_QUERY,		// クエリ登録応答
+			RESPONSE_CANCEL,	// クエリキャンセル応答
+		};		
+		responseType currentResponseType = QUERY_RESULT;
+		string protobufMessageName = "";	// protobufで送信する際の定義名
 		// UDP用コンストラクタ
-		ResponseOperator(const string &user, unsigned int mngId, const RecvData &data, int port);
+		ResponseOperator(const string &user, unsigned int mngId, const RecvData &data, int port, bool isDynamicColumn);
 		// TCP用コンストラクタ
 		ResponseOperator(const RecvData &data);
 		// TCP用コンストラクタ(管理番号あり)

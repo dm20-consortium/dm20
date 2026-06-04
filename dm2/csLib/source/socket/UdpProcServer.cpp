@@ -19,6 +19,22 @@ namespace CS{
 	}
 
 	/**
+	* @fn	UdpProcServer::Init(const std::string& fd_name, std::string interface_name, std::string port_no) 
+	*
+	* @brief	Init 処理（切り替え用）
+	*
+	* @author	Shinichi Kusayama
+	* @date     2026/6/4
+	*
+	* @param [in,out]	fd_name FDファイル名
+	* @param [in,out]	interface_name	インタフェース名
+	* @param [in,out]	port_no	ポート番号
+	*
+	*/
+	int UdpProcServer::Init(const std::string& fd_name, std::string interface_name, std::string port_no) {
+		return Init(fd_name);
+	}
+	/**
 	 * @fn	int UdpProcServer::InitServer(const char* fd_name)
 	 *
 	 * @brief	接続シーケンス
@@ -32,10 +48,10 @@ namespace CS{
 	 */
 
 	int UdpProcServer::InitServer(const char* fd_name){
-
 		//既存ソケットファイルの削除
 		DeleteFd(fd_name);
 		//アドレスの初期化
+		memset(&server_addr_, 0, sizeof(server_addr_));
 		server_addr_.sun_family = PF_UNIX;
 		strcpy(server_addr_.sun_path,fd_name);
 		
@@ -84,6 +100,38 @@ namespace CS{
 				perror("unlink");
 			}
 		}
+	}
+	/**
+	 * @fn	int RecvPacket(send_message &buf_, int socket_res_) 
+	 *
+	 * @brief	受信処理（send_message型）
+	 *
+	 * @author	Nagoya University
+	 * @date	2026/6/4
+	 *
+	 * @param	buf_  			受信バッファ
+	 * @param	socket_res_  	ソケット情報
+	 *
+	 * @return	受信サイズ
+	 */
+	int UdpProcServer::RecvPacket(send_message &buf_, int socket_res_) {
+		return Socket::Recv(buf_);
+	}
+	/**
+	 * @fn	int RecvClientData(clientdata &buf_, int socket_res_)
+	 *
+	 * @brief	受信処理（clientdata型）
+	 *
+	 * @author	Nagoya University
+	 * @date	2026/6/4
+	 *
+	 * @param	buf_  			受信バッファ
+	 * @param	socket_res_  	ソケット情報
+	 *
+	 * @return	受信サイズ
+	 */
+	int UdpProcServer::RecvClientData(clientdata &buf_, int socket_res_) {
+		return Socket::Recv(buf_);
 	}
 
 }

@@ -11,16 +11,14 @@ using namespace IS;
  * @param	ip  	IPアドレス
  * @param	port	ポート番号
  * @param	sock	ソケット
- * @param	addr	アドレス
  * @param	key	セッションキー
  */
 
-DatagramSocket::DatagramSocket(const string &ip, const int port, const int sock, const struct sockaddr_in addr, const string &key)
+DatagramSocket::DatagramSocket(const string &ip, const int port, const int sock, const string &key)
 {
 	this->ip = ip;
 	this->port = port;
 	this->sock = sock;
-	this->addr = addr;
 	this->key = key;
 }
 
@@ -33,18 +31,16 @@ DatagramSocket::DatagramSocket(const string &ip, const int port, const int sock,
 * @param	ip  	IPアドレス
 * @param	port	ポート番号
 * @param	sock	ソケット
-* @param	addr	アドレス
 * @param	key	セッションキー
 * @param	ssl  	SSLオブジェクト
 * @param	ctx		SSLコンテキスト
 */
 
-DatagramSocket::DatagramSocket(const string &ip, const int port, const int sock, const struct sockaddr_in addr, const string &key, SSL *ssl, SSL_CTX *ctx)
+DatagramSocket::DatagramSocket(const string &ip, const int port, const int sock, const string &key, SSL *ssl, SSL_CTX *ctx)
 {
 	this->ip = ip;
 	this->port = port;
 	this->sock = sock;
-	this->addr = addr;
 	this->key = key;
 	this->ssl = ssl;
 	this->ctx = ctx;
@@ -133,13 +129,10 @@ bool DatagramSocket::sendStreamData(const string &streamName, const vector<Tuple
 
 	procTime = DmUtil::getTimeMicrosec();
 #endif
-	IS::InformationSourceParser isp;
-	if (ssl == NULL) {
-		len = isp.createStreamXMLList(senderId, "-", streamName, tuples, this->key, IPv4_UDP_MAX_BYTE, sendXMLList);
-	}
-	else {
-		len = isp.createStreamXMLList(senderId, "-", streamName, tuples, this->key, IPv4_DTLS_MAX_BYTE, sendXMLList);
-	}
+
+	IS::ProtobufParser &pp = IS::ProtobufParser::get_instance();
+	sendXMLList = pp.createStreamList(streamName, tuples, this->key, IPv4_UDP_MAX_BYTE);
+	
 #if MEASURE_MODE == 1
 	now = DmUtil::getTimeMicrosec();
 	msec = (now - procTime) / 1000.0;
@@ -147,10 +140,7 @@ bool DatagramSocket::sendStreamData(const string &streamName, const vector<Tuple
 
 	procTime = DmUtil::getTimeMicrosec();
 #endif
-#if DEBUG == 1
-	cout << "[sendStreamData] ---------------- REQUEST XML ----------------" << endl;
-	cout << "[sendStreamData] All length:" << len << " part:" << sendXMLList.size() <<endl;
-#endif
+	//cout << "[sendStreamData REQUEST] All length:" << len << " part:" << sendXMLList.size() <<endl;
 
 	IS::StringUtil stringUtil;
 	char compressFlg = '0';
@@ -171,7 +161,7 @@ bool DatagramSocket::sendStreamData(const string &streamName, const vector<Tuple
 			}
 		}
 		if (ssl == NULL) {
-			len = sendto(sock, sendPointer, sendSize, 0, (struct sockaddr *)&addr, sizeof(addr));
+			len = send(sock, sendPointer, sendSize, 0);
 		}
 		else {
 			len = SSL_write(ssl, sendPointer, sendSize);
@@ -187,8 +177,11 @@ bool DatagramSocket::sendStreamData(const string &streamName, const vector<Tuple
 			cout << "[sendStreamData] Failed to sendto. retry.... split.length:" << sendSize << endl;;
 			cout << "[sendStreamData] Failed to send UDP errmsg: " << std::strerror(errno) << endl;;
 			for (int retry = 1; retry <= 3; retry++) {
-				if (ssl == NULL) len = sendto(sock, sendPointer, sendSize, 0, (struct sockaddr *)&addr, sizeof(addr));
-				else len = SSL_write(ssl, sendPointer, sendSize);
+				if (ssl == NULL) {
+					len = send(sock, sendPointer, sendSize, 0);
+				} else {
+					len = SSL_write(ssl, sendPointer, sendSize);
+				}
 				if (len > 0) {
 					sendSumLen = sendSumLen + len;
 					break;

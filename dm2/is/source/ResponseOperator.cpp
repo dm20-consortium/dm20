@@ -117,13 +117,14 @@ namespace IS {
 	 * @param	port 	通知先ポート
 	 */
 
-	ResponseOperator::ResponseOperator(const string &user, unsigned int mngId, const RecvData &data, int port)
+	ResponseOperator::ResponseOperator(const string &user, unsigned int mngId, const RecvData &data, int port, bool isDynamicMessage)
 	{
 		this->type = MyName + "_MNGID:" + std::to_string(mngId);
 		this->user = user;
 		this->addr = data.client;
 		this->mngId = mngId;
 		this->udpPort = port;
+		this->isDynamicColumn = isDynamicMessage;
 		isTCP = false;
 		expect_data_size = 1;
 		if (data.sock2 != 0) {
@@ -259,7 +260,7 @@ namespace IS {
 		long procTime = startTime;
 		int step = 1;
 #endif
-		IS::InformationSourceParser &isp = IS::InformationSourceParser::get_instance();
+		IS::ProtobufParser &pp = IS::ProtobufParser::get_instance();
 		
 		// Selectionは1つのtuplesetを使用
 		TupleSet& tupleset = ts.at(0);
@@ -294,7 +295,7 @@ namespace IS {
 		logger->info("[" + this->type + "] STAT_STEP" + to_string(step++) + " parameter analytics processing time: " + to_string(msec) + "[ms]");
 		procTime = now;
 #endif
-		isp.init();
+		pp.init();
 		if (code == ErrorCode::NO_ERR) {
 
 			// 返却するTupleが存在しないかつ、待機状態からnotify_one()により起動された場合、かつUDP使用時(継続クエリ)は返却しない
@@ -312,24 +313,50 @@ namespace IS {
 			}
 
 			if (isTCP) {
-				// タプルが大量にある場合においてDOMAPIはコストがかかるので文字列結合にてXMLを生成する
-				//isp.createQueryResult(mngId, tupleset, retXML);
-				isp.createQueryResultStr(mngId, tupleset, retXML, tcpPort);
-			}
-			else {
+				// 返信種別を判定
+				switch (currentResponseType)
+				{
+					// クエリ登録応答
+					case responseType::RESPONSE_QUERY:
+						// クエリ管理番号の返送
+						retXML = pp.createQueryResponse(mngId, tcpPort);
+						break;
+					// クエリキャンセル応答
+					case responseType::RESPONSE_CANCEL:
+						// クエリキャンセルの応答
+						retXML = pp.createCancelResponse(mngId);
+						break;
+					// 継続クエリ結果送信
+					case responseType::QUERY_RESULT:
+						// クエリ結果をprotobufに変換
+						retXML = pp.createQueryResult(mngId, this->protobufMessageName, tupleset, this->isDynamicColumn);
+						break;
+				}
+			} else {
 				// 管理者カラム制御
 				hideColumn(tupleset);
-				// 「～ResultList」の方はタプルが大量にある場合においてDOMAPIはコストがかかる
-				//isp.createQueryResultList(mngId, tupleset, sepSize, retXMLList);
-				// 文字列結合だけの「～ResultStrList」の方を使用する
-				isp.createQueryResultStrList(mngId, tupleset, sepSize, retXMLList);
+				// for (int idx = 0; idx < tupleset.size(); idx++) tupleset.getTuple(idx).dump();
+				// クエリ結果をprotobufに変換 + 指定バイト長で分割
+				retXMLList = pp.createQueryResult(mngId, this->protobufMessageName, tupleset, this->isDynamicColumn, IPv4_UDP_MAX_BYTE);
 			}
 		}
 		else {
-			// エラー時のレスポンスを生成
-			isp.createErrorResult(mngId, code, msg, retXML);
+			// 返信種別を判定
+			switch (currentResponseType)
+			{
+				// クエリキャンセル応答
+				case responseType::RESPONSE_CANCEL:
+					// エラー時のクエリキャンセルレスポンスを生成
+					retXML = pp.createCancelErrorResponse(to_string(static_cast<int>(code)), msg);
+					break;
+				// 継続クエリ結果送信
+				case responseType::QUERY_RESULT:
+					// エラー時のクエリレスポンスを生成
+					retXML = pp.createQueryErrorResponse(to_string(static_cast<int>(code)), msg);
+					break;
+			}
 		}
-		isp.finalize();
+		pp.finalize();
 
 #if MEASURE_MODE == 1
 		now = DmUtil::getTimeMicrosec();

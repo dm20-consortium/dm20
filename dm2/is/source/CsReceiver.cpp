@@ -43,8 +43,10 @@ namespace IS {
 	{
 		IS::Settings &settings = IS::Settings::get_instance();
 		int max_worker_thread = std::stoi(settings.getParameter("CS_RECEIVE_WORKER_NUM"));
+		string is_port = settings.getParameter("IS_PORT_NUMBER");
+		string is_cs_nic = settings.getParameter("INTERFACE_BY_IS_CS");
 		string fd_name_str = settings.getFDDirectory() + FD_CStoIS;
-		thread recvThread(&CsReceiver::run_is, this, fd_name_str, bind(&CsReceiver::notify, this, std::placeholders::_1));
+		thread recvThread(&CsReceiver::run_is, this, fd_name_str, is_cs_nic, is_port, bind(&CsReceiver::notify, this, std::placeholders::_1));
 		recvThread.detach();
 
 		for (int i = 0; i < max_worker_thread; i++) {
@@ -81,7 +83,7 @@ namespace IS {
 		char *payload_p = &data.payload[0];
 		struct IsHeaderInfo headerInfo;
 		stringUtil.getIsHeader(payload_p, headerInfo);
-		logger->debug("CsReceiver - Flg:" + headerInfo.header.compressFlg);
+		logger->debug(string("CsReceiver - Flg:") + string(1, headerInfo.header.compressFlg));
 		int len = 0;
 		if (headerInfo.header.compressFlg == '1' || headerInfo.header.compressFlg == '2') {
 			char bufTmp[IPv4_UDP_MAX_BYTE * 10];
@@ -102,6 +104,7 @@ namespace IS {
 				stringUtil.getIsHeader(payload_p, headerInfo);
 			}
 		}
+		logger->debug(string("CsReceiver - Flg After decompress:") + string(1, headerInfo.header.compressFlg));
 		if (headerInfo.header.compressFlg == '0') {
 			data.payload = string(headerInfo.payload_p, data.payload.length() - headerInfo.headerSize);
 			len = data.payload.length();
@@ -191,7 +194,12 @@ namespace IS {
 					logger->debug("[UDP(CS)] QUERY received data. Size:" + std::to_string(data.payload.length()));
 					// クエリの登録
 					int mngId = QeryM.getMngId();
-					QeryM.addQuery(mngId, "public", data, false);;
+					query_header query_header_;
+					//query_header_.dstSID = request.destination();
+					query_header_.port = -1;
+					query_header_.continuous = true;
+					query_header_.dmiName = "";
+					QeryM.addQuery(mngId, "public", data, false, query_header_);
 				}
 				else
 				{

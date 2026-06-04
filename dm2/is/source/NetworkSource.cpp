@@ -543,8 +543,21 @@ namespace IS {
 		// ヘッダ情報を取得する
 		stringUtil.getHeaderInfo(buf, key, flagment, flagmentMax);
 		if (flagmentMax == 0) {
-			logger->warn("[dataIntegration] Received invalied header, So continue...");
-			return;
+			// 全体のフラグメント数が取得できていない場合、電文がXMLではない可能性があるためprotobufヘッダをチェック
+			IS::ProtobufParser &pp = IS::ProtobufParser::get_instance();
+			struct ProtobufHeaderInfo headerInfo;
+			pp.getProtobufHeaderInfo(buf, headerInfo);
+			// protobufヘッダでない場合
+			if (headerInfo.headerSize == 0)
+			{
+				logger->warn("[dataIntegration] Received invalied header, So continue...");
+				return;
+			}
+			else {
+				key = headerInfo.header.key;
+				flagment = headerInfo.header.fragment_index;
+				flagmentMax = headerInfo.header.total_fragments;
+			}
 		}
 #if DEBUG == 1
 		cout << "UDP recv headerInfo  key:" << key << " flagment:" << flagment << " max:" << flagmentMax << endl;
@@ -960,10 +973,12 @@ namespace IS {
 			if (sock > 0) {
 				string ip = inet_ntoa(client.sin_addr);
 				logger->debug("[receiveTCPdata] sock:" + to_string(sock) + " sock2:" + to_string(sock2) + " ip:" + ip);
+				/*
 				if (stringUtil.contain(settings.getParameter("HISTORY_RECORD_CLASS"), stringUtil.getClassName(typeid(*this)))) {
 					thread createThread(&NetworkSource::createRecvHistory, this, "TCP", client, client2, sock, sock2, "accept", 0, 0, "", "");
 					createThread.detach();
 				}
+				*/
 			}
 			if (exit_flag) {
 				break;
@@ -1049,10 +1064,6 @@ namespace IS {
 				}
 				else {
 					bufStr = string(buf, result);
-					if (query.length() == 0) {
-						bufSize = stringUtil.getXMLSize(bufStr);
-						mes = "[sockProcess] recv from sock: " + std::to_string(sock) + ", bufSize: " + std::to_string(bufSize);
-					}
 					query.append(bufStr);
 					sumLen = sumLen + result;
 					bufStr.clear();
@@ -1061,10 +1072,12 @@ namespace IS {
 					}
 				}
 				if (isBreak) {
+					/*
 					if (stringUtil.contain(settings.getParameter("HISTORY_RECORD_CLASS"), stringUtil.getClassName(typeid(*this)))) {
 						thread createThread(&NetworkSource::createRecvHistory, this, "TCP", client, client2, sock, sock2, state, result, result2, query, mes);
 						createThread.detach();
 					}
+						*/
 					break;
 				}
 			}
@@ -1318,10 +1331,12 @@ namespace IS {
 					}
 				}
 				if (isAccept) {
+					/*
 					if (stringUtil.contain(settings.getParameter("HISTORY_RECORD_CLASS"), stringUtil.getClassName(typeid(*this)))) {
 						thread createThread(&NetworkSource::createRecvHistory, this, "SSL", client, client2, sock, sock2, "accept", 0, 0, "", "");
 						createThread.detach();
 					}
+						*/
 					// ソケット処理は別スレッドに委譲
 					thread queuingThread(&NetworkSource::sockSSLProcess, this, sock, sock2, client, client2, ssl, ssl2);
 					queuingThread.detach();
@@ -1418,10 +1433,6 @@ namespace IS {
 				}
 				else {
 					bufStr = string(buf, result);
-					if (query.length() == 0) {
-						bufSize = stringUtil.getXMLSize(bufStr);
-						mes = "[sockProcess] recv from sock: " + std::to_string(sock) + ", bufSize: " + std::to_string(bufSize);
-					}
 					query.append(bufStr);
 					sumLen = sumLen + result;
 					bufStr.clear();
@@ -1430,10 +1441,12 @@ namespace IS {
 					}
 				}
 				if (isBreak) {
+					/*
 					if (stringUtil.contain(settings.getParameter("HISTORY_RECORD_CLASS"), stringUtil.getClassName(typeid(*this)))) {
 						thread createThread(&NetworkSource::createRecvHistory, this, "SSL", client, client2, sock, sock2, state, result, result2, query, mes);
 						createThread.detach();
 					}
+						*/
 					break;
 				}
 			}
@@ -1490,7 +1503,7 @@ namespace IS {
 		pthread_mutex_lock(&createMtx);
 		try {
 			// DB接続
-			connection Conn(("dbname=" + settings.getParameter("DATABASE_IS_NAME") + " user=" + settings.getParameter("USER_NAME") + " password=" + settings.getParameter("DB_PASS") + " hostaddr=" + settings.getParameter("DATABASE_ADDR") + " port=" + settings.getParameter("DATABASE_PORT")));
+			connection Conn(("dbname=" + settings.getParameter("DATABASE_IS_NAME") + " user=" + settings.getParameter("USER_NAME") + " password=" + settings.getParameter("DB_PASS") + " host=" + settings.getParameter("DATABASE_ADDR") + " port=" + settings.getParameter("DATABASE_PORT")));
 			// 受信履歴を登録
 			work T(Conn);
 			Conn.prepare("insert_recv_history", "INSERT INTO recv_history VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14);");
@@ -1565,6 +1578,10 @@ namespace IS {
 						if (headerInfo.header.compressFlg != '1' && headerInfo.header.compressFlg != '2') {
 							if (headerInfo.header.compressFlg == '0') {
 								memcpy(outBuf, bufTmp_p, now_len);
+							} else if (headerInfo.header.compressFlg == '3') {
+								// protobufヘッダを含んだデータを渡す
+								now_len += headerInfo.headerSize;
+								memcpy(outBuf, bufTmp, now_len);
 							} else {
 								memcpy(outBuf, bufTmp, now_len);
 							}

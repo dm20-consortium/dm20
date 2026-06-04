@@ -17,7 +17,6 @@
 namespace CS{
 	//#define BUFFER_SIZE          (1<<16)
 	#define BUFFER_SIZE          (1<<8)
-	//#define COOKIE_SECRET_LENGTH 16
 
 	/**
 	 * @class	SocketDTLS
@@ -30,13 +29,6 @@ namespace CS{
 	class SocketDTLS : public Socket
 	{
 	private:
-		//const std::string SSL_PEM_PASS_PHRASE = "test_pem_pass";
-		
-		//const std::string SSL_CERTIFICATE_FILE_ABS_PATH = "cs_dtls/certs/server-cert.pem";
-		//const std::string SSL_PRIVATE_KEY_FILE_ABS_PATH = "cs_dtls/certs/server-key.pem";
-		//const std::string SSL_CERTIFICATE_CLIENT_PATH = "cs_dtls/certs/client-cert.pem";
-		//const std::string SSL_PRIVATE_KEY_CLIENT_PATH = "cs_dtls/certs/client-key.pem";
-		//const std::string SSL_CERTIFICATE_VERIFY_PATH = "cs_dtls/certs/ca.pem";
 
 		/** @brief ssl管理ブロック */
 		SSL *ssl_ = NULL;		// Client用
@@ -58,8 +50,6 @@ namespace CS{
 		};
 
 		//static struct pass_info *info;
-		//static unsigned char cookie_secret[COOKIE_SECRET_LENGTH];
-		//static int cookie_initialized;
 		static pthread_mutex_t* mutex_buf;
 		struct pass_info *info;
 		SSL_CTX *ctx;
@@ -68,8 +58,6 @@ namespace CS{
 		static int THREAD_setup(void);
 		static int THREAD_cleanup(void);
 		static int handle_socket_error(void);
-		//static int generate_cookie(SSL *ssl, unsigned char *cookie, unsigned int *cookie_len);
-		//static int verify_cookie(SSL *ssl, const unsigned char *cookie, unsigned int cookie_len);
 		static void* connection_handle(void *info);
 		//void socketDTLSProcess(void *info ,send_message &buf_, Queue<clientdata> * get_rcv_q, int recv_size_, int my_sid_);
 		void socketDTLSProcess(void *info, Queue<clientdata> * get_rcv_q, int recv_size_, unsigned long long my_sid_, const std::string &fd_cs_to_cs);
@@ -108,8 +96,6 @@ namespace CS{
 		int Sendto(send_message &buf_, int send_size_);
 		int SendtoDivision(send_message &buf_, int send_size_);
 
-		//void CreateServerContext(std::string confDirPath);
-		//SSL_CTX* CreateClientContext(std::string confDirPath);
 		void CloseDtls();
 		void CloseSocketOnly();
 	};

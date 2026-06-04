@@ -12,6 +12,8 @@
 #include <string>
 #include <map>
 #include <openssl/md5.h>
+#include <sys/socket.h>
+#include <netdb.h>
 
 using namespace std;
 
@@ -40,13 +42,14 @@ private:
 
 	static bool createSession(int &sock, const string &ip, const string &username, const string &pass);
 	static bool createSession(SSL* ssl,  const string &ip, const string &username, const string &pass);
+	static bool createSession(int &sock, SSL* ssl,  const string &ip, const string &username, const string &pass);
 	static string getMD5(const string &pass);
 public:
 	DmManager();
 	~DmManager();
 
-	static int connectSock(const string &ip, const int port, struct sockaddr_in &addr);
-	static SSL* connectSSLSock(int &sock, const string &ip, const int port, struct sockaddr_in &addr, SSL_CTX *ctx);
+	static int connectSock(const string &ip, const int port);
+	static SSL* connectSSLSock(int &sock, const string &ip, const int port, SSL_CTX *ctx);
 	static void initEncryptionSettings(const string &inCertFilePath, const string &inPrivateKeyFilePath, const string &inPemPass);
 	static void initTcpSslTimeoutSetting(const int TcpSslTimeoutSec);
 	static void initDtlsTimeoutSetting(const int DtlsTimeoutSec);

@@ -1,6 +1,7 @@
-#include "ProtobufParser.h"
+#include "is/ProtobufParser.h"
 
 #include <iostream>
+#include <arpa/inet.h>
 
 using namespace std;
 
@@ -15,6 +16,62 @@ namespace IS {
 	int signalInfoUnknownVals_0_6_0[] = {-1, -1, -1, 1, 0, 128, 0, 0, 0, 65535, 65535, 0, 0, 65535, 65535, 0, 0, 65535, 65535, 0, 0, 65535, 65535, 0, 0, 65535, 65535, 0, 0, 65535, 65535, 0, 0, 65535, 65535, 0, 0, 65535, 65535, 0, 0, 65535, 65535, 0, 0, 65535, 65535, 0, 0, 65535, 65535, 0, 0, 65535, 65535};
 	int sensorInfoUnknownVals_0_8_0[] = {-1, -1, 0, 0, 900000001, 1800000001, 800001, 0, -1, -1, -1, 0, -132768, -132768, -132768, 15, 17, 101, 0, 0, 10001, 0, -132768, -132768, -132768, 4095, 4095, 36001, 20001, 0, -1, -1, 0, 0, 0, -1, -1, 0, 0, 0, -1, -1, 0, 0, 0, -1, -1, 0, 0, 0, -1, -1, 0, 0, 0, -1, -1, 0, 0, 0, -1, -1, 0, 0, 0, -1, -1, 0, 0, 0};
 	int sensorInfoUnknownVals_0_8_1[] = {-1, -1, 0, 0, 900000001, 1800000001, 800001, 0, -1, -1, -1, 0, -132768, -132768, -132768, 15, 17, 101, 0, 0, 10001, 0, -132768, -132768, -132768, 4095, 4095, 36001, 20001, -1, 0, -1, -1, 0, 0, 0, -1, -1, 0, 0, 0, -1, -1, 0, 0, 0, -1, -1, 0, 0, 0, -1, -1, 0, 0, 0, -1, -1, 0, 0, 0, -1, -1, 0, 0, 0, -1, -1, 0, 0, 0};
+
+	// APL側ではスキーマ情報を保持していないため、暫定で定義
+	// カラム名
+	string objectInfoNameList_0_6_0[] = {"id", "time", "object_class_id_0", "object_class_confidence_0", "object_class_subclass_type_0", "object_class_subclass_confidence_0", "object_class_id_1", "object_class_confidence_1", "object_class_subclass_type_1", "object_class_subclass_confidence_1", "object_class_id_2", "object_class_confidence_2", "object_class_subclass_type_2", "object_class_subclass_confidence_2", "object_class_id_3", "object_class_confidence_3", "object_class_subclass_type_3", "object_class_subclass_confidence_3", "existency", "geodetic_system", "latitude", "longitude", "altitude", "crp_id", "dx_crp", "dy_crp", "dh_crp", "lane_count", "lane_position", "lane_lateral_position", "crp_id_begin", "crp_id_end", "lane_vertical_position", "lane_id", "dx_lane", "dy_lane", "dh_lane", "semi_axis_length_major", "semi_axis_length_minor", "ellipse_orientation", "altitude_accuracy", "reference_point", "move_direction_value", "move_direction_accuracy", "speed_value", "speed_accuracy", "yaw_rate_value", "yaw_rate_accuracy", "acceleration_value", "acceleration_accuracy", "orientation_value", "orientation_accuracy", "length_value", "length_accuracy", "width_value", "width_accuracy", "height_value", "height_accuracy", "color", "shift_position", "steering_angle_front", "steering_angle_rear", "brake_state", "auxiliary_brake_state", "throttle_position", "exterior_lights", "adaptive_cruise_control_system", "cooperative_adaptive_cruise_control_system", "pre_crash_safety_system", "antilock_brake_system", "traction_control_system", "electronic_stability_control_system", "lane_keeping_assist_system", "lane_departure_warning_system", "vehicle_role", "vehicle_extended_info", "towing_vehicle", "information_source_list", "dm2_creator_id", "dm2_ip_addr", "dm2_hash", "dm2_ts_group"};
+	string objectInfoNameList_0_8_0[] = {"object_id", "time", "object_class_id_0", "object_class_confidence_0", "object_class_subclass_type_0", "object_class_subclass_confidence_0", "object_class_id_1", "object_class_confidence_1", "object_class_subclass_type_1", "object_class_subclass_confidence_1", "object_class_id_2", "object_class_confidence_2", "object_class_subclass_type_2", "object_class_subclass_confidence_2", "object_class_id_3", "object_class_confidence_3", "object_class_subclass_type_3", "object_class_subclass_confidence_3", "existency", "geodetic_srid", "latitude", "longitude", "altitude", "projective_srid", "prc_x", "prc_y", "prc_z", "crp_id", "dx_crp", "dy_crp", "dh_crp", "lane_count", "lane_position", "lane_lateral_position", "crp_id_begin", "crp_id_end", "lane_vertical_position", "lane_id", "dx_lane", "dy_lane", "dh_lane", "semi_axis_length_major", "semi_axis_length_minor", "ellipse_orientation", "altitude_accuracy", "reference_point", "move_direction_value", "move_direction_accuracy", "speed_value", "speed_accuracy", "yaw_rate_value", "yaw_rate_accuracy", "acceleration_value", "acceleration_accuracy", "orientation_value", "orientation_accuracy", "length_value", "length_accuracy", "width_value", "width_accuracy", "height_value", "height_accuracy", "static_status", "shift_position", "steering_angle_front", "steering_angle_rear", "brake_state", "auxiliary_brake_state", "throttle_position", "exterior_lights", "adaptive_cruise_control_system", "cooperative_adaptive_cruise_control_system", "pre_crash_safety_system", "antilock_brake_system", "traction_control_system", "electronic_stability_control_system", "lane_keeping_assist_system", "lane_departure_warning_system", "vehicle_size_type", "vehicle_role", "vehicle_extended_info", "towing_vehicle", "tracking_status", "detection_count", "lost_count", "object_age", "information_source_list", "dm2_creator_id", "dm2_ip_addr", "dm2_hash", "dm2_ts_group"};
+	string objectInfoNameList_0_8_1[] = {"object_id", "time", "revision", "object_class_id_0", "object_class_confidence_0", "object_class_subclass_type_0", "object_class_subclass_confidence_0", "object_class_id_1", "object_class_confidence_1", "object_class_subclass_type_1", "object_class_subclass_confidence_1", "object_class_id_2", "object_class_confidence_2", "object_class_subclass_type_2", "object_class_subclass_confidence_2", "object_class_id_3", "object_class_confidence_3", "object_class_subclass_type_3", "object_class_subclass_confidence_3", "existency", "geodetic_srid", "latitude", "longitude", "altitude", "projective_srid", "prc_x", "prc_y", "prc_z", "crp_id", "dx_crp", "dy_crp", "dh_crp", "lane_count", "lane_position", "lane_lateral_position", "crp_id_begin", "crp_id_end", "lane_vertical_position", "lane_id", "dx_lane", "dy_lane", "dh_lane", "semi_axis_length_major", "semi_axis_length_minor", "ellipse_orientation", "altitude_accuracy", "reference_point", "move_direction_value", "move_direction_accuracy", "speed_value", "speed_accuracy", "yaw_rate_value", "yaw_rate_accuracy", "acceleration_value", "acceleration_accuracy", "orientation_value", "orientation_accuracy", "length_value", "length_accuracy", "width_value", "width_accuracy", "height_value", "height_accuracy", "static_status", "shift_position", "steering_angle_front", "steering_angle_rear", "brake_state", "auxiliary_brake_state", "throttle_position", "exterior_lights", "adaptive_cruise_control_system", "cooperative_adaptive_cruise_control_system", "pre_crash_safety_system", "antilock_brake_system", "traction_control_system", "electronic_stability_control_system", "lane_keeping_assist_system", "lane_departure_warning_system", "vehicle_size_type", "vehicle_role", "vehicle_extended_info", "towing_vehicle", "tracking_status", "detection_count", "lost_count", "object_age", "information_source_list", "dm2_creator_id", "dm2_ip_addr", "dm2_hash", "dm2_ts_group"};
+	string freespaceInfoNameList_0_6_0[] = {"id", "time", "existency", "minimal_detectable_size", "position_begin_geodetic_system", "position_begin_latitude", "position_begin_longitude", "position_begin_altitude", "position_begin_crp_id", "position_begin_dx_crp", "position_begin_dy_crp", "position_begin_dh_crp", "position_begin_lane_count", "position_begin_lane_position", "position_begin_lane_lateral_position", "position_begin_crp_id_begin", "position_begin_crp_id_end", "position_begin_lane_vertical_position", "position_begin_lane_id", "position_begin_dx_lane", "position_begin_dy_lane", "position_begin_dh_lane", "position_begin_semi_axis_length_major", "position_begin_semi_axis_length_minor", "position_begin_ellipse_orientation", "position_begin_altitude_accuracy", "position_end_geodetic_system", "position_end_latitude", "position_end_longitude", "position_end_altitude", "position_end_crp_id", "position_end_dx_crp", "position_end_dy_crp", "position_end_dh_crp", "position_end_lane_count", "position_end_lane_position", "position_end_lane_lateral_position", "position_end_crp_id_begin", "position_end_crp_id_end", "position_end_lane_vertical_position", "position_end_lane_id", "position_end_dx_lane", "position_end_dy_lane", "position_end_dh_lane", "position_end_semi_axis_length_major", "position_end_semi_axis_length_minor", "position_end_ellipse_orientation", "position_end_altitude_accuracy", "length_value", "length_accuracy", "id_begin", "id_end", "information_source_list", "dm2_creator_id", "dm2_ip_addr", "dm2_hash", "dm2_ts_group"};
+	string freespaceInfoNameList_0_8_0[] = {"id", "time", "detection_method", "detactable_classes", "vertices_begin_geodetic_srid", "vertices_begin_latitude", "vertices_begin_longitude", "vertices_begin_altitude", "vertices_begin_projective_srid", "vertices_begin_prc_x", "vertices_begin_prc_y", "vertices_begin_prc_z", "vertices_begin_crp_id", "vertices_begin_dx_crp", "vertices_begin_dy_crp", "vertices_begin_dh_crp", "vertices_begin_lane_count", "vertices_begin_lane_position", "vertices_begin_lane_lateral_position", "vertices_begin_crp_id_begin", "vertices_begin_crp_id_end", "vertices_begin_lane_vertical_position", "vertices_begin_lane_id", "vertices_begin_dx_lane", "vertices_begin_dy_lane", "vertices_begin_dh_lane", "vertices_begin_semi_axis_length_major", "vertices_begin_semi_axis_length_minor", "vertices_begin_ellipse_orientation", "vertices_begin_altitude_accuracy", "vertices_dx_list", "vertices_dy_list", "position_begin_geodetic_srid", "position_begin_latitude", "position_begin_longitude", "position_begin_altitude", "position_begin_projective_srid", "position_begin_prc_x", "position_begin_prc_y", "position_begin_prc_z", "position_begin_crp_id", "position_begin_dx_crp", "position_begin_dy_crp", "position_begin_dh_crp", "position_begin_lane_count", "position_begin_lane_position", "position_begin_lane_lateral_position", "position_begin_crp_id_begin", "position_begin_crp_id_end", "position_begin_lane_vertical_position", "position_begin_lane_id", "position_begin_dx_lane", "position_begin_dy_lane", "position_begin_dh_lane", "position_begin_semi_axis_length_major", "position_begin_semi_axis_length_minor", "position_begin_ellipse_orientation", "position_begin_altitude_accuracy", "position_end_geodetic_srid", "position_end_latitude", "position_end_longitude", "position_end_altitude", "position_end_projective_srid", "position_end_prc_x", "position_end_prc_y", "position_end_prc_z", "position_end_crp_id", "position_end_dx_crp", "position_end_dy_crp", "position_end_dh_crp", "position_end_lane_count", "position_end_lane_position", "position_end_lane_lateral_position", "position_end_crp_id_begin", "position_end_crp_id_end", "position_end_lane_vertical_position", "position_end_lane_id", "position_end_dx_lane", "position_end_dy_lane", "position_end_dh_lane", "position_end_semi_axis_length_major", "position_end_semi_axis_length_minor", "position_end_ellipse_orientation", "position_end_altitude_accuracy", "length_value", "length_accuracy", "id_begin", "id_end", "existency", "minimal_detectable_size", "information_source_list", "dm2_creator_id", "dm2_ip_addr", "dm2_hash", "dm2_ts_group"};
+	string freespaceInfoNameList_0_8_1[] = {"id", "time", "revision", "detection_method", "detactable_classes", "vertices_begin_geodetic_srid", "vertices_begin_latitude", "vertices_begin_longitude", "vertices_begin_altitude", "vertices_begin_projective_srid", "vertices_begin_prc_x", "vertices_begin_prc_y", "vertices_begin_prc_z", "vertices_begin_crp_id", "vertices_begin_dx_crp", "vertices_begin_dy_crp", "vertices_begin_dh_crp", "vertices_begin_lane_count", "vertices_begin_lane_position", "vertices_begin_lane_lateral_position", "vertices_begin_crp_id_begin", "vertices_begin_crp_id_end", "vertices_begin_lane_vertical_position", "vertices_begin_lane_id", "vertices_begin_dx_lane", "vertices_begin_dy_lane", "vertices_begin_dh_lane", "vertices_begin_semi_axis_length_major", "vertices_begin_semi_axis_length_minor", "vertices_begin_ellipse_orientation", "vertices_begin_altitude_accuracy", "vertices_dx_list", "vertices_dy_list", "position_begin_geodetic_srid", "position_begin_latitude", "position_begin_longitude", "position_begin_altitude", "position_begin_projective_srid", "position_begin_prc_x", "position_begin_prc_y", "position_begin_prc_z", "position_begin_crp_id", "position_begin_dx_crp", "position_begin_dy_crp", "position_begin_dh_crp", "position_begin_lane_count", "position_begin_lane_position", "position_begin_lane_lateral_position", "position_begin_crp_id_begin", "position_begin_crp_id_end", "position_begin_lane_vertical_position", "position_begin_lane_id", "position_begin_dx_lane", "position_begin_dy_lane", "position_begin_dh_lane", "position_begin_semi_axis_length_major", "position_begin_semi_axis_length_minor", "position_begin_ellipse_orientation", "position_begin_altitude_accuracy", "position_end_geodetic_srid", "position_end_latitude", "position_end_longitude", "position_end_altitude", "position_end_projective_srid", "position_end_prc_x", "position_end_prc_y", "position_end_prc_z", "position_end_crp_id", "position_end_dx_crp", "position_end_dy_crp", "position_end_dh_crp", "position_end_lane_count", "position_end_lane_position", "position_end_lane_lateral_position", "position_end_crp_id_begin", "position_end_crp_id_end", "position_end_lane_vertical_position", "position_end_lane_id", "position_end_dx_lane", "position_end_dy_lane", "position_end_dh_lane", "position_end_semi_axis_length_major", "position_end_semi_axis_length_minor", "position_end_ellipse_orientation", "position_end_altitude_accuracy", "length_value", "length_accuracy", "id_begin", "id_end", "existency", "minimal_detectable_size", "information_source_list", "dm2_creator_id", "dm2_ip_addr", "dm2_hash", "dm2_ts_group"};
+	string signalInfoNameList_0_6_0[] = {"crp_id", "id", "time", "state", "specific_control_flags", "event_count", "count_down_stop_flag", "light_info_main_0", "light_info_arrow_0", "light_info_min_time_to_change_0", "light_info_max_time_to_change_0", "light_info_main_1", "light_info_arrow_1", "light_info_min_time_to_change_1", "light_info_max_time_to_change_1", "light_info_main_2", "light_info_arrow_2", "light_info_min_time_to_change_2", "light_info_max_time_to_change_2", "light_info_main_3", "light_info_arrow_3", "light_info_min_time_to_change_3", "light_info_max_time_to_change_3", "light_info_main_4", "light_info_arrow_4", "light_info_min_time_to_change_4", "light_info_max_time_to_change_4", "light_info_main_5", "light_info_arrow_5", "light_info_min_time_to_change_5", "light_info_max_time_to_change_5", "light_info_main_6", "light_info_arrow_6", "light_info_min_time_to_change_6", "light_info_max_time_to_change_6", "light_info_main_7", "light_info_arrow_7", "light_info_min_time_to_change_7", "light_info_max_time_to_change_7", "light_info_main_8", "light_info_arrow_8", "light_info_min_time_to_change_8", "light_info_max_time_to_change_8", "light_info_main_9", "light_info_arrow_9", "light_info_min_time_to_change_9", "light_info_max_time_to_change_9", "light_info_main_10", "light_info_arrow_10", "light_info_min_time_to_change_10", "light_info_max_time_to_change_10", "light_info_main_11", "light_info_arrow_11", "light_info_min_time_to_change_11", "light_info_max_time_to_change_11", "dm2_creator_id", "dm2_ip_addr", "dm2_hash", "dm2_ts_group"};
+	string sensorInfoNameList_0_8_0[] = {"unit_id", "sensor_id", "sensor_type", "geodetic_srid", "latitude", "longitude", "altitude", "projective_srid", "prc_x", "prc_y", "prc_z", "crp_id", "dx_crp", "dy_crp", "dh_crp", "lane_count", "lane_position", "lane_lateral_position", "crp_id_begin", "crp_id_end", "lane_vertical_position", "lane_id", "dx_lane", "dy_lane", "dh_lane", "semi_axis_length_major", "semi_axis_length_minor", "ellipse_orientation", "altitude_accuracy", "detectable_classes_0", "detectable_domain_x_list_0", "detectable_domain_y_list_0", "confidence_0", "minimal_detectable_size_0", "detectable_classes_1", "detectable_domain_x_list_1", "detectable_domain_y_list_1", "confidence_1", "minimal_detectable_size_1", "detectable_classes_2", "detectable_domain_x_list_2", "detectable_domain_y_list_2", "confidence_2", "minimal_detectable_size_2", "detectable_classes_3", "detectable_domain_x_list_3", "detectable_domain_y_list_3", "confidence_3", "minimal_detectable_size_3", "detectable_classes_4", "detectable_domain_x_list_4", "detectable_domain_y_list_4", "confidence_4", "minimal_detectable_size_4", "detectable_classes_5", "detectable_domain_x_list_5", "detectable_domain_y_list_5", "confidence_5", "minimal_detectable_size_5", "detectable_classes_6", "detectable_domain_x_list_6", "detectable_domain_y_list_6", "confidence_6", "minimal_detectable_size_6", "detectable_classes_7", "detectable_domain_x_list_7", "detectable_domain_y_list_7", "confidence_7", "minimal_detectable_size_7", "sensor_status", "dm2_creator_id", "dm2_ip_addr", "dm2_hash", "dm2_ts_group"};
+	string sensorInfoNameList_0_8_1[] = {"unit_id", "sensor_id", "sensor_type", "geodetic_srid", "latitude", "longitude", "altitude", "projective_srid", "prc_x", "prc_y", "prc_z", "crp_id", "dx_crp", "dy_crp", "dh_crp", "lane_count", "lane_position", "lane_lateral_position", "crp_id_begin", "crp_id_end", "lane_vertical_position", "lane_id", "dx_lane", "dy_lane", "dh_lane", "semi_axis_length_major", "semi_axis_length_minor", "ellipse_orientation", "altitude_accuracy", "time", "detectable_classes_0", "detectable_domain_x_list_0", "detectable_domain_y_list_0", "confidence_0", "minimal_detectable_size_0", "detectable_classes_1", "detectable_domain_x_list_1", "detectable_domain_y_list_1", "confidence_1", "minimal_detectable_size_1", "detectable_classes_2", "detectable_domain_x_list_2", "detectable_domain_y_list_2", "confidence_2", "minimal_detectable_size_2", "detectable_classes_3", "detectable_domain_x_list_3", "detectable_domain_y_list_3", "confidence_3", "minimal_detectable_size_3", "detectable_classes_4", "detectable_domain_x_list_4", "detectable_domain_y_list_4", "confidence_4", "minimal_detectable_size_4", "detectable_classes_5", "detectable_domain_x_list_5", "detectable_domain_y_list_5", "confidence_5", "minimal_detectable_size_5", "detectable_classes_6", "detectable_domain_x_list_6", "detectable_domain_y_list_6", "confidence_6", "minimal_detectable_size_6", "detectable_classes_7", "detectable_domain_x_list_7", "detectable_domain_y_list_7", "confidence_7", "minimal_detectable_size_7", "sensor_status", "dm2_creator_id", "dm2_ip_addr", "dm2_hash", "dm2_ts_group"};
+	// データタイプ
+	const std::vector<std::string>  objectInfoTypeList_0_6_0 = {"string", "long", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "string", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "string", "vector(string)", "string", "string", "string", "string"};
+	const std::vector<std::string>  objectInfoTypeList_0_8_0 = {"ulong", "long", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "ulong", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "ulong", "int", "int", "int", "int", "vector(ulong)", "string", "string", "string", "string"};
+	const std::vector<std::string>  objectInfoTypeList_0_8_1 = {"ulong", "long", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "ulong", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "ulong", "int", "int", "int", "int", "vector(ulong)", "string", "string", "string", "string"};
+	const std::vector<std::string>  freespaceInfoTypeList_0_6_0 = {"string", "long", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "string", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "string", "int", "int", "int", "int", "int", "int", "int", "int", "int", "ulong", "string", "vector(string)", "string", "string", "string", "string"};
+	const std::vector<std::string>  freespaceInfoTypeList_0_8_0 = {"ulong", "long", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "ulong", "int", "int", "int", "int", "int", "int", "int", "vector(int)", "vector(int)", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "ulong", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "ulong", "int", "int", "int", "int", "int", "int", "int", "int", "int", "ulong", "ulong", "int", "int", "vector(ulong)", "string", "string", "string", "string"};
+	const std::vector<std::string>  freespaceInfoTypeList_0_8_1 = {"ulong", "long", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "ulong", "int", "int", "int", "int", "int", "int", "int", "vector(int)", "vector(int)", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "ulong", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "ulong", "int", "int", "int", "int", "int", "int", "int", "int", "int", "ulong", "ulong", "int", "int", "vector(ulong)", "string", "string", "string", "string"};
+	const std::vector<std::string>  signalInfoTypeList_0_6_0 = {"int", "vector(int)", "long", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "string", "string", "string", "string"};
+	const std::vector<std::string>  sensorInfoTypeList_0_8_0 = {"ulong", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "ulong", "int", "int", "int", "int", "int", "int", "int", "int", "vector(int)", "vector(int)", "int", "int", "int", "vector(int)", "vector(int)", "int", "int", "int", "vector(int)", "vector(int)", "int", "int", "int", "vector(int)", "vector(int)", "int", "int", "int", "vector(int)", "vector(int)", "int", "int", "int", "vector(int)", "vector(int)", "int", "int", "int", "vector(int)", "vector(int)", "int", "int", "int", "vector(int)", "vector(int)", "int", "int", "int", "string", "string", "string", "string"};
+	const std::vector<std::string>  sensorInfoTypeList_0_8_1 = {"ulong", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int", "ulong", "int", "int", "int", "int", "int", "int", "int", "long", "int", "vector(int)", "vector(int)", "int", "int", "int", "vector(int)", "vector(int)", "int", "int", "int", "vector(int)", "vector(int)", "int", "int", "int", "vector(int)", "vector(int)", "int", "int", "int", "vector(int)", "vector(int)", "int", "int", "int", "vector(int)", "vector(int)", "int", "int", "int", "vector(int)", "vector(int)", "int", "int", "int", "vector(int)", "vector(int)", "int", "int", "int", "string", "string", "string", "string"};
+	const int is_tuple_size = 4;
+	const int objectInfo_0_6_0_normal_size = objectInfoTypeList_0_6_0.size() - is_tuple_size;
+	const int objectInfo_0_8_0_normal_size = objectInfoTypeList_0_8_0.size() - is_tuple_size;
+	const int objectInfo_0_8_1_normal_size = objectInfoTypeList_0_8_1.size() - is_tuple_size;
+	const int freespaceInfo_0_6_0_normal_size = freespaceInfoTypeList_0_6_0.size() - is_tuple_size;
+	const int freespaceInfo_0_8_0_normal_size = freespaceInfoTypeList_0_8_0.size() - is_tuple_size;
+	const int freespaceInfo_0_8_1_normal_size = freespaceInfoTypeList_0_8_1.size() - is_tuple_size;
+	const int signalInfo_0_6_0_normal_size = signalInfoTypeList_0_6_0.size() - is_tuple_size;
+	const int sensorInfo_0_8_0_normal_size = sensorInfoTypeList_0_8_0.size() - is_tuple_size;
+	const int sensorInfo_0_8_1_normal_size = sensorInfoTypeList_0_8_1.size() - is_tuple_size;
+	std::map<std::type_index, std::string> typeStringMap = {
+		{typeid(int), "int"},
+		{typeid(long), "long"},
+		{typeid(double), "double"},
+		{typeid(float), "float"},
+		{typeid(string), "string"},
+		{typeid(bool), "bool"},
+		{typeid(unsigned int), "uint"},
+		{typeid(unsigned long), "ulong"},
+		{typeid(vector<int>), "vector(int)"},
+		{typeid(vector<long>), "vector(long)"},
+		{typeid(vector<double>), "vector(double)"},
+		{typeid(vector<string>), "vector(string)"},
+		{typeid(vector<bool>), "vector(bool)"},
+		{typeid(vector<unsigned int>), "vector(uint)"},
+		{typeid(vector<unsigned long>), "vector(ulong)"},
+		{typeid(vector<vector<int>>), "vector(vector(int))"},
+		{typeid(vector<vector<long>>), "vector(vector(long))"},
+		{typeid(vector<vector<double>>), "vector(vector(double))"},
+		{typeid(vector<vector<string>>), "vector(vector(string))"},
+		{typeid(vector<vector<bool>>), "vector(vector(bool))"},
+		{typeid(vector<vector<unsigned int>>), "vector(vector(uint))"},
+		{typeid(vector<vector<unsigned long>>), "vector(vector(ulong))"}
+	};
 	/**
 	* 初期処理
 	*
@@ -40,15 +97,670 @@ namespace IS {
 	}
 
 	/**
-	* フィールドの型を文字列に変換する関数
+	 * protobufヘッダ作成(セッションキー無し)
+	 * 
+	 * @author	Nagoya University
+	 * @date 2025/10/31
+	 * 
+	 * @param [in]	mngId		クエリ管理番号
+	 * @param [in]	tableName	テーブル名
+	 * @param [in]	serializedStr	protobufデータ文字列
+	 * 
+	 * @return	protobufヘッダ文字列
+	 * 
+	 */
+	string ProtobufParser::createHeader(const unsigned int mngId, const string &tableName, const string &serializedStr)
+	{
+		return createHeader(mngId, tableName, serializedStr, serializedStr.size(), 0, 1);
+	}
+
+	/**
+	 * protobufヘッダ作成(セッションキー有り)
+	 * 
+	 * @author	Nagoya University
+	 * @date 2025/10/31
+	 * 
+	 * @param [in]	mngId			クエリ管理番号
+	 * @param [in]	tableName		テーブル名
+	 * @param [in]	serializedStr	protobufデータ文字列
+	 * @param [in]	strLength		protobufデータ文字長
+	 * @param [in]	fragmentIndex	フラグメント番号
+	 * @param [in]	totalFragments	全体のフラグメント数
+	 * @param [in]	key				セッションキー
+	 * 
+	 * @return	protobufヘッダ文字列
+	 */
+	string ProtobufParser::createHeader(const unsigned int mngId, const string &tableName, const string &serializedStr, size_t strLength, short fragmentIndex, short totalFragments, const string &key)
+	{
+		std::ostringstream oss(std::ios::binary);
+		oss << "3" 	// protobufフラグ
+			<< std::setfill('0') << std::setw(2) << tableName.length()	// テーブル名長(2桁固定)
+			<< tableName;	// テーブル名
+		
+		// protobufデータ長
+		uint32_t strlen = htonl(static_cast<uint32_t>(serializedStr.length()));
+		oss.write(reinterpret_cast<const char*>(&strlen), sizeof(strlen));
+		
+		// クエリ管理番号
+		strlen = htonl(mngId);
+		oss.write(reinterpret_cast<const char*>(&strlen), sizeof(strlen));
+
+		// フラグメント番号
+		oss.put(static_cast<char>(fragmentIndex));
+		
+		// 全体のフラグメント数
+    	oss.put(static_cast<char>(totalFragments));
+
+		// セッションキー長
+		strlen = htonl(static_cast<uint32_t>(key.length()));
+		oss.write(reinterpret_cast<const char*>(&strlen), sizeof(strlen));
+
+		// セッションキー
+		oss << key;
+
+		return oss.str();
+	}
+
+	/**
+	 * 受信電文からprotobufヘッダ情報を取り出す
+	 * 
+	 * @author	Nagoya University
+	 * @date 2025/10/31
+	 * 
+	 * @param [in]		receiveData		受信電文
+	 * @param [in,out]	info			protobufヘッダ情報
+	 * 
+	 */
+	void ProtobufParser::getProtobufHeaderInfo(const string &receiveData, ProtobufHeaderInfo &info)
+	{
+		// 文字列インデックス
+		size_t pos = 0;
+
+		// フラグを取り出す
+		char flag = receiveData.at(0);
+		
+		if (flag == '3') {
+			// フラグを設定
+			info.header.flag = flag;
+			pos += sizeof(info.header.flag);
+
+			// テーブル名長
+			info.header.table_name_length = stoi(receiveData.substr(pos,2));
+			pos += 2; // 2桁の文字列で表現されているため
+			
+			// テーブル名
+			info.header.table_name = receiveData.substr(pos, info.header.table_name_length);
+			pos += info.header.table_name.length();
+
+			//protobufデータ長
+			int payload_size;
+			memcpy(&payload_size, receiveData.data() + pos, sizeof(payload_size));
+			info.header.payload_size = ntohl(payload_size);
+			pos += sizeof(payload_size);
+
+			//クエリ管理番号
+			unsigned int mngId;
+			memcpy(&mngId, receiveData.data() + pos, sizeof(mngId));
+			info.header.mngId = ntohl(mngId);
+			pos += sizeof(mngId);
+
+			// フラグメント番号
+			uint8_t fragment_idx;
+			memcpy(&fragment_idx, receiveData.data() + pos, sizeof(fragment_idx));
+			info.header.fragment_index = fragment_idx;
+			pos += sizeof(fragment_idx);
+
+			// 全体のフラグメント数
+			uint8_t total_fragments;
+			memcpy(&total_fragments, receiveData.data() + pos, sizeof(total_fragments));
+			info.header.total_fragments = total_fragments;
+			pos += sizeof(total_fragments);
+
+			// セッションキー長
+			int key_length;
+			memcpy(&key_length, receiveData.data() + pos, sizeof(key_length));
+			info.header.key_length = ntohl(key_length);
+			pos += sizeof(key_length);
+
+			// セッションキー
+			info.header.key = receiveData.substr(pos, info.header.key_length);
+			pos += info.header.key.length();
+
+			// ヘッダサイズ
+			info.headerSize = pos;
+
+			// protobufデータ位置
+			info.payload_p = receiveData.data() + pos;
+			
+		} else {
+			// ヘッダー不明につき、なしと見なす
+			info.headerSize = 0;
+		}
+
+		return;
+	}
+	/**
+	 * 接続要求のシリアライズ
+	 *
+	* @author	Nagoya University
+	* @date		2025/10/31
+	*
+	* @param [in]	username	ユーザ名
+	* @param [in]	md5			ハッシュ値
+	*
+	* @return	シリアライズされた文字列 
+	*/
+	string ProtobufParser::createSessionSerializeToString(const string &username, const string &md5)
+	{
+		string retStr = "";
+		dm2_proto::System_request_dm2is msg;
+
+		dm2_proto::System_request* request = msg.mutable_system_request();
+		
+		request->set_type("session");
+		request->set_key(md5);
+		request->set_pid(getpid());
+		request->set_body(username);
+
+		msg.SerializeToString(&retStr);
+		return retStr;
+	}
+
+	/**
+	 * 接続要求のシリアライズ
+	 *
+	* @author	Nagoya University
+	* @date		2025/10/31
+	*
+	* @param [in]	username	ユーザ名
+	* @param [in]	md5			ハッシュ値
+	*
+	* @return	シリアライズされた文字列 
+	*/
+	string ProtobufParser::createCreateSession(const string &username, const string &md5)
+	{
+		string retStr = "";
+		retStr = createSessionSerializeToString(username, md5);
+		//retStr = createHeader("[system]", retStr) + retStr;
+		return retStr;
+	}
+
+	/**
+	 * 接続要求/クエリ登録/クエリキャンセル 応答のシリアライズ
+	 *
+	* @author	Nagoya University
+	* @date		2025/10/31
+	*
+	* @param [in]	value	ハッシュ値/エラーメッセージ
+	* @param [in]	errCode	エラーコード
+	*
+	* @return	シリアライズされた文字列 
+	*/
+	string ProtobufParser::systemResponseSerializeToString(const string type, const string &value, const int tcpPortconst, const string &errCode)
+	{
+		string retStr = "";
+		dm2_proto::System_response_dm2is msg;
+
+		dm2_proto::System_response* response = msg.mutable_system_response();
+		response->set_type(type);
+		response->set_value(value);
+		if (errCode != "")
+			response->set_error(errCode);
+
+		if (tcpPortconst != -1)
+			response->set_port(tcpPortconst);
+
+		msg.SerializeToString(&retStr);
+		return retStr;
+	}
+
+	/**
+	 * 接続要求応答のシリアライズ
+	 *
+	* @author	Nagoya University
+	* @date		2025/10/31
+	*
+	* @param [in]	sessionKey	ハッシュ値
+	*
+	* @return	シリアライズされた文字列 
+	*/
+	string ProtobufParser::createCreateSessionResponse(const string &sessionKey)
+	{
+		string retStr = "";
+		retStr = systemResponseSerializeToString("session", sessionKey);
+		
+		return retStr;
+	}
+
+	/**
+	 * 接続要求エラー応答のシリアライズ
+	 *
+	* @author	Nagoya University
+	* @date		2025/10/31
+	*
+	* @param [in]	errCode		エラーコード
+	* @param [in]	errMessage	エラーメッセージ
+	*
+	* @return	シリアライズされた文字列 
+	*/
+	string ProtobufParser::createCreateSessionErrorResponse(const string &errCode, const string &errMessage)
+	{
+		string retStr = "";
+		retStr = systemResponseSerializeToString("session", errMessage, -1, errCode);
+		
+		return retStr;
+	}
+
+	/**
+	 * クエリ登録のシリアライズ
+	 *
+	* @author	Nagoya University
+	* @date		2025/10/31
+	*
+	* @param [in]	query				クエリ文
+	* @param [in]	key					セッションキー
+	* @param [in]	receptionPort_p		受付ポート番号
+	* @param [in]	senderSID_p			実行元SID
+	* @param [in]	destionationSID_p	宛先SID
+	* @param [in]	getTcpSession_p		TCP Sessionをサーバへ要求
+	* @param [in]	continuous			継続クエリか判定するフラグ
+	*
+	* @return	シリアライズされた文字列 
+	*/
+	string ProtobufParser::querySerializeToString(const string &query, const string &key, const bool &continuous, const int* receptionPort_p,
+		const unsigned long long* senderSID_p, const unsigned long long* destionationSID_p, const bool* getTcpSession_p)
+	{
+		string retStr = "";
+		dm2_proto::System_request_dm2is msg;
+
+		dm2_proto::System_request* request = msg.mutable_system_request();
+		
+		request->set_type("query");
+		request->set_key(key);
+		request->set_body(query);
+		if (receptionPort_p != nullptr) request->set_port(*receptionPort_p);
+		if (senderSID_p != nullptr) request->set_sender(*senderSID_p);
+		if (destionationSID_p != nullptr) request->set_destination(*destionationSID_p);
+		if (getTcpSession_p != nullptr) request->set_tcp_session(*getTcpSession_p);
+		request->set_continuous(continuous);
+
+		msg.SerializeToString(&retStr);
+		return retStr;
+	}
+
+	/**
+	 * クエリ登録のシリアライズ
+	 *
+	* @author	Nagoya University
+	* @date		2025/10/31
+	*
+	* @param [in]	query			クエリ文
+	* @param [in]	key				セッションキー
+	* @param [in]	receptionPort	受付ポート番号
+	* @param [in]	getTcpSession	TCP Sessionをサーバへ要求
+	* @param [in]	continuous		継続クエリか判定するフラグ
+	*
+	* @return	シリアライズされた文字列 
+	*/
+	string ProtobufParser::createQuery(const string &query, const string &key, const int receptionPort, const bool &getTcpSession, const bool &continuous)
+	{
+		string retStr = "";
+		retStr = querySerializeToString(query, key, continuous, &receptionPort, nullptr, nullptr, &getTcpSession);
+		//retStr = createHeader("[system]", retStr) + retStr;
+		return retStr;
+	}
+
+	/**
+	 * クエリ登録のシリアライズ
+	 *
+	* @author	Nagoya University
+	* @date		2025/10/31
+	*
+	* @param [in]	query			クエリ文
+	* @param [in]	key				セッションキー
+	* @param [in]	destionationSID	宛先SID
+	* @param [in]	continuous		継続クエリか判定するフラグ
+	*
+	* @return	シリアライズされた文字列 
+	*/
+	string ProtobufParser::createQuery(const string &query, const string &key, unsigned long long destinationSID, const bool &continuous)
+	{
+		string retStr = "";
+		retStr = querySerializeToString(query, key, continuous, nullptr, nullptr, &destinationSID, nullptr);
+		//retStr = createHeader("[system]", retStr) + retStr;
+		return retStr;
+	}
+
+	/**
+	 * クエリ登録応答のシリアライズ
+	 *
+	* @author	Nagoya University
+	* @date		2025/10/31
+	*
+	* @param [in]	query			クエリ管理番号
+	* @param [in]	tcpPort			ポート番号
+	*
+	* @return	シリアライズされた文字列 
+	*/
+	string ProtobufParser::createQueryResponse(const unsigned int mngId, const int tcpPort)
+	{
+		string retStr = "";
+		retStr = systemResponseSerializeToString("query", to_string(mngId), tcpPort);
+		//retStr = createHeader("[system]", retStr) + retStr;
+		return retStr;
+	}
+
+	/**
+	 * クエリ登録エラー応答のシリアライズ
+	 *
+	* @author	Nagoya University
+	* @date		2025/10/31
+	*
+	* @param [in]	errCode		エラーコード
+	* @param [in]	errMessage	エラーメッセージ
+	*
+	* @return	シリアライズされた文字列 
+	*/
+	string ProtobufParser::createQueryErrorResponse(const string &errCode, const string &errMessage)
+	{
+		string retStr = "";
+		retStr = systemResponseSerializeToString("query", errMessage, -1, errCode);
+		//retStr = createHeader("[system]", retStr) + retStr;
+		return retStr;
+	}
+
+	/**
+	 * クエリ結果のシリアライズ
+	 *
+	* @author	Nagoya University
+	* @date		2025/10/31
+	*
+	* @param [in]	tableName		テーブル名
+	* @param [in]	ts				クエリ結果タプルセット
+	* @param [in]	isDynamicColumn	不定形メッセージフラグ
+	*
+	* @return	シリアライズされた文字列 
+	*/
+	string ProtobufParser::queryResultSerializeToString(const string &tableName, TupleSet& ts, const bool isDynamicColumn)
+	{
+		if (isDynamicColumn)
+		{
+			return SerializeToStringDynamically(ts);
+		}
+		else {
+			if (tableName == "object_info" || tableName == "object_info_processed") {
+				return objectInfoSerializeToString_0_6_0(ts);
+			} else if (tableName == "object_info_0_8_0" || tableName == "object_info_0_8_0_processed") {
+				return objectInfoSerializeToString_0_8_0(ts);
+			} else if (tableName == "object_info_0_8_1" || tableName == "object_info_0_8_1_processed") {
+				return objectInfoSerializeToString_0_8_1(ts);
+			} else if (tableName == "freespace_info") {
+				return freespaceInfoSerializeToString_0_6_0(ts);
+			} else if (tableName == "freespace_info_0_8_0") {
+				return freespaceInfoSerializeToString_0_8_0(ts);
+			} else if (tableName == "freespace_info_0_8_1") {
+				return freespaceInfoSerializeToString_0_8_1(ts);
+			} else if (tableName == "signal_info") {
+				return signalInfoSerializeToString_0_6_0(ts);
+			} else if (tableName == "sensor_info") {
+				return sensorInfoSerializeToString_0_8_0(ts);
+			} else if (tableName == "sensor_info_0_8_1") {
+				return sensorInfoSerializeToString_0_8_1(ts);
+			} else {
+				return SerializeToStringDynamically(ts);
+			}
+		}
+	}
+
+	/**
+	 * クエリ結果のシリアライズ
+	 *
+	* @author	Nagoya University
+	* @date		2025/10/31
+	*
+	* @param [in]	mngId			クエリ管理番号
+	* @param [in]	tableName		テーブル名
+	* @param [in]	ts				クエリ結果タプルセット
+	* @param [in]	isDynamicColumn	不定形メッセージフラグ
+	*
+	* @return	シリアライズされた文字列 
+	*/
+	string ProtobufParser::createQueryResult(const unsigned int mngId, const string &tableName, TupleSet& ts, const bool isDynamicColumn)
+	{
+		string retStr = queryResultSerializeToString(tableName, ts, isDynamicColumn);
+		retStr = createHeader(mngId, tableName, retStr) + retStr;
+		
+		return retStr;
+	}
+
+	/**
+	 * クエリ結果のシリアライズ
+	 *
+	* @author	Nagoya University
+	* @date		2025/10/31
+	*
+	* @param [in]	mngId			クエリ管理番号
+	* @param [in]	tableName		テーブル名
+	* @param [in]	ts				クエリ結果タプルセット
+	* @param [in]	isDynamicColumn	不定形メッセージフラグ
+	* @param [in]	sepSize			分割メッセージサイズ
+	*
+	* @return	シリアライズされた文字列を指定サイズで分割したリスト 
+	*/
+	vector<string> ProtobufParser::createQueryResult(const unsigned int mngId, const string &tableName, TupleSet& ts, const bool isDynamicColumn, const int sepSize)
+	{
+		vector<string> retStrList;
+
+		string retStr = queryResultSerializeToString(tableName, ts, isDynamicColumn);
+
+		StringUtil stringUtil;
+		stringUtil.splitBySize(retStr, sepSize - PROTOBUF_HEADER_FIXED_SIZE, retStrList);
+		for(int i = 0; i < retStrList.size() ; i++)
+		{
+			retStrList[i] = createHeader(mngId, tableName, retStrList[i], retStr.size(), i, retStrList.size()) + retStrList[i];
+		}
+		return retStrList;
+	}
+
+	/**
+	 * クエリキャンセルのシリアライズ
+	 *
+	* @author	Nagoya University
+	* @date		2025/10/31
+	*
+	* @param [in]	mngId	クエリ管理番号
+	* @param [in]	key		セッションキー
+	*
+	* @return	シリアライズされた文字列 
+	*/
+	string ProtobufParser::createCancelSerializeToString(const unsigned int mngId, const string &key)
+	{
+		string retStr = "";
+		dm2_proto::System_request_dm2is msg;
+
+		dm2_proto::System_request* request = msg.mutable_system_request();
+		request->set_type("cancel");
+		request->set_key(key);
+		request->set_body(to_string(mngId));
+
+		msg.SerializeToString(&retStr);
+		return retStr;
+	}
+
+	/**
+	 * クエリキャンセルのシリアライズ
+	 *
+	* @author	Nagoya University
+	* @date		2025/10/31
+	*
+	* @param [in]	mngId	クエリ管理番号
+	* @param [in]	key		セッションキー
+	*
+	* @return	シリアライズされた文字列 
+	*/
+	string ProtobufParser::createCancel(const unsigned int mngId, const string &key)
+	{
+		string retStr = "";
+		retStr = createCancelSerializeToString(mngId, key);
+
+		//retStr = createHeader("[system]", retStr) + retStr;
+		return retStr;
+	}
+	/**
+	 * クエリキャンセル応答のシリアライズ
+	 *
+	* @author	Nagoya University
+	* @date		2025/10/31
+	*
+	* @param [in]	mngId	クエリ管理番号
+	* @param [in]	key		セッションキー
+	*
+	* @return	シリアライズされた文字列 
+	*/
+	string ProtobufParser::createCancelResponse(const unsigned int mngId)
+	{
+		string retStr = "";
+		retStr = systemResponseSerializeToString("cancel", to_string(mngId));
+		//retStr = createHeader("[system]", retStr) + retStr;
+		return retStr;
+	}
+
+	/**
+	 * クエリキャンセルエラー応答のシリアライズ
+	 *
+	* @author	Nagoya University
+	* @date		2025/10/31
+	*
+	* @param [in]	errCode		エラーコード
+	* @param [in]	errMessage	エラーメッセージ
+	*
+	* @return	シリアライズされた文字列 
+	*/
+	string ProtobufParser::createCancelErrorResponse(const string &errCode, const string &errMessage)
+	{
+		string retStr = "";
+		retStr = systemResponseSerializeToString("cancel", errMessage, -1, errCode);
+		//retStr = createHeader("[system]", retStr) + retStr;
+		return retStr;
+	}
+	/**
+	 * ストリームデータのシリアライズ
+	 *
+	* @author	Nagoya University
+	* @date		2025/10/31
+	*
+	* @param [in]	tableName		テーブル名
+	* @param [in]	tuples			ストリームデータタプルリスト
+	*
+	* @return	シリアライズされた文字列を指定サイズで分割したリスト 
+	*/
+	string ProtobufParser::streamSerializeToString(const string &tableName, const vector<Tuple> &tuples)
+	{
+		if (tableName == "object_info" || tableName == "object_info_processed") {
+			vector<Tuple> normalizedTuples = normalizeTuple(tuples, objectInfoTypeList_0_6_0);
+			return objectInfoSerializeToString_0_6_0(normalizedTuples);
+		} else if (tableName == "object_info_0_8_0" || tableName == "object_info_0_8_0_processed") {
+			vector<Tuple> normalizedTuples = normalizeTuple(tuples, objectInfoTypeList_0_8_0);
+			return objectInfoSerializeToString_0_8_0(normalizedTuples);
+		} else if (tableName == "object_info_0_8_1" || tableName == "object_info_0_8_1_processed") {
+			vector<Tuple> normalizedTuples = normalizeTuple(tuples, objectInfoTypeList_0_8_1);
+			return objectInfoSerializeToString_0_8_1(normalizedTuples);
+		} else if (tableName == "freespace_info") {
+			vector<Tuple> normalizedTuples = normalizeTuple(tuples, freespaceInfoTypeList_0_6_0);
+			return freespaceInfoSerializeToString_0_6_0(normalizedTuples);
+		} else if (tableName == "freespace_info_0_8_0") {
+			vector<Tuple> normalizedTuples = normalizeTuple(tuples, freespaceInfoTypeList_0_8_0);
+			return freespaceInfoSerializeToString_0_8_0(normalizedTuples);
+		} else if (tableName == "freespace_info_0_8_1") {
+			vector<Tuple> normalizedTuples = normalizeTuple(tuples, freespaceInfoTypeList_0_8_1);
+			return freespaceInfoSerializeToString_0_8_1(normalizedTuples);
+		} else if (tableName == "signal_info") {
+			vector<Tuple> normalizedTuples = normalizeTuple(tuples, signalInfoTypeList_0_6_0);
+			return signalInfoSerializeToString_0_6_0(normalizedTuples);
+		} else if (tableName == "sensor_info") {
+			vector<Tuple> normalizedTuples = normalizeTuple(tuples, sensorInfoTypeList_0_8_0);
+			return sensorInfoSerializeToString_0_8_0(normalizedTuples);
+		} else if (tableName == "sensor_info_0_8_1") {
+			vector<Tuple> normalizedTuples = normalizeTuple(tuples, sensorInfoTypeList_0_8_1);
+			return sensorInfoSerializeToString_0_8_1(normalizedTuples);
+		} else {
+			return SerializeToStringDynamically(tuples, nullptr);
+		}
+	}
+
+	/**
+	 * ストリームデータの生成
+	 *
+	* @author	Nagoya University
+	* @date		2025/10/31
+	*
+	* @param [in]	tableName		テーブル名
+	* @param [in]	tuples			ストリームデータタプルリスト
+	* @param [in]	sepSize			ストリームデータタプルリスト
+	*
+	* @return	シリアライズされた文字列リスト 
+	*/
+	vector<string> ProtobufParser::createStreamList(const string &tableName, const vector<Tuple> &tuples, const string &key, const int sepSize)
+	{
+		vector<string> retStrList;
+		
+		string retStr = streamSerializeToString(tableName, tuples);
+		/*
+		cout << "createStreamList:retStr:" << retStr << endl;
+		cout << "createStreamList:sepSize:" << sepSize << endl;
+		cout << "createStreamList:PROTOBUF_HEADER_FIXED_SIZE:" << PROTOBUF_HEADER_FIXED_SIZE << endl;
+		cout << "createStreamList:key:" << key.size() << endl;
+		cout << "createStreamList:calc:" << sepSize - PROTOBUF_HEADER_FIXED_SIZE - key.size() << endl;
+		cout << "createStreamList:retStr.size():" << retStr.size() << endl;
+		*/
+		StringUtil stringUtil;
+		stringUtil.splitBySize(retStr, sepSize - PROTOBUF_HEADER_FIXED_SIZE - key.size(), retStrList);
+
+		/*
+		if (retStrList.size() == 1) {
+			retStrList[0] = createHeader(0, tableName, retStr, retStr.size(), 0, retStrList.size(), key) + retStr;
+			//cout << "createStreamList:retStrList[0].size():" << retStrList[0].size() << endl;
+		} else {
+		*/
+		for(int i = 0; i < retStrList.size() ; i++)
+		{
+			retStrList[i] = createHeader(0, tableName, retStrList[i], retStr.size(), i, retStrList.size(), key) + retStrList[i];
+			/*
+			cout << "createStreamList:retStrList[i] size:" << retStrList[i].size() << endl;
+			cout << "createStreamList:retStr size:" << retStr.size() << endl;
+			cout << "createStreamList:retStrList size:" << retStrList.size() << endl;
+			cout << "createStreamList:Serialized+Header:" << retStrList[i] << endl;
+			*/
+		}
+		return retStrList;
+	}
+
+	/**
+	* 物標情報のシリアライズ (API 仕様案 Ver.0.6.0)
 	*
 	* @author	Shinichi Kusayama
-	* @date		2024/07/03
+	* @date	2023/12/10
 	*
-	* @param [in]	filed	フィールド
+	* @param [in]	tuples	タプルリスト
 	*
-	* @return	文字列
+	* @return	シリアライズされた文字列
 	 */
+	string ProtobufParser::objectInfoSerializeToString_0_6_0(const vector<Tuple> &tuples)
+	{
+		string retStr = "";
+		dm2_proto::Object_info_0_6_0_dm2is msg;
+		for (Tuple tuple : tuples)
+		{
+			try {
+				setObjectInfo(msg.add_object_info(), msg.add_is_tuple_info(), tuple);
+			} catch (...) {
+				msg.mutable_object_info()->RemoveLast();
+				loggerWarn(__func__, "]Serialize Failed");
+			}
+		}
+		if (msg.object_info_size() > 0) msg.SerializeToString(&retStr);
+		return retStr;
+	}
 	/**
 	* 物標情報のシリアライズ (API 仕様案 Ver.0.6.0)
 	*
@@ -61,21 +773,35 @@ namespace IS {
 	 */
 	string ProtobufParser::objectInfoSerializeToString_0_6_0(TupleSet &tupleset)
 	{
+		return objectInfoSerializeToString_0_6_0(tupleset.getTuples());
+	}
+
+	/**
+	* 物標情報のシリアライズ (API 仕様案 Ver.0.8.0)
+	*
+	* @author	Shinichi Kusayama
+	* @date	2023/12/10
+	*
+	* @param [in]	tuples	タプルリスト
+	*
+	* @return	シリアライズされた文字列
+	 */
+	string ProtobufParser::objectInfoSerializeToString_0_8_0(const vector<Tuple> &tuples)
+	{
 		string retStr = "";
-		dm2_proto::Object_info_0_6_0_dm2is msg;
-		for (Tuple tuple : tupleset.getTuples())
+		dm2_proto::Object_info_0_8_0_dm2is msg;
+		for (Tuple tuple : tuples)
 		{
 			try {
 				setObjectInfo(msg.add_object_info(), msg.add_is_tuple_info(), tuple);
 			} catch (...) {
 				msg.mutable_object_info()->RemoveLast();
-				logger->warn("[" + to_string(__func__) + "]Serialize Failed");
+				loggerWarn(__func__, "]Serialize Failed");
 			}
 		}
 		if (msg.object_info_size() > 0) msg.SerializeToString(&retStr);
 		return retStr;
 	}
-
 	/**
 	* 物標情報のシリアライズ (API 仕様案 Ver.0.8.0)
 	*
@@ -88,15 +814,30 @@ namespace IS {
 	 */
 	string ProtobufParser::objectInfoSerializeToString_0_8_0(TupleSet &tupleset)
 	{
+		return objectInfoSerializeToString_0_8_0(tupleset.getTuples());
+	}
+
+	/**
+	* 物標情報のシリアライズ (API 仕様案 Ver.0.8.1)
+	*
+	* @author	Shinichi Kusayama
+	* @date		2024/10/7
+	*
+	* @param [in]	tuples	タプルリスト
+	*
+	* @return	シリアライズされた文字列
+	 */
+	string ProtobufParser::objectInfoSerializeToString_0_8_1(const vector<Tuple> &tuples)
+	{
 		string retStr = "";
-		dm2_proto::Object_info_0_8_0_dm2is msg;
-		for (Tuple tuple : tupleset.getTuples())
+		dm2_proto::Object_info_0_8_1_dm2is msg;
+		for (Tuple tuple : tuples)
 		{
 			try {
 				setObjectInfo(msg.add_object_info(), msg.add_is_tuple_info(), tuple);
 			} catch (...) {
 				msg.mutable_object_info()->RemoveLast();
-				logger->warn("[" + to_string(__func__) + "]Serialize Failed");
+				loggerWarn(__func__, "]Serialize Failed");
 			}
 		}
 		if (msg.object_info_size() > 0) msg.SerializeToString(&retStr);
@@ -114,18 +855,33 @@ namespace IS {
 	 */
 	string ProtobufParser::objectInfoSerializeToString_0_8_1(TupleSet &tupleset)
 	{
+		return objectInfoSerializeToString_0_8_1(tupleset.getTuples());
+	}
+
+	/**
+	* フリースペース情報のシリアライズ (API 仕様案 Ver.0.6.0)
+	*
+	* @author	Shinichi Kusayama
+	* @date	2023/12/10
+	*
+	* @param [in]	tuples	タプルリスト
+	*
+	* @return	シリアライズされた文字列
+	 */
+	string ProtobufParser::freespaceInfoSerializeToString_0_6_0(const vector<Tuple> &tuples)
+	{
 		string retStr = "";
-		dm2_proto::Object_info_0_8_1_dm2is msg;
-		for (Tuple tuple : tupleset.getTuples())
+		dm2_proto::Freespace_info_0_6_0_dm2is msg;
+		for (Tuple tuple : tuples)
 		{
 			try {
-				setObjectInfo(msg.add_object_info(), msg.add_is_tuple_info(), tuple);
+				setFreespaceInfo(msg.add_freespace_info(), msg.add_is_tuple_info(), tuple);
 			} catch (...) {
-				msg.mutable_object_info()->RemoveLast();
-				logger->warn("[" + to_string(__func__) + "]Serialize Failed");
+				msg.mutable_freespace_info()->RemoveLast();
+				loggerWarn(__func__, "]Serialize Failed");
 			}
 		}
-		if (msg.object_info_size() > 0) msg.SerializeToString(&retStr);
+		if (msg.freespace_info_size() > 0) msg.SerializeToString(&retStr);
 		return retStr;
 	}
 	/**
@@ -140,15 +896,30 @@ namespace IS {
 	 */
 	string ProtobufParser::freespaceInfoSerializeToString_0_6_0(TupleSet &tupleset)
 	{
+		return freespaceInfoSerializeToString_0_6_0(tupleset.getTuples());
+	}
+
+	/**
+	* フリースペース情報のシリアライズ (API 仕様案 Ver.0.8.0)
+	*
+	* @author	Shinichi Kusayama
+	* @date		2024/05/10
+	*
+	* @param [in]	tuples	タプルリスト
+	*
+	* @return	シリアライズされた文字列
+	 */
+	string ProtobufParser::freespaceInfoSerializeToString_0_8_0(const vector<Tuple> &tuples)
+	{
 		string retStr = "";
-		dm2_proto::Freespace_info_0_6_0_dm2is msg;
-		for (Tuple tuple : tupleset.getTuples())
+		dm2_proto::Freespace_info_0_8_0_dm2is msg;
+		for (Tuple tuple : tuples)
 		{
 			try {
 				setFreespaceInfo(msg.add_freespace_info(), msg.add_is_tuple_info(), tuple);
 			} catch (...) {
 				msg.mutable_freespace_info()->RemoveLast();
-				logger->warn("[" + to_string(__func__) + "]Serialize Failed");
+				loggerWarn(__func__, "]Serialize Failed");
 			}
 		}
 		if (msg.freespace_info_size() > 0) msg.SerializeToString(&retStr);
@@ -166,15 +937,30 @@ namespace IS {
 	 */
 	string ProtobufParser::freespaceInfoSerializeToString_0_8_0(TupleSet &tupleset)
 	{
+		return freespaceInfoSerializeToString_0_8_0(tupleset.getTuples());
+	}
+
+	/**
+	* フリースペース情報のシリアライズ (API 仕様案 Ver.0.8.1)
+	*
+	* @author	Shinichi Kusayama
+	* @date		2025/06/30
+	*
+	* @param [in]	tuples	タプルリスト
+	*
+	* @return	シリアライズされた文字列
+	 */
+	string ProtobufParser::freespaceInfoSerializeToString_0_8_1(const vector<Tuple> &tuples)
+	{
 		string retStr = "";
-		dm2_proto::Freespace_info_0_8_0_dm2is msg;
-		for (Tuple tuple : tupleset.getTuples())
+		dm2_proto::Freespace_info_0_8_1_dm2is msg;
+		for (Tuple tuple : tuples)
 		{
 			try {
 				setFreespaceInfo(msg.add_freespace_info(), msg.add_is_tuple_info(), tuple);
 			} catch (...) {
 				msg.mutable_freespace_info()->RemoveLast();
-				logger->warn("[" + to_string(__func__) + "]Serialize Failed");
+				loggerWarn(__func__, "]Serialize Failed");
 			}
 		}
 		if (msg.freespace_info_size() > 0) msg.SerializeToString(&retStr);
@@ -192,18 +978,32 @@ namespace IS {
 	 */
 	string ProtobufParser::freespaceInfoSerializeToString_0_8_1(TupleSet &tupleset)
 	{
+		return freespaceInfoSerializeToString_0_8_1(tupleset.getTuples());
+	}
+	/**
+	* 信号情報のシリアライズ (API 仕様案 Ver.0.6.0)
+	*
+	* @author	Shinichi Kusayama
+	* @date	2023/12/10
+	*
+	* @param [in]	tuples	タプルリスト
+	*
+	* @return	シリアライズされた文字列
+	 */
+	string ProtobufParser::signalInfoSerializeToString_0_6_0(const vector<Tuple> &tuples)
+	{
 		string retStr = "";
-		dm2_proto::Freespace_info_0_8_1_dm2is msg;
-		for (Tuple tuple : tupleset.getTuples())
+		dm2_proto::Signal_info_0_6_0_dm2is msg;
+		for (Tuple tuple : tuples)
 		{
 			try {
-				setFreespaceInfo(msg.add_freespace_info(), msg.add_is_tuple_info(), tuple);
+				setSignalInfo(msg.add_signal_info(), msg.add_is_tuple_info(), tuple);
 			} catch (...) {
-				msg.mutable_freespace_info()->RemoveLast();
-				logger->warn("[" + to_string(__func__) + "]Serialize Failed");
+				msg.mutable_signal_info()->RemoveLast();
+				loggerWarn(__func__, "]Serialize Failed");
 			}
 		}
-		if (msg.freespace_info_size() > 0) msg.SerializeToString(&retStr);
+		if (msg.signal_info_size() > 0) msg.SerializeToString(&retStr);
 		return retStr;
 	}
 	/**
@@ -218,18 +1018,33 @@ namespace IS {
 	 */
 	string ProtobufParser::signalInfoSerializeToString_0_6_0(TupleSet &tupleset)
 	{
+		return signalInfoSerializeToString_0_6_0(tupleset.getTuples());
+	}
+
+	/**
+	* センサー情報のシリアライズ (API 仕様案 Ver.0.8.0)
+	*
+	* @author	Shinichi Kusayama
+	* @date		2024/10/7
+	*
+	* @param [in]	tuples	タプルリスト
+	*
+	* @return	シリアライズされた文字列
+	 */
+	string ProtobufParser::sensorInfoSerializeToString_0_8_0(const vector<Tuple> &tuples)
+	{
 		string retStr = "";
-		dm2_proto::Signal_info_0_6_0_dm2is msg;
-		for (Tuple tuple : tupleset.getTuples())
+		dm2_proto::Sensor_info_0_8_0_dm2is msg;
+		for (Tuple tuple : tuples)
 		{
 			try {
-				setSignalInfo(msg.add_signal_info(), msg.add_is_tuple_info(), tuple);
+				setSensorInfo(msg.add_sensor_info(), msg.add_is_tuple_info(), tuple);
 			} catch (...) {
-				msg.mutable_signal_info()->RemoveLast();
-				logger->warn("[" + to_string(__func__) + "]Serialize Failed");
+				msg.mutable_sensor_info()->RemoveLast();
+				loggerWarn(__func__, "]Serialize Failed");
 			}
 		}
-		if (msg.signal_info_size() > 0) msg.SerializeToString(&retStr);
+		if (msg.sensor_info_size() > 0) msg.SerializeToString(&retStr);
 		return retStr;
 	}
 	/**
@@ -244,15 +1059,30 @@ namespace IS {
 	 */
 	string ProtobufParser::sensorInfoSerializeToString_0_8_0(TupleSet &tupleset)
 	{
+		return sensorInfoSerializeToString_0_8_0(tupleset.getTuples());
+	}
+
+	/**
+	* センサー情報のシリアライズ (API 仕様案 Ver.0.8.1)
+	*
+	* @author	Shinichi Kusayama
+	* @date		2024/10/7
+	*
+	* @param [in]	tuples	タプルリスト
+	*
+	* @return	シリアライズされた文字列
+	 */
+	string ProtobufParser::sensorInfoSerializeToString_0_8_1(const vector<Tuple> &tuples)
+	{
 		string retStr = "";
-		dm2_proto::Sensor_info_0_8_0_dm2is msg;
-		for (Tuple tuple : tupleset.getTuples())
+		dm2_proto::Sensor_info_0_8_1_dm2is msg;
+		for (Tuple tuple : tuples)
 		{
 			try {
 				setSensorInfo(msg.add_sensor_info(), msg.add_is_tuple_info(), tuple);
 			} catch (...) {
 				msg.mutable_sensor_info()->RemoveLast();
-				logger->warn("[" + to_string(__func__) + "]Serialize Failed");
+				loggerWarn(__func__, "]Serialize Failed");
 			}
 		}
 		if (msg.sensor_info_size() > 0) msg.SerializeToString(&retStr);
@@ -270,19 +1100,7 @@ namespace IS {
 	 */
 	string ProtobufParser::sensorInfoSerializeToString_0_8_1(TupleSet &tupleset)
 	{
-		string retStr = "";
-		dm2_proto::Sensor_info_0_8_1_dm2is msg;
-		for (Tuple tuple : tupleset.getTuples())
-		{
-			try {
-				setSensorInfo(msg.add_sensor_info(), msg.add_is_tuple_info(), tuple);
-			} catch (...) {
-				msg.mutable_sensor_info()->RemoveLast();
-				logger->warn("[" + to_string(__func__) + "]Serialize Failed");
-			}
-		}
-		if (msg.sensor_info_size() > 0) msg.SerializeToString(&retStr);
-		return retStr;
+		return sensorInfoSerializeToString_0_8_1(tupleset.getTuples());
 	}
 	/**
 	* 物標情報のデシリアライズ (API 仕様案 Ver.0.6.0)
@@ -300,13 +1118,19 @@ namespace IS {
 		dm2_proto::Object_info_0_6_0_dm2is msg;
 		msg.ParseFromString(serializedStr);
 		string strVal;
+		// CS からの転送の場合、ここで管理者情報列込の列数がセットされる
+		int attr_size = schema.getAttributeSize();
 		for (int i = 0; i < msg.object_info_size(); i++) {
-			// スキーマのカラム数 + 管理者情報列
-			Tuple tuple(82);
 			const cool4_api_0_6_0::Object_info& obj = msg.object_info(i);
 			const cool4_api_0_6_0::Position_and_movement obj_pm = obj.position_and_movement();
 			const cool4_api_0_6_0::Vehicle_condition obj_vc = obj.vehicle_condition();
 			const dm2_proto::Is_tuple_info& is_info = msg.is_tuple_info(i);
+			if (attr_size == 0) {
+				// 受信アプリの場合、スキーマを持たないため、ここで列数をセット（電文の中に時刻列が入っていれば、管理者情報列分、追加する）
+				attr_size = objectInfo_0_6_0_normal_size;
+				if (is_info.dm2_ts_group_size() > 0) attr_size = attr_size + is_tuple_size;
+			}
+			Tuple tuple(attr_size);
 			long ts = is_info.dm2_create_ts();
 			strVal = DmUtil::getStringFromUnsignedLong(obj.id());
 			tuple.setValue((int)OBJECT_INFO_POS_0_6_0::id, strVal, ts);
@@ -403,7 +1227,7 @@ namespace IS {
 					strVal += DmUtil::getStringFromUnsignedLong(obj.information_source_list(i));
 				}
 				if (strVal != "") strVal = "[" + strVal + "]";
-				any val = stringUtil.getAnyValFromString(strVal, schema.getAttributeType((int)OBJECT_INFO_POS_0_6_0::information_source_list));
+				any val = stringUtil.getAnyValFromString(strVal, objectInfoTypeList_0_6_0[(int)OBJECT_INFO_POS_0_6_0::information_source_list]);
 				tuple.setValue((int)OBJECT_INFO_POS_0_6_0::information_source_list, val, ts);
 			}
 			isTupleInfoDeserializeToTuple(tuple, is_info, ts, (int)OBJECT_INFO_POS_0_6_0::information_source_list + 1);
@@ -426,14 +1250,20 @@ namespace IS {
 		dm2_proto::Object_info_0_8_0_dm2is msg;
 		msg.ParseFromString(serializedStr);
 		string strVal;
+		// CS からの転送の場合、ここで管理者情報列込の列数がセットされる
+		int attr_size = schema.getAttributeSize();
 		for (int i = 0; i < msg.object_info_size(); i++) {
-			// スキーマのカラム数 + 管理者情報列
-			Tuple tuple(91);
 			const cool4_api_0_8_0::Object_info_0_8_0& obj = msg.object_info(i);
 			const cool4_api_0_8_0::Position_and_movement obj_pm = obj.position_and_movement();
 			const cool4_api_0_8_0::Vehicle_condition obj_vc = obj.vehicle_condition();
 			const cool4_api_0_8_0::Tracking_information obj_ti = obj.tracking_information();
 			const dm2_proto::Is_tuple_info& is_info = msg.is_tuple_info(i);
+			if (attr_size == 0) {
+				// 受信アプリの場合、スキーマを持たないため、ここで列数をセット（電文の中に時刻列が入っていれば、管理者情報列分、追加する）
+				attr_size = objectInfo_0_8_0_normal_size;
+				if (is_info.dm2_ts_group_size() > 0) attr_size = attr_size + is_tuple_size;
+			}
+			Tuple tuple(attr_size);
 			long ts = is_info.dm2_create_ts();
 			tuple.setValue((int)OBJECT_INFO_POS_0_8_0::object_id, (unsigned long long)obj.object_id(), ts);
 			tuple.setValue((int)OBJECT_INFO_POS_0_8_0::time, (long)obj.time(), ts);
@@ -547,15 +1377,22 @@ namespace IS {
 	{
 		dm2_proto::Object_info_0_8_1_dm2is msg;
 		msg.ParseFromString(serializedStr);
+		//cout << msg.object_info_size() << endl;
 		string strVal;
+		// CS からの転送の場合、ここで管理者情報列込の列数がセットされる
+		int attr_size = schema.getAttributeSize();
 		for (int i = 0; i < msg.object_info_size(); i++) {
-			// スキーマのカラム数 + 管理者情報列
-			Tuple tuple(92);
 			const cool4_api_0_8_0::Object_info_0_8_1& obj = msg.object_info(i);
 			const cool4_api_0_8_0::Position_and_movement obj_pm = obj.position_and_movement();
 			const cool4_api_0_8_0::Vehicle_condition obj_vc = obj.vehicle_condition();
 			const cool4_api_0_8_0::Tracking_information obj_ti = obj.tracking_information();
 			const dm2_proto::Is_tuple_info& is_info = msg.is_tuple_info(i);
+			if (attr_size == 0) {
+				// 受信アプリの場合、スキーマを持たないため、ここで列数をセット（電文の中に時刻列が入っていれば、管理者情報列分、追加する）
+				attr_size = objectInfo_0_8_1_normal_size;
+				if (is_info.dm2_ts_group_size() > 0) attr_size = attr_size + is_tuple_size;
+			}
+			Tuple tuple(attr_size);
 			long ts = is_info.dm2_create_ts();
 			tuple.setValue((int)OBJECT_INFO_POS_0_8_1::object_id, (unsigned long long)obj.object_id(), ts);
 			tuple.setValue((int)OBJECT_INFO_POS_0_8_1::time, (long)obj.time(), ts);
@@ -671,13 +1508,19 @@ namespace IS {
 		dm2_proto::Freespace_info_0_6_0_dm2is msg;
 		msg.ParseFromString(serializedStr);
 		string strVal;
+		// CS からの転送の場合、ここで管理者情報列込の列数がセットされる
+		int attr_size = schema.getAttributeSize();
 		for (int i = 0; i < msg.freespace_info_size(); i++) {
-			// スキーマのカラム数 + 管理者情報列
-			Tuple tuple(57);
 			const cool4_api_0_6_0::Freespace_info& fre = msg.freespace_info(i);
 			const cool4_api_0_6_0::Location pos_begin = fre.position_begin();
 			const cool4_api_0_6_0::Location pos_end = fre.position_end();
 			const dm2_proto::Is_tuple_info& is_info = msg.is_tuple_info(i);
+			if (attr_size == 0) {
+				// 受信アプリの場合、スキーマを持たないため、ここで列数をセット（電文の中に時刻列が入っていれば、管理者情報列分、追加する）
+				attr_size = freespaceInfo_0_6_0_normal_size;
+				if (is_info.dm2_ts_group_size() > 0) attr_size = attr_size + is_tuple_size;
+			}
+			Tuple tuple(attr_size);
 			long ts = is_info.dm2_create_ts();
 			strVal = DmUtil::getStringFromUnsignedLong(fre.id());
 			tuple.setValue((int)FREESPACE_INFO_POS_0_6_0::id, strVal, ts);
@@ -759,7 +1602,7 @@ namespace IS {
 					strVal += DmUtil::getStringFromUnsignedLong(fre.information_source_list(i));
 				}
 				if (strVal != "") strVal = "[" + strVal + "]";
-				any val = stringUtil.getAnyValFromString(strVal, schema.getAttributeType((int)FREESPACE_INFO_POS_0_6_0::information_source_list));
+				any val = stringUtil.getAnyValFromString(strVal, freespaceInfoTypeList_0_6_0[(int)FREESPACE_INFO_POS_0_6_0::information_source_list]);
 				tuple.setValue((int)FREESPACE_INFO_POS_0_6_0::information_source_list, val, ts);
 			}
 			isTupleInfoDeserializeToTuple(tuple, is_info, ts, (int)FREESPACE_INFO_POS_0_6_0::information_source_list + 1);
@@ -782,14 +1625,20 @@ namespace IS {
 		dm2_proto::Freespace_info_0_8_0_dm2is msg;
 		msg.ParseFromString(serializedStr);
 		string strVal;
+		// CS からの転送の場合、ここで管理者情報列込の列数がセットされる
+		int attr_size = schema.getAttributeSize();
 		for (int i = 0; i < msg.freespace_info_size(); i++) {
-			// スキーマのカラム数 + 管理者情報列
-			Tuple tuple(95);
 			const cool4_api_0_8_0::Freespace_info_0_8_0& fre = msg.freespace_info(i);
 			const cool4_api_0_8_0::Location vertices_begin = fre.vertices_begin();
 			const cool4_api_0_8_0::Location pos_begin = fre.position_begin();
 			const cool4_api_0_8_0::Location pos_end = fre.position_end();
 			const dm2_proto::Is_tuple_info& is_info = msg.is_tuple_info(i);
+			if (attr_size == 0) {
+				// 受信アプリの場合、スキーマを持たないため、ここで列数をセット（電文の中に時刻列が入っていれば、管理者情報列分、追加する）
+				attr_size = freespaceInfo_0_8_0_normal_size;
+				if (is_info.dm2_ts_group_size() > 0) attr_size = attr_size + is_tuple_size;
+			}
+			Tuple tuple(attr_size);
 			long ts = is_info.dm2_create_ts();
 			tuple.setValue((int)FREESPACE_INFO_POS_0_8_0::id, (unsigned long long)fre.id(), ts);
 			tuple.setValue((int)FREESPACE_INFO_POS_0_8_0::time, (long)fre.time(), ts);
@@ -920,14 +1769,20 @@ namespace IS {
 		dm2_proto::Freespace_info_0_8_1_dm2is msg;
 		msg.ParseFromString(serializedStr);
 		string strVal;
+		// CS からの転送の場合、ここで管理者情報列込の列数がセットされる
+		int attr_size = schema.getAttributeSize();
 		for (int i = 0; i < msg.freespace_info_size(); i++) {
-			// スキーマのカラム数 + 管理者情報列
-			Tuple tuple(96);
 			const cool4_api_0_8_0::Freespace_info_0_8_1& fre = msg.freespace_info(i);
 			const cool4_api_0_8_0::Location vertices_begin = fre.vertices_begin();
 			const cool4_api_0_8_0::Location pos_begin = fre.position_begin();
 			const cool4_api_0_8_0::Location pos_end = fre.position_end();
 			const dm2_proto::Is_tuple_info& is_info = msg.is_tuple_info(i);
+			if (attr_size == 0) {
+				// 受信アプリの場合、スキーマを持たないため、ここで列数をセット（電文の中に時刻列が入っていれば、管理者情報列分、追加する）
+				attr_size = freespaceInfo_0_8_1_normal_size;
+				if (is_info.dm2_ts_group_size() > 0) attr_size = attr_size + is_tuple_size;
+			}
+			Tuple tuple(attr_size);
 			long ts = is_info.dm2_create_ts();
 			tuple.setValue((int)FREESPACE_INFO_POS_0_8_1::id, (unsigned long long)fre.id(), ts);
 			tuple.setValue((int)FREESPACE_INFO_POS_0_8_1::time, (long)fre.time(), ts);
@@ -1059,11 +1914,17 @@ namespace IS {
 		dm2_proto::Signal_info_0_6_0_dm2is msg;
 		msg.ParseFromString(serializedStr);
 		string strVal;
+		// CS からの転送の場合、ここで管理者情報列込の列数がセットされる
+		int attr_size = schema.getAttributeSize();
 		for (int i = 0; i < msg.signal_info_size(); i++) {
-			// スキーマのカラム数 + 管理者情報列
-			Tuple tuple(59);
 			const cool4_api_0_6_0::Signal_info& sig = msg.signal_info(i);
 			const dm2_proto::Is_tuple_info& is_info = msg.is_tuple_info(i);
+			if (attr_size == 0) {
+				// 受信アプリの場合、スキーマを持たないため、ここで列数をセット（電文の中に時刻列が入っていれば、管理者情報列分、追加する）
+				attr_size = signalInfo_0_6_0_normal_size;
+				if (is_info.dm2_ts_group_size() > 0) attr_size = attr_size + is_tuple_size;
+			}
+			Tuple tuple(attr_size);
 			long ts = is_info.dm2_create_ts();
 			tuple.setValue((int)SIGNAL_INFO_POS_0_6_0::crp_id, (int)sig.crp_id(), ts);
 			{
@@ -1072,7 +1933,7 @@ namespace IS {
 					if (i != 0) strVal += ",";
 					strVal += to_string(sig.id(i));
 				}
-				tuple.setValue((int)SIGNAL_INFO_POS_0_6_0::id, stringUtil.getAnyValFromString(strVal, schema.getAttributeType((int)SIGNAL_INFO_POS_0_6_0::id)), ts);
+				tuple.setValue((int)SIGNAL_INFO_POS_0_6_0::id, stringUtil.getAnyValFromString(strVal, signalInfoTypeList_0_6_0[(int)SIGNAL_INFO_POS_0_6_0::id]), ts);
 			}
 			tuple.setValue((int)SIGNAL_INFO_POS_0_6_0::time, (long)sig.time(), ts);
 			if (sig.has_state()) { tuple.setValue((int)SIGNAL_INFO_POS_0_6_0::state, (int)sig.state(), ts); } else { tuple.setValue((int)SIGNAL_INFO_POS_0_6_0::state, signalInfoUnknownVals_0_6_0[(int)SIGNAL_INFO_POS_0_6_0::state], ts); }
@@ -1113,12 +1974,18 @@ namespace IS {
 		dm2_proto::Sensor_info_0_8_0_dm2is msg;
 		msg.ParseFromString(serializedStr);
 		string strVal;
+		// CS からの転送の場合、ここで管理者情報列込の列数がセットされる
+		int attr_size = schema.getAttributeSize();
 		for (int i = 0; i < msg.sensor_info_size(); i++) {
-			// スキーマのカラム数 + 管理者情報列
-			Tuple tuple(74);
 			const cool4_api_0_8_0::Sensor_info_0_8_0& sen = msg.sensor_info(i);
 			const cool4_api_0_8_0::Position sen_po = sen.position();
 			const dm2_proto::Is_tuple_info& is_info = msg.is_tuple_info(i);
+			if (attr_size == 0) {
+				// 受信アプリの場合、スキーマを持たないため、ここで列数をセット（電文の中に時刻列が入っていれば、管理者情報列分、追加する）
+				attr_size = sensorInfo_0_8_0_normal_size;
+				if (is_info.dm2_ts_group_size() > 0) attr_size = attr_size + is_tuple_size;
+			}
+			Tuple tuple(attr_size);
 			long ts = is_info.dm2_create_ts();
 			tuple.setValue((int)SENSOR_INFO_POS_0_8_0::unit_id, (unsigned long long)sen.unit_id(), ts);
 			tuple.setValue((int)SENSOR_INFO_POS_0_8_0::sensor_id, (int)sen.sensor_id(), ts);
@@ -1198,12 +2065,18 @@ namespace IS {
 		dm2_proto::Sensor_info_0_8_1_dm2is msg;
 		msg.ParseFromString(serializedStr);
 		string strVal;
+		// CS からの転送の場合、ここで管理者情報列込の列数がセットされる
+		int attr_size = schema.getAttributeSize();
 		for (int i = 0; i < msg.sensor_info_size(); i++) {
-			// スキーマのカラム数 + 管理者情報列
-			Tuple tuple(75);
 			const cool4_api_0_8_0::Sensor_info_0_8_1& sen = msg.sensor_info(i);
 			const cool4_api_0_8_0::Position sen_po = sen.position();
 			const dm2_proto::Is_tuple_info& is_info = msg.is_tuple_info(i);
+			if (attr_size == 0) {
+				// 受信アプリの場合、スキーマを持たないため、ここで列数をセット（電文の中に時刻列が入っていれば、管理者情報列分、追加する）
+				attr_size = sensorInfo_0_8_1_normal_size;
+				if (is_info.dm2_ts_group_size() > 0) attr_size = attr_size + is_tuple_size;
+			}
+			Tuple tuple(attr_size);
 			long ts = is_info.dm2_create_ts();
 			tuple.setValue((int)SENSOR_INFO_POS_0_8_1::unit_id, (unsigned long long)sen.unit_id(), ts);
 			tuple.setValue((int)SENSOR_INFO_POS_0_8_1::sensor_id, (int)sen.sensor_id(), ts);
@@ -1280,13 +2153,14 @@ namespace IS {
 	*
 	 */
 	void ProtobufParser::isTupleInfoDeserializeToTuple(Tuple &tuple, const dm2_proto::Is_tuple_info &is_info, long &ts, const int &curIdx)
-	{
+	{	
+		if (tuple.size() <= curIdx + (int)IS_TUPLE_INFO_POS::dm2_ts_group) return;
 		string strVal;
 		// DBシステムが付与する項目
 		if (is_info.has_dm2_creator_id()) {
 			tuple.setValue(curIdx + (int)IS_TUPLE_INFO_POS::dm2_creator_id, is_info.dm2_creator_id(), ts);
 		} else {
-			strVal = "dm2sampleuser";
+			strVal = "dm2developer1";
 			tuple.setValue(curIdx + (int)IS_TUPLE_INFO_POS::dm2_creator_id, strVal, ts);
 		}
 		if (is_info.has_dm2_ip_addr()) {
@@ -1321,7 +2195,7 @@ namespace IS {
 		int tuple_size = tuple.size();
 		cool4_api_0_6_0::Position_and_movement* obj_pm = obj->mutable_position_and_movement();
 		cool4_api_0_6_0::Vehicle_condition* obj_vc = obj->mutable_vehicle_condition();
-		any vals[tuple_size];
+		vector<any> vals(tuple_size);
 		string strVal;
 		long ts_first = 0;
 		long ts_tmp = 0;
@@ -1441,7 +2315,7 @@ namespace IS {
 		cool4_api_0_8_0::Position_and_movement* obj_pm = obj->mutable_position_and_movement();
 		cool4_api_0_8_0::Vehicle_condition* obj_vc = obj->mutable_vehicle_condition();
 		cool4_api_0_8_0::Tracking_information* obj_ti = obj->mutable_tracking_information();
-		any vals[tuple_size];
+		vector<any> vals(tuple_size);
 		string strVal;
 		long ts_first = 0;
 		long ts_tmp = 0;
@@ -1571,7 +2445,7 @@ namespace IS {
 		cool4_api_0_8_0::Position_and_movement* obj_pm = obj->mutable_position_and_movement();
 		cool4_api_0_8_0::Vehicle_condition* obj_vc = obj->mutable_vehicle_condition();
 		cool4_api_0_8_0::Tracking_information* obj_ti = obj->mutable_tracking_information();
-		any vals[tuple_size];
+		vector<any> vals(tuple_size);
 		string strVal;
 		long ts_first = 0;
 		long ts_tmp = 0;
@@ -1701,7 +2575,7 @@ namespace IS {
 		int tuple_size = tuple.size();
 		cool4_api_0_6_0::Location* pos_begin = fre->mutable_position_begin();
 		cool4_api_0_6_0::Location* pos_end = fre->mutable_position_end();
-		any vals[tuple_size];
+		vector<any> vals(tuple_size);
 		string strVal;
 		long ts_first = 0;
 		long ts_tmp = 0;
@@ -1799,7 +2673,7 @@ namespace IS {
 		cool4_api_0_8_0::Location* vertices_begin = fre->mutable_vertices_begin();
 		cool4_api_0_8_0::Location* pos_begin = fre->mutable_position_begin();
 		cool4_api_0_8_0::Location* pos_end = fre->mutable_position_end();
-		any vals[tuple_size];
+		vector<any> vals(tuple_size);
 		string strVal;
 		long ts_first = 0;
 		long ts_tmp = 0;
@@ -1953,7 +2827,7 @@ namespace IS {
 		cool4_api_0_8_0::Location* vertices_begin = fre->mutable_vertices_begin();
 		cool4_api_0_8_0::Location* pos_begin = fre->mutable_position_begin();
 		cool4_api_0_8_0::Location* pos_end = fre->mutable_position_end();
-		any vals[tuple_size];
+		vector<any> vals(tuple_size);
 		string strVal;
 		long ts_first = 0;
 		long ts_tmp = 0;
@@ -2105,7 +2979,7 @@ namespace IS {
 	void ProtobufParser::setSignalInfo(cool4_api_0_6_0::Signal_info *sig, dm2_proto::Is_tuple_info *is_info, Tuple tuple)
 	{
 		int tuple_size = tuple.size();
-		any vals[tuple_size];
+		vector<any> vals(tuple_size);
 		string strVal;
 		long ts_first = 0;
 		long ts_tmp = 0;
@@ -2165,7 +3039,7 @@ namespace IS {
 	{
 		int tuple_size = tuple.size();
 		cool4_api_0_8_0::Position* sen_po = sen->mutable_position();
-		any vals[tuple_size];
+		vector<any> vals(tuple_size);
 		string strVal;
 		long ts_first = 0;
 		long ts_tmp = 0;
@@ -2261,7 +3135,7 @@ namespace IS {
 	{
 		int tuple_size = tuple.size();
 		cool4_api_0_8_0::Position* sen_po = sen->mutable_position();
-		any vals[tuple_size];
+		vector<any> vals(tuple_size);
 		string strVal;
 		long ts_first = 0;
 		long ts_tmp = 0;
@@ -2353,10 +3227,11 @@ namespace IS {
 	*
 	* @return	シリアライズされた文字列
 	 */
-	void ProtobufParser::setIsTupleInfo(dm2_proto::Is_tuple_info *is_info, any vals[], const int &curIdx)
+	void ProtobufParser::setIsTupleInfo(dm2_proto::Is_tuple_info *is_info, vector<any> &vals, const int &curIdx)
 	{
+		if (vals.size() <= curIdx + (int)IS_TUPLE_INFO_POS::dm2_ts_group) return;
 		string strVal;
-		strVal = any_cast<string>(vals[curIdx + (int)IS_TUPLE_INFO_POS::dm2_creator_id]); if (strVal != "dm2sampleuser") is_info->set_dm2_creator_id(strVal);
+		strVal = any_cast<string>(vals[curIdx + (int)IS_TUPLE_INFO_POS::dm2_creator_id]); if (strVal != "dm2developer1") is_info->set_dm2_creator_id(strVal);
 		strVal = any_cast<string>(vals[curIdx + (int)IS_TUPLE_INFO_POS::dm2_ip_addr]); if (strVal != "0.0.0.0") is_info->set_dm2_ip_addr(strVal);
 		string hashStr = any_cast<string>(vals[curIdx + (int)IS_TUPLE_INFO_POS::dm2_hash]);
 		is_info->set_dm2_hash(stoull(hashStr));
@@ -2432,6 +3307,12 @@ namespace IS {
 				break;
 		}
 		return type_string;
+	}
+
+	void ProtobufParser::loggerWarn(const char * func, const string &msg)
+	{
+		string s = __func__;
+		//logger->warn("[" + s + "]" + msg);
 	}
 	/**
 	* 物標情報のデバッグ出力 (API 仕様案 Ver.0.6.0)
@@ -3306,13 +4187,16 @@ namespace IS {
 	* @param [in]	serializedStr	シリアライズされた文字列
 	* @param [in]	tuples			デシリアライズされたタプル
 	* @param [in]	schema			スキーマ情報
+	* @param [out]	fieldNameList	フィールド名リスト
+	* @param [out]	fieldTypeList	データタイプリスト
+	* @param [in]	fromApl			アプリからの電文フラグ
 	*
 	*/
-	void ProtobufParser::DeserializeToTupleDynamically(string serializedStr, vector<Tuple> &tuples, const Schema &schema)
+	void ProtobufParser::DeserializeToTupleDynamically(string serializedStr, vector<Tuple> &tuples, const Schema &schema, vector<string> &fieldNameList, vector<string> &fieldTypeList, const bool &fromApl)
 	{
 		size_t delimit_pos = serializedStr.find(",");
 		if (delimit_pos == std::string::npos) {
-			logger->warn("[" + to_string(__func__) + "] MetaData Delimeter Missing");
+			loggerWarn(__func__, " MetaData Delimeter Missing");
 			return;
 		}
 		string metadataLenStr = serializedStr.substr(0, delimit_pos);
@@ -3321,7 +4205,7 @@ namespace IS {
 		try {
 			metadataLen = stoi(metadataLenStr);
 		} catch (...) {
-			logger->warn("[" + to_string(__func__) + "] MetaData Length Missing:" + metadataLenStr);
+			loggerWarn(__func__, " MetaData Length Missing:" + metadataLenStr);
 			return;
 		}
 		string metadataStr = metaAndMessage.substr(0, metadataLen);
@@ -3331,8 +4215,6 @@ namespace IS {
 		fileDescriptor.ParseFromString(metadataStr);
 
 		string message_name;
-		vector<string> field_name_list;
-		vector<string> field_type_list;
 		//メタデータの情報表示
 		for (int i = 0; i < fileDescriptor.message_type_size(); ++i) {
 			const DescriptorProto& message = fileDescriptor.message_type(i);
@@ -3341,11 +4223,11 @@ namespace IS {
 			
 			for (int j = 0; j < message.field_size(); ++j) {
 				const FieldDescriptorProto& field = message.field(j);
-				//string filed_type = FieldTypeToString(field);
-				//std::cout << "  Field Name: " << field.name() << ", Type: " << filed_type << ", Label: " << field.label() << ", Number: " << field.number() << std::endl;
+				string filed_type = FieldTypeToString(field);
+				// std::cout << "[DeserializeToTupleDynamically] Field Name: " << field.name() << ", Type: " << filed_type << ", Label: " << field.label() << ", Number: " << field.number() << std::endl;
 				if (message_name == "Tuple_set") {
-					field_name_list.push_back(field.name());
-					//field_type_list.push_back(filed_type);
+					fieldNameList.push_back(field.name());
+					fieldTypeList.push_back(filed_type);
 				}
 			}
 		}
@@ -3368,23 +4250,273 @@ namespace IS {
 		//	string name = 2;
 		// }
 		int tuple_count = (int)top_level_mes->GetReflection()->FieldSize(*top_level_mes, tuple_set_fd);
-		//cout << "tuple_count:" << tuple_count << endl;
+		//cout << "[DeserializeToTupleDynamically] tuple_count:" << tuple_count << endl;
+		
+		vector<string> attrTypeList;
+		int attr_size = schema.getAttributeSize();
+		if (fromApl) {
+			for (int i = 0; i < attr_size; i++) {
+				attrTypeList.push_back(schema.getAttributeType(i));
+			}
+		}
+		// 最後の項目「dm2_create_ts」の分を削除
+		int field_count = (int)fieldNameList.size() - 1;
+		int tuple_normal_attr_count = attr_size - schema.getAdminAttributeSize();
+		// IS -> APL の場合、且つ、不定形の場合、スキーマが空になるため、attr_sizeは0になる
+		if (attr_size == 0) {
+			//届いたProtobuf電文のフィールド数をセットする。
+			attr_size = (int)fieldNameList.size() - 1;
+			tuple_normal_attr_count = attr_size;
+		}
+		//cout << "[DeserializeToTupleDynamically] tuple_normal_attr_count:" << tuple_normal_attr_count << ",attr_size:" << attr_size << ",field_count:" << field_count << ",fromApl:" << fromApl << endl;
 		for (int i = 0; i < tuple_count; i++) {
 			const Message& tuple_set_mes = top_level_mes->GetReflection()->GetRepeatedMessage(*top_level_mes, tuple_set_fd, i);
 			const Reflection* reflection = tuple_set_mes.GetReflection();
 			
-			int field_count = (int)field_name_list.size() - 1;
-			Tuple tuple(field_count);
+			Tuple tuple(attr_size);
+
 			const FieldDescriptor* field_descriptor = tuple_set_des->FindFieldByName("dm2_create_ts");
 			long ts = tuple_set_mes.GetReflection()->GetInt64(tuple_set_mes, field_descriptor);
 
 			for (int j = 0; j < field_count; j++) {
-				const FieldDescriptor* field_descriptor = tuple_set_des->FindFieldByName(field_name_list.at(j));
-				setTupleAttrValue(reflection, tuple_set_mes, field_descriptor, tuple, j, ts, field_name_list.at(j));
+				// アプリからの電文は、管理者属性が付与されていないため、ユーザが付与した属性の数までで処理を終了する。
+				if (fromApl && j >= tuple_normal_attr_count) continue;
+				const FieldDescriptor* field_descriptor = tuple_set_des->FindFieldByName(fieldNameList.at(j));
+				// protobufメッセージに該当するフィールドが無い場合はnull
+				//bool isNull = !tuple_set_mes.GetReflection()->HasField(tuple_set_mes, field_descriptor);
+				bool isNull = false;
+				if (fromApl) {
+					setTupleAttrValue(reflection, tuple_set_mes, field_descriptor, tuple, j, ts, fieldNameList.at(j), isNull);
+					checkAndNormalizedTuple(field_descriptor, tuple, j, attrTypeList[j]);
+				} else {
+					setTupleAttrValue(reflection, tuple_set_mes, field_descriptor, tuple, j, ts, fieldNameList.at(j), isNull);
+				}
 			}
 			tuples.push_back(tuple);
 		}
 		delete top_level_mes;
+
+		// 返却用にdm2_create_tsの情報を削除
+		fieldNameList.pop_back();
+		fieldTypeList.pop_back();
+
+	}
+
+	/**
+	* 動的にデシリアライズ (不定形メッセージ対応)
+	*
+	* @author	Shinichi Kusayama
+	* @date		2024/07/03
+	*
+	* @param [in]	serializedStr	シリアライズされた文字列
+	* @param [in]	tuples			デシリアライズされたタプル
+	* @param [in]	schema			スキーマ情報
+	*
+	*/
+	void ProtobufParser::DeserializeToTupleDynamically(string serializedStr, vector<Tuple> &tuples, const Schema &schema, const bool &fromApl)
+	{
+		vector<string> field_name_list, field_type_list;
+		DeserializeToTupleDynamically(serializedStr, tuples, schema, field_name_list, field_type_list, fromApl);
+	}
+	/**
+	* タプルの項目の型が正しいかチェックし、正しくない場合は変換する
+	*
+	* @author	Shinichi Kusayama
+	* @date		2026/01/05
+	*
+	* @param [in]		fd				FieldDescriptor
+	* @param [in,out]	tuple			タプル
+	* @param [in]		t_idx			タプルインデックス
+	* @param [in]		attrType		正しい型
+	*
+	 */
+	void ProtobufParser::checkAndNormalizedTuple(const FieldDescriptor* fd, Tuple &tuple, int t_idx, const string &attrType)
+	{
+		FieldDescriptor::Type field_type = fd->type();
+		FieldDescriptor::Label field_label = fd->label();
+		//cout << "[checkAndNormalizedTuple]No." << t_idx << ",protoTypeMap:" << protoTypeMap[field_type] << ",attrType:" << attrType << endl;
+		bool equalAttr = false;
+		if(stringUtil.contain(attrType, "vector")) {
+			if (field_label == FieldDescriptor::LABEL_REPEATED) {
+				if (protoTypeMap.find(field_type) != protoTypeMap.end()) {
+					if (protoTypeMap[field_type] == attrType) equalAttr = true;
+				}
+			}
+		} else {
+			if (protoTypeMap.find(field_type) != protoTypeMap.end()) {
+				if (protoTypeMap[field_type] == attrType) equalAttr = true;
+			}
+		}
+		if (!equalAttr) {
+			any val;
+			long ts;
+			tuple.getValue(t_idx, val, ts);
+			any retVal = normalizeAny(val, attrType);
+			tuple.setValue(t_idx, retVal, ts);
+		}
+	}
+	/**
+	* 属性の種別に合ったProtobufの形式でタプルに値をセット
+	*
+	* @author	Shinichi Kusayama
+	* @date		2024/07/08
+	*
+	* @param [in]		reflection		Reflection
+	* @param [in]		mes				Message
+	* @param [in]		fd				FieldDescriptor
+	* @param [in,out]	tuple			タプル
+	* @param [in]		t_idx			タプルインデックス
+	* @param [in]		ts				タイムスタンプ
+	* @param [in]		field_name		フィールド名
+	* @param [in]		isNull			nullフラグ
+	*
+	 */
+	void ProtobufParser::setTupleAttrValue(const Reflection* reflection, const Message& mes, const FieldDescriptor* fd, Tuple &tuple, int t_idx, long ts, const string &field_name, bool isNull)
+	{
+		FieldDescriptor::Type field_type = fd->type();
+		FieldDescriptor::Label field_label = fd->label();
+		if (field_label == FieldDescriptor::LABEL_REPEATED) {
+			//1次元配列用
+			int size = reflection->FieldSize(mes, fd);
+			if (field_type == FieldDescriptor::TYPE_INT32) {
+				vector<int> val;
+				for (int i = 0; i < size; i++) {
+					val.push_back(reflection->GetRepeatedInt32(mes, fd, i));
+				}
+				tuple.setValue(t_idx, val, ts, isNull);
+			} else if (field_type == FieldDescriptor::TYPE_INT64) {
+				vector<long> val;
+				for (int i = 0; i < size; i++) {
+					val.push_back(reflection->GetRepeatedInt64(mes, fd, i));
+				}
+				tuple.setValue(t_idx, val, ts, isNull);
+			} else if (field_type == FieldDescriptor::TYPE_DOUBLE) {
+				vector<double> val;
+				for (int i = 0; i < size; i++) {
+					val.push_back(reflection->GetRepeatedDouble(mes, fd, i));
+				}
+				tuple.setValue(t_idx, val, ts, isNull);
+			} else if (field_type == FieldDescriptor::TYPE_STRING) {
+				vector<string> val;
+				for (int i = 0; i < size; i++) {
+					val.push_back(reflection->GetRepeatedString(mes, fd, i));
+				}
+				tuple.setValue(t_idx, val, ts, isNull);
+			} else if (field_type == FieldDescriptor::TYPE_BOOL) {
+				vector<bool> val;
+				for (int i = 0; i < size; i++) {
+					val.push_back(reflection->GetRepeatedBool(mes, fd, i));
+				}
+				tuple.setValue(t_idx, val, ts, isNull);
+			} else if (field_type == FieldDescriptor::TYPE_UINT32) {
+				vector<unsigned int> val;
+				for (int i = 0; i < size; i++) {
+					val.push_back(reflection->GetRepeatedUInt32(mes, fd, i));
+				}
+				tuple.setValue(t_idx, val, ts, isNull);
+			} else if (field_type == FieldDescriptor::TYPE_UINT64) {
+				vector<unsigned long long> val;
+				for (int i = 0; i < size; i++) {
+					val.push_back(reflection->GetRepeatedUInt64(mes, fd, i));
+				}
+				tuple.setValue(t_idx, val, ts, isNull);
+			} else if (field_type == FieldDescriptor::TYPE_MESSAGE) {
+				//2次元配列用
+				vector<vector<int>> v2val_int;
+				vector<vector<long>> v2val_long;
+				vector<vector<double>> v2val_double;
+				vector<vector<string>> v2val_string;
+				vector<vector<bool>> v2val_bool;
+				vector<vector<unsigned int>> v2val_uint;
+				vector<vector<unsigned long long>> v2val_ulong;
+				FieldDescriptor::Type v2field_type = FieldDescriptor::TYPE_MESSAGE;
+				for (int i = 0; i < size; i++) {
+					const Message& v2mes = reflection->GetRepeatedMessage(mes, fd, i);
+					const Reflection* v2reflection = v2mes.GetReflection();
+					const Descriptor* v2des = fd->message_type();
+					const FieldDescriptor* v2fd = v2des->FindFieldByName(field_name + "_item");
+					v2field_type = v2fd->type();
+					int v2size = v2reflection->FieldSize(v2mes, v2fd);
+					if (v2field_type == FieldDescriptor::TYPE_INT32) {
+						vector<int> val;
+						for (int j = 0; j < v2size; j++) {
+							val.push_back(v2reflection->GetRepeatedInt32(v2mes, v2fd, j));
+						}
+						v2val_int.push_back(val);
+					} else if (v2field_type == FieldDescriptor::TYPE_INT64) {
+						vector<long> val;
+						for (int j = 0; j < v2size; j++) {
+							val.push_back(v2reflection->GetRepeatedInt64(v2mes, v2fd, j));
+						}
+						v2val_long.push_back(val);
+					} else if (v2field_type == FieldDescriptor::TYPE_DOUBLE) {
+						vector<double> val;
+						for (int j = 0; j < v2size; j++) {
+							val.push_back(v2reflection->GetRepeatedDouble(v2mes, v2fd, j));
+						}
+						v2val_double.push_back(val);
+					} else if (v2field_type == FieldDescriptor::TYPE_STRING) {
+						vector<string> val;
+						for (int j = 0; j < v2size; j++) {
+							val.push_back(v2reflection->GetRepeatedString(v2mes, v2fd, j));
+						}
+						v2val_string.push_back(val);
+					} else if (v2field_type == FieldDescriptor::TYPE_BOOL) {
+						vector<bool> val;
+						for (int j = 0; j < v2size; j++) {
+							val.push_back(v2reflection->GetRepeatedBool(v2mes, v2fd, j));
+						}
+						v2val_bool.push_back(val);
+					} else if (v2field_type == FieldDescriptor::TYPE_UINT32) {
+						vector<unsigned int> val;
+						for (int j = 0; j < v2size; j++) {
+							val.push_back(v2reflection->GetRepeatedUInt32(v2mes, v2fd, j));
+						}
+						v2val_uint.push_back(val);
+					} else if (v2field_type == FieldDescriptor::TYPE_UINT64) {
+						vector<unsigned long long> val;
+						for (int j = 0; j < v2size; j++) {
+							val.push_back(v2reflection->GetRepeatedUInt64(v2mes, v2fd, j));
+						}
+						v2val_ulong.push_back(val);
+					}
+				}
+				if (v2field_type == FieldDescriptor::TYPE_INT32) tuple.setValue(t_idx, v2val_int, ts);
+				else if (v2field_type == FieldDescriptor::TYPE_INT64) tuple.setValue(t_idx, v2val_long, ts);
+				else if (v2field_type == FieldDescriptor::TYPE_DOUBLE) tuple.setValue(t_idx, v2val_double, ts);
+				else if (v2field_type == FieldDescriptor::TYPE_STRING) tuple.setValue(t_idx, v2val_string, ts);
+				else if (v2field_type == FieldDescriptor::TYPE_BOOL) tuple.setValue(t_idx, v2val_bool, ts);
+				else if (v2field_type == FieldDescriptor::TYPE_UINT32) tuple.setValue(t_idx, v2val_uint, ts);
+				else if (v2field_type == FieldDescriptor::TYPE_UINT64) tuple.setValue(t_idx, v2val_ulong, ts);
+				//else logger->warn("[" + to_string(__func__) + "] Unknown FieldType");
+			}
+		} else {
+			// not 配列
+			if (field_type == FieldDescriptor::TYPE_INT32) {
+				int val = reflection->GetInt32(mes, fd);
+				tuple.setValue(t_idx, val, ts, isNull);
+			} else if (field_type == FieldDescriptor::TYPE_INT64) {
+				long val = reflection->GetInt64(mes, fd);
+				tuple.setValue(t_idx, val, ts, isNull);
+			} else if (field_type == FieldDescriptor::TYPE_DOUBLE) {
+				double val = reflection->GetDouble(mes, fd);
+				tuple.setValue(t_idx, val, ts, isNull);
+			} else if (field_type == FieldDescriptor::TYPE_STRING) {
+				string val = reflection->GetString(mes, fd);
+				tuple.setValue(t_idx, val, ts, isNull);
+			} else if (field_type == FieldDescriptor::TYPE_BOOL) {
+				bool val = reflection->GetBool(mes, fd);
+				tuple.setValue(t_idx, val, ts, isNull);
+			} else if (field_type == FieldDescriptor::TYPE_UINT32) {
+				unsigned int val = reflection->GetUInt32(mes, fd);
+				tuple.setValue(t_idx, val, ts, isNull);
+			} else if (field_type == FieldDescriptor::TYPE_UINT64) {
+				unsigned long long val = reflection->GetUInt64(mes, fd);
+				tuple.setValue(t_idx, val, ts, isNull);
+			} else {
+				cout << "unknown field_type:" << field_type << endl;
+			}
+		}			
 	}
 	/**
 	* 属性の種別に合ったProtobufの形式で値をセット
@@ -3515,7 +4647,7 @@ namespace IS {
 				else if (v2field_type == FieldDescriptor::TYPE_BOOL) tuple.setValue(t_idx, v2val_bool, ts);
 				else if (v2field_type == FieldDescriptor::TYPE_UINT32) tuple.setValue(t_idx, v2val_uint, ts);
 				else if (v2field_type == FieldDescriptor::TYPE_UINT64) tuple.setValue(t_idx, v2val_ulong, ts);
-				//else logger->warn("[" + to_string(__func__) + "] Unknown FieldType");
+				//else loggerWarn(__func__, " Unknown FieldType");
 			}
 		} else {
 			if (field_type == FieldDescriptor::TYPE_INT32) {
@@ -3556,8 +4688,23 @@ namespace IS {
 	*/
 	string ProtobufParser::SerializeToStringDynamically(TupleSet &tupleset)
 	{
-		string retStr = "";
 		Schema schema = tupleset.getSchemaRef();
+		return SerializeToStringDynamically(tupleset.getTuples(), &schema);
+	}
+
+	/**
+	* 動的にシリアライズ (不定形メッセージ対応)
+	*
+	* @author	Shinichi Kusayama
+	* @date		2024/07/03
+	*
+	* @param [in]	tupleset	タプルセット
+	*
+	* @return	シリアライズされた文字列
+	*/
+	string ProtobufParser::SerializeToStringDynamically(const vector<Tuple> &tuples, const Schema *schema)
+	{
+		string retStr = "";
 		FileDescriptorProto fileDescriptor;
 
 		// syntax, pacckage, message名の設定
@@ -3586,22 +4733,42 @@ namespace IS {
 		DescriptorProto* tuplesetDescriptor = fileDescriptor.add_message_type();
 		tuplesetDescriptor->set_name("Tuple_set");
 
-		int attr_size = schema.getAttributeSize();
+		int attr_size = 0;
+		if (schema == nullptr) {
+			attr_size = tuples.at(0).size();
+		} else {
+			if (tuples.size() > 0) attr_size = schema->getAttributeSize();
+		}
 		string attrTypeList[attr_size];
 		string attrNameList[attr_size];
+		
+		// *** フィールド（列情報）の構築
 		for (int i = 0; i < attr_size; i++) {
-			attrTypeList[i] = schema.getAttributeType(i);
-			attrNameList[i] = schema.getAttributeName(i);
-			if (attrNameList[i].find(".") != string::npos) {
-				attrNameList[i] = attrNameList[i].substr(attrNameList[i].find(".") + 1);
-			}
-			//cout << attr_size << "," << attrNameList[i] << "," << attrTypeList[i] << endl;
-			FieldDescriptorProto* field = tuplesetDescriptor->add_field();
-			field->set_name(attrNameList[i]);
-			field->set_number(i + 1);
+			int repeated = 0;
+			FieldDescriptorProto_Type type;
 			try {
-				int repeated = 0;
-				FieldDescriptorProto_Type type = AttributeNameToFieldType(attrTypeList[i], repeated);
+				if (schema == nullptr) {
+					// スキーマ未定義につき、col1, col2, ...と採番する
+					attrNameList[i] = std::string("col") + to_string(i + 1);
+					// スキーマ未定義につき、tupleに格納されたvalueの型を元に、typeとrepeatedをセットする
+					any value;
+					tuples.at(0).getValueByIdx(i, value);
+					std::type_index ti(value.type());
+					attrTypeList[i] = typeStringMap[ti];
+				} else {
+					attrNameList[i] = schema->getAttributeName(i);
+					//TODO:もしかしたらいらないかも　typeが存在しない場合はnameを入れる
+					attrTypeList[i] = schema->getAttributeType(i) != "" ?  schema->getAttributeType(i) : schema->getAttributeName(i);
+					if (attrNameList[i].find(".") != string::npos) {
+						attrNameList[i] = attrNameList[i].substr(attrNameList[i].find(".") + 1);
+					}
+				}
+				type = AttributeNameToFieldType(attrTypeList[i], repeated);
+				//cout << attr_size << "," << attrNameList[i] << "," << attrTypeList[i] << endl;
+				
+				FieldDescriptorProto* field = tuplesetDescriptor->add_field();
+				field->set_name(attrNameList[i]);
+				field->set_number(i + 1);
 				if (repeated > 0) {
 					field->set_label(FieldDescriptorProto_Label_LABEL_REPEATED);
 					if (repeated == 2) {
@@ -3628,10 +4795,11 @@ namespace IS {
 				}
 			} catch (const exception &e) {
 				string what(e.what());
-				logger->warn("[" + to_string(__func__) + "]" + what);
+				//logger->warn(string("[") + __func__ + "]" + what);
 				return "";
 			}
 		}
+
 		FieldDescriptorProto* field = tuplesetDescriptor->add_field();
 		field->set_name("dm2_create_ts");
 		field->set_number(attr_size + 1);
@@ -3655,7 +4823,7 @@ namespace IS {
 		//	uint32 id = 1;
 		//	string name = 2;
 		// }
-		for (Tuple tuple : tupleset.getTuples())
+		for (Tuple tuple : tuples)
 		{
 			int tuple_size = tuple.size();
 			long ts_first = 0;
@@ -3665,14 +4833,29 @@ namespace IS {
 			const Reflection* reflection = tuple_set_mes->GetReflection();
 			for (int i = 0; i < tuple_size; i++) {
 				any val;
-				tuple.getValue(i, val, ts_tmp);
+				bool isnull;
+				tuple.getValue(i, val, ts_tmp, isnull);
 				if (i == 0) ts_first = ts_tmp;
 				//cout << attrTypeList[i] << endl;
 				//tuple.dumpAny(val);
-				setAttrValue(reflection, tuple_set_mes, tuple_set_des, val, attrTypeList[i], attrNameList[i], dynamic_fd);
+				if (!isnull) {
+					try {
+						setAttrValue(reflection, tuple_set_mes, tuple_set_des, val, attrTypeList[i], attrNameList[i], dynamic_fd);
+					} catch (const exception &e) {
+						string what(e.what());
+						loggerWarn(__func__, what);
+						tuple.dumpAny(val);
+						return "";
+					}
+				} else {
+					// nullの場合はフィールドを削除
+					const Descriptor* tuple_set_desc = tuple_set_mes->GetDescriptor();
+					tuple_set_mes->GetReflection()->ClearField(tuple_set_mes, tuple_set_desc->FindFieldByName(attrNameList[i]));
+				}
 			}
 			tuple_set_mes->GetReflection()->SetInt64(tuple_set_mes, tuple_set_des->FindFieldByName("dm2_create_ts"), ts_first);
 		}
+
 		string serialized_data, dynamic_serialized_metadata;
 		top_level_mes->SerializeToString(&serialized_data);
 		fileDescriptor.SerializeToString(&dynamic_serialized_metadata);
@@ -3704,13 +4887,13 @@ namespace IS {
 	 */
 	void ProtobufParser::setAttrValue(const Reflection* reflection, Message *mes, const Descriptor* tuple_set_des, any val, const string &attrType, const string &attrName, const FileDescriptor* dynamic_fd)
 	{
-		if (attrType == "int") {
+		if (attrType == "int" || attrType == "int4") {
 			reflection->SetInt32(mes, tuple_set_des->FindFieldByName(attrName), any_cast<int>(val));
 		} else if (attrType == "long") {
 			reflection->SetInt64(mes, tuple_set_des->FindFieldByName(attrName), any_cast<long>(val));
 		} else if (attrType == "double") {
 			reflection->SetDouble(mes, tuple_set_des->FindFieldByName(attrName), any_cast<double>(val));
-		} else if (attrType == "string") {
+		} else if (attrType == "string" || attrType == "geometry" || attrType == "geography") {
 			reflection->SetString(mes, tuple_set_des->FindFieldByName(attrName), any_cast<string>(val));
 		} else if (attrType == "bool") {
 			reflection->SetBool(mes, tuple_set_des->FindFieldByName(attrName), any_cast<bool>(val));
@@ -3718,7 +4901,7 @@ namespace IS {
 			reflection->SetUInt32(mes, tuple_set_des->FindFieldByName(attrName), any_cast<uint>(val));
 		} else if (attrType == "ulong") {
 			reflection->SetUInt64(mes, tuple_set_des->FindFieldByName(attrName), any_cast<unsigned long long>(val));
-		} else if (attrType == "vector(int)") {
+		} else if (attrType == "vector(int)" || attrType == "vector(int4)") {
 			try {
 				vector<int> vany = any_cast<vector<int>>(val);
 				for (int i = 0; i < (int)vany.size(); i++) {
@@ -3763,7 +4946,7 @@ namespace IS {
 				} catch (...) {
 				}
 			}
-		} else if (attrType == "vector(string)") {
+		} else if (attrType == "vector(string)"  || attrType == "vector(geometry)" || attrType == "vector(geography)") {
 			try {
 				vector<string> vany = any_cast<vector<string>>(val);
 				for (int i = 0; i < (int)vany.size(); i++) {
@@ -3823,7 +5006,7 @@ namespace IS {
 				} catch (...) {
 				}
 			}
-		} else if (attrType == "vector(vector(int))") {
+		} else if (attrType == "vector(vector(int))" || attrType == "vector(vector(int4))") {
 			try {
 				vector<vector<int>> v2any = any_cast<vector<vector<int>>>(val);
 				const Descriptor* attr_des = dynamic_fd->FindMessageTypeByName(attrName + "_");
@@ -3898,7 +5081,7 @@ namespace IS {
 				} catch (...) {
 				}
 			}
-		} else if (attrType == "vector(vector(string))") {
+		} else if (attrType == "vector(vector(string))" || attrType == "vector(vector(geometry))" || attrType == "vector(vector(geography))") {
 			try {
 				vector<vector<string>> v2any = any_cast<vector<vector<string>>>(val);
 				const Descriptor* attr_des = dynamic_fd->FindMessageTypeByName(attrName + "_");
@@ -4014,12 +5197,14 @@ namespace IS {
 	 */
 	FieldDescriptorProto_Type ProtobufParser::AttributeNameToFieldType(const string& attrType, int &repeated)
 	{
-		if (attrType == "int") {
+		if (attrType == "int" || attrType == "int4") {
 			return FieldDescriptorProto_Type_TYPE_INT32;
 		} else if (attrType == "long") {
 			return FieldDescriptorProto_Type_TYPE_INT64;
 		} else if (attrType == "double") {
 			return FieldDescriptorProto_Type_TYPE_DOUBLE;
+		} else if (attrType == "float" || attrType == "float8") {
+			return FieldDescriptorProto_Type_TYPE_FLOAT;
 		} else if (attrType == "string" || attrType == "geometry" || attrType == "geography") {
 			return FieldDescriptorProto_Type_TYPE_STRING;
 		} else if (attrType == "bool") {
@@ -4028,7 +5213,7 @@ namespace IS {
 			return FieldDescriptorProto_Type_TYPE_UINT32;
 		} else if (attrType == "ulong") {
 			return FieldDescriptorProto_Type_TYPE_UINT64;
-		} else if (attrType == "vector(int)") {
+		} else if (attrType == "vector(int)" || attrType == "vector(int4)") {
 			repeated = 1;
 			return FieldDescriptorProto_Type_TYPE_INT32;
 		} else if (attrType == "vector(long)") {
@@ -4049,7 +5234,7 @@ namespace IS {
 		} else if (attrType == "vector(ulong)") {
 			repeated = 1;
 			return FieldDescriptorProto_Type_TYPE_UINT64;
-		} else if (attrType == "vector(vector(int))") {
+		} else if (attrType == "vector(vector(int))" || attrType == "vector(vector(int4))") {
 			repeated = 2;
 			return FieldDescriptorProto_Type_TYPE_INT32;
 		} else if (attrType == "vector(vector(long))") {
@@ -4076,4 +5261,342 @@ namespace IS {
 		}
 		return FieldDescriptorProto_Type_TYPE_STRING;
 	}
+	/**
+	* タプルの各属性の型を正しい型に合わせる
+	*
+	* @author	Shinichi Kusayama
+	* @date		2026/1/4
+	*
+	* @param [in]	tuples		タプル
+	* @param [out]	typeList	型リスト
+	*
+	* @return	変換後のタプル
+	 */
+	vector<Tuple> ProtobufParser::normalizeTuple(const vector<Tuple> &tuples, const std::vector<std::string> &typeList)
+	{
+		vector<Tuple> retTuples;
+		long ts = 0;
+		for (Tuple tuple : tuples) {
+			Tuple newTuple(tuple.size());
+			for (int i = 0; i < tuple.size(); i++) {
+				any val;
+				tuple.getValue(i, val, ts);
+				any retVal = normalizeAny(val, typeList[i]);
+				newTuple.setValue(i, retVal, ts);
+			}
+			retTuples.push_back(newTuple);
+		}
+		return retTuples;
+	}
+	/**
+	* anyに入っている型を正しい型に合わせる
+	*
+	* @author	Shinichi Kusayama
+	* @date		2026/1/4
+	*
+	* @param [in]	value			any型の値
+	* @param [out]	expectedType	正しい型
+	*
+	* @return	変換後のany型
+	 */
+	any ProtobufParser::normalizeAny(any& value, const std::string& expectedType)
+	{
+		auto it = typeMap.find(expectedType);
+		if (it == typeMap.end())
+			throw std::runtime_error("[ProtobufParser::normalizeAny]unknown expected type");
+
+		// すでに正しい型
+		if (std::type_index(value.type()) == it->second)
+			return value;
+
+		string s = stringUtil.getAnyString(value);
+		any retVal = stringUtil.getAnyValFromString(s, expectedType);
+
+		/*
+		const std::type_info& typeInfo = retVal.type();
+		if (typeInfo == typeid(int)) {
+			cout << "normalize Any-Trans[int]" << s << endl;
+		}
+		*/
+		return retVal;
+	}
+
+	/**
+	* 接続要求/クエリ登録/クエリキャンセルのデシリアライズ
+	*
+	* @author	Nagoya University
+	* @date	2025/10/31
+	*
+	* @param [in]	serializedStr	シリアライズされた文字列
+	*
+	* @return	受信メッセージ 
+	*
+	 */
+	dm2_proto::System_request ProtobufParser::systemRequestDeserialize(const string &serializedStr)
+	{
+		dm2_proto::System_request_dm2is msg;
+		msg.ParseFromString(serializedStr);
+
+		return msg.system_request();
+	}
+
+	/**
+	* 接続要求のデシリアライズ
+	*
+	* @author	Nagoya University
+	* @date	2025/10/31
+	*
+	* @param [in]	serializedStr	シリアライズされた文字列
+	* @param [out]	username		ユーザ名
+	* @param [out]	md5				ハッシュ値
+	*
+	 */
+	void ProtobufParser::createSessionDeserialize(const string &serializedStr, string &username, string &md5)
+	{
+		dm2_proto::System_request request = systemRequestDeserialize(serializedStr);
+		
+		username = request.body();
+		md5 = request.key();
+	}
+
+	/**
+	* 接続要求/クエリ登録/クエリキャンセル 応答のデシリアライズ
+	*
+	* @author	Nagoya University
+	* @date	2025/10/31
+	*
+	* @param [in]	serializedStr	シリアライズされた文字列
+	*
+	* @return	受信メッセージ 
+	*
+	 */
+	dm2_proto::System_response ProtobufParser::systemResponseDeserialize(const string &serializedStr)
+	{
+		dm2_proto::System_response_dm2is msg;
+		msg.ParseFromString(serializedStr);
+
+		return msg.system_response();
+	}
+
+	/**
+	* 接続要求応答のデシリアライズ
+	*
+	* @author	Nagoya University
+	* @date	2025/10/31
+	*
+	* @param [in]	serializedStr	シリアライズされた文字列
+	* @param [out]	sessionKey		セッションキー
+	* @param [out]	errCode			エラーコード
+	* @param [out]	errMessage		エラーメッセージ
+	*
+	 */
+	void ProtobufParser::createSessionResponseDeserialize(const string &serializedStr, string &sessionKey, int &errCode, string &errMessage)
+	{
+		dm2_proto::System_response response = systemResponseDeserialize(serializedStr);
+
+		string errCodeStr = response.error();
+
+		if (errCodeStr.length() == 0)
+		{
+			sessionKey = response.value();
+		} else {
+			errCode = stoi(errCodeStr);
+			errMessage = response.value();
+		}
+	}
+	/**
+	* クエリ登録エラー応答のデシリアライズ
+	*
+	* @author	Nagoya University
+	* @date	2025/10/31
+	*
+	* @param [in]	serializedStr	シリアライズされた文字列
+	* @param [out]	errCode			エラーコード
+	* @param [out]	errMessage		エラーメッセージ
+	*
+	 */
+	void ProtobufParser::queryErrorReponseDeserialize(const string &serializedStr, int &errCode, string &errMessage)
+	{
+		dm2_proto::System_response response = systemResponseDeserialize(serializedStr);
+
+		string errCodeStr = response.error();
+		errCode = stoi(errCodeStr);
+		errMessage = response.value();
+	}
+	/**
+	* クエリキャンセル応答のデシリアライズ
+	*
+	* @author	Nagoya University
+	* @date	2025/10/31
+	*
+	* @param [in]	serializedStr	シリアライズされた文字列
+	* @param [out]	mngId			クエリ管理番号
+	* @param [out]	errCode			エラーコード
+	* @param [out]	errMessage		エラーメッセージ
+	*
+	 */
+	void ProtobufParser::cancelResponseDeserialize(const string &serializedStr, unsigned int &mngId, int &errCode, string &errMessage)
+	{
+		dm2_proto::System_response response = systemResponseDeserialize(serializedStr);
+
+		string errCodeStr = response.error();
+		if (errCodeStr.length() == 0) {
+			mngId = stoi(response.value());
+		}
+		else {
+			errCode = stoi(errCodeStr);
+			errMessage = response.value();
+		}
+	}
+
+	/**
+	* クエリ登録のデシリアライズ
+	*
+	* @author	Nagoya University
+	* @date	2025/10/31
+	*
+	* @param [in]	serializedStr	シリアライズされた文字列
+	* @param [out]	query			クエリ文
+	* @param [out]	senderSID		実行元SID
+	* @param [out]	destinationSID	宛先SID
+	* @param [out]	receptionPort	受付ポート番号
+	* @param [out]	getTcpSession	TCP Sessionをサーバへ要求
+	* @param [out]	continuous		継続クエリか判定するフラグ
+	*
+	 */
+	void ProtobufParser::queryDeserialize(const string &serializedStr, string &query, unsigned long long &senderSID, unsigned long long &destinationSID, int &receptionPort, bool &getTcpSession, bool &continuous)
+	{
+		dm2_proto::System_request request = systemRequestDeserialize(serializedStr);
+
+		query = request.body();
+		destinationSID = request.destination();
+		senderSID = request.sender();
+		receptionPort = request.port();
+		getTcpSession = request.tcp_session();
+		continuous = request.continuous();
+	}
+
+	/**
+	* クエリ登録のデシリアライズ
+	*
+	* @author	Nagoya University
+	* @date	2025/10/31
+	*
+	* @param [in]	serializedStr	シリアライズされた文字列
+	* @param [out]	query			クエリ文
+	* @param [out]	destinationSID	宛先SID
+	* @param [out]	receptionPort	受付ポート番号
+	* @param [out]	continuous		継続クエリか判定するフラグ
+	*
+	 */
+	void ProtobufParser::queryDeserialize(const string &serializedStr, string &query, unsigned long long &destinationSID, int &receptionPort, bool &continuous)
+	{
+		unsigned long long senderSID;
+		bool getTcpSession;
+		queryDeserialize(serializedStr, query, senderSID, destinationSID, receptionPort, getTcpSession, continuous);
+	}
+
+	/**
+	* クエリ登録応答のデシリアライズ
+	*
+	* @author	Nagoya University
+	* @date	2025/10/31
+	*
+	* @param [in]	serializedStr	シリアライズされた文字列
+	* @param [out]	mngId			クエリ文
+	* @param [out]	receptionPort	受付ポート番号
+	* @param [out]	errCode			エラーコード
+	* @param [out]	errMessage		エラーメッセージ
+	*
+	 */
+	void ProtobufParser::queryReponseDeserialize(const string &serializedStr, unsigned int &mngId, int &receptionPort, int &errCode, string &errMessage)
+	{
+		dm2_proto::System_response response = systemResponseDeserialize(serializedStr);
+
+		string errCodeStr = response.error();
+		if (errCodeStr.length() == 0) {
+			mngId = stoi(response.value());
+			receptionPort = response.port();
+		}
+		else {
+			errCode = stoi(errCodeStr);
+			errMessage = response.value();
+		}
+	}
+
+	/**
+	* クエリ結果のデシリアライズ
+	*
+	* @author	Nagoya University
+	* @date	2025/10/31
+	*
+	* @param [in]	serializedStr	シリアライズされた文字列
+	* @param [out]	tableName		テーブル名
+	* @param [out]	tuples			クエリ結果タプルリスト
+	*
+	 */
+	void ProtobufParser::queryResultDeserialize(const string &serializedStr, const string &tableName, vector<Tuple> &tuples)
+	{
+		vector<string> nameList, typeList;
+		queryResultDeserialize(serializedStr, tableName, tuples, nameList, typeList);
+	}
+
+	/**
+	* クエリ結果のデシリアライズ
+	*
+	* @author	Nagoya University
+	* @date	2025/10/31
+	*
+	* @param [in]	serializedStr	シリアライズされた文字列
+	* @param [out]	tableName		テーブル名
+	* @param [out]	tuples			クエリ結果タプルリスト
+	* @param [out]	nameList		カラム名リスト
+	* @param [out]	typeList		データタイプリスト
+	*
+	 */
+	void ProtobufParser::queryResultDeserialize(const string &serializedStr, const string &tableName, vector<Tuple> &tuples, vector<string> &nameList, vector<string> &typeList)
+	{
+		Schema schema;
+		if (tableName == "object_info" || tableName == "object_info_processed") {
+			objectInfoDeserializeToTuple_0_6_0(serializedStr, tuples, schema);
+			if (tuples.size() > 0)
+				for(int i = 0; i < tuples.at(0).size(); i++ ) { nameList.push_back(objectInfoNameList_0_6_0[i]); typeList.push_back(objectInfoTypeList_0_6_0[i]);}
+		} else if (tableName == "object_info_0_8_0" || tableName == "object_info_0_8_0_processed") {
+			objectInfoDeserializeToTuple_0_8_0(serializedStr, tuples, schema);
+			if (tuples.size() > 0)
+				for(int i = 0; i < tuples.at(0).size(); i++ ) { nameList.push_back(objectInfoNameList_0_8_0[i]); typeList.push_back(objectInfoTypeList_0_8_0[i]);}
+		} else if (tableName == "object_info_0_8_1" || tableName == "object_info_0_8_1_processed") {
+			objectInfoDeserializeToTuple_0_8_1(serializedStr, tuples, schema);
+			if (tuples.size() > 0)
+				for(int i = 0; i < tuples.at(0).size(); i++ ) { nameList.push_back(objectInfoNameList_0_8_1[i]); typeList.push_back(objectInfoTypeList_0_8_1[i]);}
+		} else if (tableName == "freespace_info") {
+			freespaceInfoDeserializeToTuple_0_6_0(serializedStr, tuples, schema);
+			if (tuples.size() > 0)
+				for(int i = 0; i < tuples.at(0).size(); i++ ) { nameList.push_back(freespaceInfoNameList_0_6_0[i]); typeList.push_back(freespaceInfoTypeList_0_6_0[i]);}
+		} else if (tableName == "freespace_info_0_8_0") {
+			freespaceInfoDeserializeToTuple_0_8_0(serializedStr, tuples, schema);
+			if (tuples.size() > 0)
+				for(int i = 0; i < tuples.at(0).size(); i++ ) { nameList.push_back(freespaceInfoNameList_0_8_0[i]); typeList.push_back(freespaceInfoTypeList_0_8_0[i]);}
+		} else if (tableName == "freespace_info_0_8_1") {
+			freespaceInfoDeserializeToTuple_0_8_1(serializedStr, tuples, schema);
+			if (tuples.size() > 0)
+				for(int i = 0; i < tuples.at(0).size(); i++ ) { nameList.push_back(freespaceInfoNameList_0_8_1[i]); typeList.push_back(freespaceInfoTypeList_0_8_1[i]);}
+		} else if (tableName == "signal_info") {
+			signalInfoDeserializeToTuple_0_6_0(serializedStr, tuples, schema);
+			if (tuples.size() > 0)
+				for(int i = 0; i < tuples.at(0).size(); i++ ) { nameList.push_back(signalInfoNameList_0_6_0[i]); typeList.push_back(signalInfoTypeList_0_6_0[i]);}
+		} else if (tableName == "sensor_info") {
+			sensorInfoDeserializeToTuple_0_8_0(serializedStr, tuples, schema);
+			if (tuples.size() > 0)
+				for(int i = 0; i < tuples.at(0).size(); i++ ) { nameList.push_back(sensorInfoNameList_0_8_0[i]); typeList.push_back(sensorInfoTypeList_0_8_0[i]);}
+		} else if (tableName == "sensor_info_0_8_1") {
+			sensorInfoDeserializeToTuple_0_8_1(serializedStr, tuples, schema);
+			if (tuples.size() > 0)
+				for(int i = 0; i < tuples.at(0).size(); i++ ) { nameList.push_back(sensorInfoNameList_0_8_1[i]); typeList.push_back(sensorInfoTypeList_0_8_1[i]);}
+		} else {
+			DeserializeToTupleDynamically(serializedStr, tuples, schema, nameList, typeList, false);
+		}
+	}
+
+
 }

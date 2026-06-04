@@ -16,7 +16,7 @@ namespace IS {
 	 * @param	classVal	クラスパラメータ情報
 	 */
 
-	DmiOperator::DmiOperator(const string &user, unsigned int mngId, const RecvData &data, const string& dmi)
+	DmiOperator::DmiOperator(const string &user, unsigned int mngId, const string& dmi)
 	{
 		this->type = MyName + "_MNGID:" + std::to_string(mngId);
 		this->user = user;

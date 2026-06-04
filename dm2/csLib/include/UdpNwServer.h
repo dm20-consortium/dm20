@@ -2,6 +2,7 @@
 #define UDPNWSERVER_H
 
 #include "Cs.h"
+#include "UdpServer.h"
 #include <openssl/ssl.h>
 namespace CS{
 	/**
@@ -12,7 +13,7 @@ namespace CS{
 	 * @author	Nagoya University
 	 * @date	2018/03/14
 	 */
-	class UdpNwServer:public SocketUdp{
+	class UdpNwServer:public SocketUdp, public IUdpServer{
 	private:
 		int sockd; //socketディスクリプタ
 		struct addrinfo hints;
@@ -38,6 +39,10 @@ namespace CS{
 		int InitServer(std::string port_no);
 		
 		int Init(std::string receive_ip_addr, std::string port_no);
+
+		int Init(const std::string& fd_name, std::string interface_name, std::string port_no) override;
+		int RecvPacket(send_message &buf_, int socket_res_) override;
+		int RecvClientData(clientdata &buf_, int socket_res_) override;
 
 		int InitServer(std::string receive_ip_addr, std::string port_no);
 		

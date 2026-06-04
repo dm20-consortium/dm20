@@ -47,6 +47,41 @@ std::thread* ProcReceiver::Run(vector<Queue<clientdata>*>* pvec_queues)
 }
 
 /**
+ * @fn		ProcReceiver::receiveDataToQueue
+ * @brief	プロセス間通信待ち受け
+ * @author	Nagoya University
+ * @date	2026/6/4
+ * @return
+ */
+void ProcReceiver::receiveDataToQueue(const ProcReceiver* me, struct send_message &buf, struct clientdata &cdata)
+{
+	struct timespec ts;
+	if (buf.msg_type == DM2Type_MNG_CONN_REGIST) {
+		// ペイロードの中身から、SIDの更新があるかチェックする。
+		me->sid_update_check(me, buf.dm2_payload);
+	} else {
+		if ((cdata.msg).transmission_flag == 0 || (cdata.msg).duplication_check_id == 0) {
+			// 送信元ID・重複チェックIDをセット（このルートに入らない場合は電文内の送信元ID・重複チェックIDが引き継がれる）
+			(cdata.msg).src_station_id = me->settings.my_sid;
+			timespec_get(&ts, TIME_UTC);
+			(cdata.msg).duplication_check_id = ts.tv_sec * 1000000000 + ts.tv_nsec;
+		}
+		// 保有している全ネットワークに対し送信を行う
+		for(uint index = 0; index < me->p_queues->size(); index++)
+		{
+			/// DTLS且つ、設定されたSIDが電文のSIDと相違ある場合は読み飛ばす
+			if (me->settings.socket_types[index] == 2 && me->settings.dtls_dest_sids[index] != cdata.msg.dst_station_id) continue;
+			// キューが溜まっている場合はクリアする。
+			if (me->p_queues->at(index)->Size() > 10000) {
+				while (!me->p_queues->at(index)->Empty()) {
+					me->p_queues->at(index)->Pop();
+				}
+			}
+			me->p_queues->at(index)->Push(cdata);	// キューに格納し、送信を依頼する
+		}
+	}
+}
+/**
  * @fn		ProcReceiver::Receive()
  * @brief	プロセス間通信待ち受け
  * @author	Nagoya University
@@ -69,8 +104,10 @@ void ProcReceiver::receiver(const ProcReceiver* param, const string confDirPath)
 
 	// IS/APLからの受信  [TODO] Init()に逃がせるかも... 失敗した際の対処を要検討
  	struct send_message buf;
-	UdpProcServer udpprocserver(me->udpprocserver);
-	int res_init = udpprocserver.Init(confDirPath + FD_IStoCS);
+	UdpServer server_;
+	int res_init = server_.Init(confDirPath + FD_IStoCS, me->settings.interface_by_is_cs, me->settings.cs_port_number);
+	//UdpProcServer udpprocserver(me->udpprocserver);
+	//int res_init = udpprocserver.Init(confDirPath + FD_IStoCS);
 	if(res_init < 0){
 		log_str = "udpprocserver.Init fail: " + to_string(res_init);
 		LOG4CXX_WARN(me->logger, log_str);
@@ -79,11 +116,10 @@ void ProcReceiver::receiver(const ProcReceiver* param, const string confDirPath)
 
 	LOG4CXX_DEBUG(me->logger, "受信待ちへ移行");
 
-	struct timespec ts;
 	while(1)
 	{
 		LOG4CXX_DEBUG(me->logger, "before UdpProcServer");
-		if(udpprocserver.Recv(buf) > 0){
+		if (server_.RecvPacket(buf, res_init) > 0) {
 			LOG4CXX_DEBUG(me->logger, "after UdpProcServer");
 #if TRACELOG == 1
 			// tracelogの取得と格納
@@ -96,31 +132,7 @@ void ProcReceiver::receiver(const ProcReceiver* param, const string confDirPath)
 			//受信データ等の表示(デバッグ用)
 			//log_str = Util(me->dm2util).PrintSend_message(cdata.msg);
 			//LOG4CXX_DEBUG(me->logger, log_str);
-
-			if (buf.msg_type == DM2Type_MNG_CONN_REGIST) {
-				// ペイロードの中身から、SIDの更新があるかチェックする。
-				me->sid_update_check(me, buf.dm2_payload);
-			} else {
-				if ((cdata.msg).transmission_flag == 0 || (cdata.msg).duplication_check_id == 0) {
-					// 送信元ID・重複チェックIDをセット（このルートに入らない場合は電文内の送信元ID・重複チェックIDが引き継がれる）
-					(cdata.msg).src_station_id = me->settings.my_sid;
-					timespec_get(&ts, TIME_UTC);
-					(cdata.msg).duplication_check_id = ts.tv_sec * 1000000000 + ts.tv_nsec;
-				}
-				// 保有している全ネットワークに対し送信を行う
-				for(uint index = 0; index < me->p_queues->size(); index++)
-				{
-					/// DTLS且つ、設定されたSIDが電文のSIDと相違ある場合は読み飛ばす
-					if (me->settings.socket_types[index] == 2 && me->settings.dtls_dest_sids[index] != cdata.msg.dst_station_id) continue;
-					// キューが溜まっている場合はクリアする。
-					if (me->p_queues->at(index)->Size() > 10000) {
-						while (!me->p_queues->at(index)->Empty()) {
-							me->p_queues->at(index)->Pop();
-						}
-					}
-					me->p_queues->at(index)->Push(cdata);	// キューに格納し、送信を依頼する
-				}
-			}
+			receiveDataToQueue(me, buf, cdata);
 		}
 	}
 

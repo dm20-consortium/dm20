@@ -8,12 +8,12 @@ images:
 	${DOCKER_BUILD} -f secLib/Dockerfile --build-arg IMAGE_TAG=${IMAGE_TAG} -t ${IMAGE_PREFIX}/seclib:${IMAGE_TAG} secLib/
 	${DOCKER_BUILD} -f csLib/Dockerfile --build-arg IMAGE_TAG=${IMAGE_TAG} -t ${IMAGE_PREFIX}/cslib:${IMAGE_TAG} csLib/
 	${DOCKER_BUILD} -f commonLib/Dockerfile --build-arg IMAGE_TAG=${IMAGE_TAG} -t ${IMAGE_PREFIX}/commonlib:${IMAGE_TAG} commonLib/
-	${DOCKER_BUILD} -f cs/Dockerfile --build-arg IMAGE_TAG=${IMAGE_TAG} -t ${IMAGE_PREFIX}/cs:${IMAGE_TAG} cs/
+	${DOCKER_BUILD} -f cs/Dockerfile --build-arg IMAGE_TAG=${IMAGE_TAG} -t ${IMAGE_PREFIX}/cs:${IMAGE_TAG} ./
 	${DOCKER_BUILD} -f tupleLib/Dockerfile --build-arg IMAGE_TAG=${IMAGE_TAG} -t ${IMAGE_PREFIX}/tuplelib:${IMAGE_TAG} tupleLib/
 	${DOCKER_BUILD} -f dmClientLib/Dockerfile --build-arg IMAGE_TAG=${IMAGE_TAG} -t ${IMAGE_PREFIX}/dmclientlib:${IMAGE_TAG} dmClientLib/
 	${DOCKER_BUILD} -f proto/Dockerfile.proto --build-arg IMAGE_TAG=${IMAGE_TAG} -t ${IMAGE_PREFIX}/protoc:${IMAGE_TAG} proto/
 	${DOCKER_BUILD} -f proto/Dockerfile --build-arg IMAGE_TAG=${IMAGE_TAG} -t ${IMAGE_PREFIX}/proto:${IMAGE_TAG} proto/
-	${DOCKER_BUILD} -f is/Dockerfile --build-arg IMAGE_TAG=${IMAGE_TAG} -t ${IMAGE_PREFIX}/is:${IMAGE_TAG} is/
+	${DOCKER_BUILD} -f is/Dockerfile --build-arg IMAGE_TAG=${IMAGE_TAG} -t ${IMAGE_PREFIX}/is:${IMAGE_TAG} ./
 	${DOCKER_BUILD} -f apl/dm2mes/Dockerfile --build-arg IMAGE_TAG=${IMAGE_TAG} -t ${IMAGE_PREFIX}/dm2mes:${IMAGE_TAG} apl/dm2mes/
 	${DOCKER_BUILD} -f rdb/Dockerfile --build-arg IMAGE_TAG=${IMAGE_TAG} -t ${IMAGE_PREFIX}/rdb:${IMAGE_TAG} rdb/
 

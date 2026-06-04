@@ -2,6 +2,7 @@
 #define UDPNWCLIENT_H
 
 #include "Cs.h"
+#include "UdpClient.h"
 #include <openssl/ssl.h>
 
 namespace CS{
@@ -14,7 +15,7 @@ namespace CS{
 	 * @author	Nagoya University
 	 * @date	2018/03/14
 	 */
-	class UdpNwClient:public SocketUdp{
+	class UdpNwClient:public SocketUdp, public IUdpClient {
 	private:
 		/** @brief	socketディスクリプタ */
 		int sockd;
@@ -64,8 +65,12 @@ namespace CS{
 
 		addrinfo Init(std::string port_no, std::string dst_ip);
 
-		addrinfo Init(std::string port_no, std::string dst_ip, std::string conf_dir_path);
+		addrinfo Init_path(std::string port_no, std::string dst_ip, std::string conf_dir_path);
 
+		void Init(const std::string& fd_name, const std::string& port, const std::string& ip) override;
+		int SendClientData(struct clientdata &buf_) override;
+		int SendPacket(struct send_message &buf_) override;
+		
 		addrinfo Init_v6(std::string port_no, std::string dst_ip, std::string if_name);
 
 		addrinfo InitClient(std::string port_no, std::string dst_ip);

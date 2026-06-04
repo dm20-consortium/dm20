@@ -27,6 +27,15 @@ namespace IS {
 		//this->settingMap.insert(std::pair<string, string>("MY_STATION_ID", util.ReadConfigFile("MY_STATION_ID", CONF_FILE)));
 		this->settingMap.insert(std::pair<string, string>("MY_STATION_ID", readConfigFile("MY_STATION_ID", CONF_FILE_CS)));
 
+		// CSのIPアドレス
+		this->settingMap.insert(std::pair<string, string>("CS_IP_ADDRESS", readConfigFile("CS_IP_ADDRESS", CONF_FILE_CS, false)));
+		// CSのポート番号
+		this->settingMap.insert(std::pair<string, string>("CS_PORT_NUMBER", readConfigFile("CS_PORT_NUMBER", CONF_FILE_CS, false)));
+		// ISのポート番号
+		this->settingMap.insert(std::pair<string, string>("IS_PORT_NUMBER", readConfigFile("IS_PORT_NUMBER", CONF_FILE_CS, false)));
+		// IS・CS間のNIC
+		this->settingMap.insert(std::pair<string, string>("INTERFACE_BY_IS_CS", readConfigFile("INTERFACE_BY_IS_CS", CONF_FILE_CS, false)));
+		
 		string sidType = readConfigFile("SID_TYPE", CONF_FILE_SYS);
 		if (sidType == "1") {
 			mySIDType = EDGE;
@@ -38,9 +47,6 @@ namespace IS {
 			mySIDType = CAR;
 			logger->debug("[initSettings] MY_STATION_ID:" + getParameter("MY_STATION_ID") + " NODE_TYPE: CAR");
 		}
-		// CloudのStationID
-		this->settingMap.insert(std::pair<string, string>("CLOUD_STATION_ID", readConfigFile("CLOUD_STATION_ID", CONF_FILE_SYS)));
-
 		// ******************* system.conf ******************* //
 		// TCPタイムアウト時間（秒）
 		this->settingMap.insert(std::pair<string, string>("TCP_TIMEOUT_SEC", readConfigFile("TCP_TIMEOUT_SEC", CONF_FILE_SYS)));

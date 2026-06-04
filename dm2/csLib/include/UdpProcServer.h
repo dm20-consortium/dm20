@@ -2,6 +2,7 @@
 #define UDPPROCSERVER_H
 
 #include "Cs.h"
+#include "UdpServer.h"
 
 namespace CS{
 	/**
@@ -12,7 +13,7 @@ namespace CS{
 	 * @author	Nagoya University
 	 * @date	2018/03/14
 	 */
-	class UdpProcServer:public SocketUdp{
+	class UdpProcServer:public SocketUdp, public IUdpServer{
 	private:
 		int server_d_; // ソケットディスクリプタ(サーバ)
 		struct sockaddr_un server_addr_; // ソケットのアドレス(サーバ)
@@ -28,6 +29,10 @@ namespace CS{
 		}
 		
 		int Init(const std::string &fd_name);
+
+		int Init(const std::string& fd_name, std::string interface_name, std::string port_no) override;
+		int RecvPacket(send_message &buf_, int socket_res_) override;
+		int RecvClientData(clientdata &buf_, int socket_res_) override;
 
 		int InitServer(const char* fd_name);
 

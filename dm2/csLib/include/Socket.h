@@ -94,11 +94,13 @@ namespace CS{
 
 		int Recvfrom(int socket_res_, send_message &buf_, sockaddr_storage &ss_);
 		int Recvfrom(int socket_res_, send_message &buf_, sockaddr_storage &ss_, int recv_size_);
+		int Recvfrom(int socket_res_, clientdata &buf_, sockaddr_storage &ss_, int recv_size_);
 		int RecvfromEtM(int socket_res_, send_message &buf_, sockaddr_storage &ss_, int recv_size_, const std::string &aesKey);
 		int RecvfromEtMonPki(int socket_res_, send_message &buf_, sockaddr_storage &ss_, int recv_size_, const std::string &aesKey);
 
 		int Sendto(send_message &buf_, sockaddr_un &addr_);
 		int Sendto(struct clientdata &buf_, sockaddr_un &addr_);
+		int SendClientData(struct clientdata &buf_, addrinfo &addr_);
 		int Sendto(send_message &buf_, addrinfo &addr_);
 		int Sendto(send_message &buf_, addrinfo &addr_, int send_size_, std::string udp_port_number_);
 		int SendtoEtM(send_message &buf_, addrinfo &addr_, int send_size_, std::string udp_port_number_, const std::string &aesKey);

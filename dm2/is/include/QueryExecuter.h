@@ -62,6 +62,7 @@ namespace IS {
 
 		string user;
 		RecvData recvInfo;
+		query_header query_header_;
 
 		unsigned int mngId;
 		unsigned int requestedMngId;
@@ -92,10 +93,11 @@ namespace IS {
 		void addOperator(Operator* ope);
 		bool runForNearBy(int range, unsigned long long senderId, unsigned long long destId, unsigned long long requestVehicleId, unsigned long long receptionEdgeId, unsigned int receptionMngId, string edgeSIDsStr);
 		IS::Operator* parseOperatorTree(const string &operatorTreeXml);
-		Operator* getOperator(DOMNodeList* dataList, DOMNodeList* graphList, const string &nodeId);
+		Operator* getOperator(DOMNodeList* dataList, DOMNodeList* graphList, const string &nodeId, bool isDynamicColumn);
 
 	public:
-		QueryExecuter(const string &user, const unsigned int mngId, const RecvData &data, const bool &returnMngId);
+		QueryExecuter(const string &user, const unsigned int mngId, const RecvData &data, const bool &returnMngId, const query_header &_query_header);
+		QueryExecuter(const string &user, const unsigned int mngId, const RecvData &data);
 		QueryExecuter(const string &user, const unsigned int mngId, const string query);
 
 		bool isOperatorTreeXML = false;

@@ -272,6 +272,10 @@ bool ProcRcvSettings::load_dm2conf(const std::string &confDirPath)
 
 	if (!dm2util.chk_dm2conf_int_item("SEND_NETWORK_NUM", network_num, true)) return false;
 
+	if (!dm2util.chk_dm2conf_str_item("CS_PORT_NUMBER", cs_port_number, false)) cs_port_number = "";
+	
+	if (!dm2util.chk_dm2conf_str_item("INTERFACE_BY_IS_CS", interface_by_is_cs, false)) interface_by_is_cs = "";
+	
 	for (int count = 1; count < network_num + 1; count++) {
 		string item_str;
 		int item_int;

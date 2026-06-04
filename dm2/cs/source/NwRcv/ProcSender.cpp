@@ -59,10 +59,12 @@ void ProcSender::sender(const ProcSender *param, UnorderedMap<string, time_t> &s
 {
     const ProcSender *me = param;       // 自身のメンバへのアクセスはmeを通じて行うこと
     LOG4CXX_INFO(me->logger, "start");
+    const std::string is_ip_address = me->settings.is_ip_address;
+    const std::string is_port_number = me->settings.is_port_number;
 
 	//自車両内のIS向け送信用socketFD作成
-	UdpProcClient ownisudpprocclient;
-	sockaddr_un own_is_addr = ownisudpprocclient.Init(confDirPath + FD_CStoIS);
+	UdpClient ownisudpclient;
+	ownisudpclient.Init(confDirPath + FD_CStoIS, is_port_number, is_ip_address);
 
     // 自車のCS(VehicleProcRcv)向け送信用socketFD作成
     UdpProcClient owncsudpprocclient;
@@ -120,7 +122,7 @@ void ProcSender::sender(const ProcSender *param, UnorderedMap<string, time_t> &s
             for(int i = 0; i< max_sendto_times; i++)
             {
 			    // UdpReceiveInterfaceには client_data型で渡す
-                if(ownisudpprocclient.Sendto(cdata, own_is_addr) < 0) {
+                if(ownisudpclient.SendClientData(cdata) < 0) {
                     send_result = false;
                     LOG4CXX_DEBUG(me->logger, "IS部に送信 失敗");
                 }
@@ -185,7 +187,7 @@ void ProcSender::sender(const ProcSender *param, UnorderedMap<string, time_t> &s
             for(int i = 0; i< max_sendto_times; i++)
             {
 			    // UdpReceiveInterfaceには client_data型で渡す
-                if(ownisudpprocclient.Sendto(cdata, own_sec_addr) < 0) {
+                if(ownsecudpprocclient.Sendto(cdata, own_sec_addr) < 0) {
                     send_result = false;
                     LOG4CXX_DEBUG(me->logger, "Security部に送信 失敗");
                 }

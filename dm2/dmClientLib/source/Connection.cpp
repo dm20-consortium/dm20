@@ -27,13 +27,12 @@ string Connection::pemPass = "";
  * @param	tcpSslTimeoutSec TCP/SSLタイムアウト秒
  */
 
-Connection::Connection(const string &ip, const int port, const int sock, const struct sockaddr_in addr, const string &key, const int tcpSslTimeoutSec, const bool isTransportMode)
+Connection::Connection(const string &ip, const int port, const int sock, const string &key, const int tcpSslTimeoutSec, const bool isTransportMode)
 {
 	this->ip = ip;
 	this->port = port;
 	this->sock = sock;
 	this->isTransportMode = isTransportMode;
-	this->addr = addr;
 	this->key = key;
 	this->tcpSslTimeoutSec = tcpSslTimeoutSec;
 	callBackMp.clear();
@@ -60,14 +59,13 @@ Connection::Connection(const string &ip, const int port, const int sock, const s
 * @param	dtlsTimeoutSec		DTLSタイムアウト秒
 */
 
-Connection::Connection(const string &ip, const int port, const int sock,  const struct sockaddr_in addr, const string &key,
+Connection::Connection(const string &ip, const int port, const int sock, const string &key,
 	SSL *ssl, SSL_CTX *ctx, const string &certFilePath, const string &privateKeyFilePath, const string &inPemPass,
 	const int tcpSslTimeoutSec, const int dtlsTimeoutSec, const bool isTransportMode)
 {
 	this->ip = ip;
 	this->port = port;
 	this->sock = sock;
-	this->addr = addr;
 	this->key = key;
 	this->ssl = ssl;
 	this->isTransportMode = isTransportMode;
@@ -123,49 +121,6 @@ Connection::~Connection()
 	}
 }
 
-ResultSet Connection::changeid(const string &query)
-{
-	char buffer[BUF_MAX];
-	int data = 0;
-	int sumLen = 0;
-	int bufSize = 0;
-	
-	string receiveData = "";
-
-	if (query.length() <= 6) {
-		cout << "[execute] ERROR occured, throw SQLException. cause: Illigal SQL statement" << endl;
-		throw SQLException("[execute] ERROR occured, throw SQLException. cause: Illigal SQL statement");
-	}
-	// クエリをQueryXMLに変換
-	string queryXML;
-	IS::InformationSourceParser isp;
-	isp.createChangeidXML(query, 0, this->key, queryXML, false);
-
-	// サーバに送信
-	int retLen;
-	if(!isSSL){
-		retLen = send(sock, queryXML.c_str(), queryXML.length(), 0);
-		cout << "send cahngeID" << endl;
-	}
-	else{
-		retLen = SSL_write(ssl, queryXML.c_str(), queryXML.length());
-	}
-		
-	cout << to_string(retLen) << endl;
-
-	if (retLen < 0) {
-		perror("[changeID] send/SSL_write error");
-		cerr << "[changeID] send/SSL_write TCP Connection Timeout. errno:" << errno << endl;
-		throw ConnectionTimeoutException();
-	}
-
-	// ResultSetに変換
-	ResultSet ret;
-
-	return ret;
-
-}
-
 /**
  * One-Shot Query(ワンショットクエリ)の実行
  *
@@ -197,31 +152,25 @@ ResultSet Connection::execute(const string &query)
 	long startTime = DmUtil::getTimeMicrosec();
 	long procTime = startTime;
 #endif
-	// クエリをQueryXMLに変換
-	string queryXML;
-	IS::InformationSourceParser isp;
-	isp.createQueryXML(query, 0, this->key, queryXML, false);
+	// クエリ電文をシリアライズ
+	IS::ProtobufParser &pp = IS::ProtobufParser::get_instance();
+	string serializedQuery = pp.createQuery(query, this->key, 0, false, false);
 #if MEASURE_MODE == 1
 	long now = DmUtil::getTimeMicrosec();
 	double msec = (now - procTime) / 1000.0;
 	cout << "[STAT] createQueryXML processTime(msec):" << msec << endl;
 #endif
-#if DEBUG == 1
-	cout << "[execute] ---------------- REQUEST XML ----------------" << endl;
-	cout << "[execute] " << query << endl;
-#endif
+	//cout << "[execute] REQUEST" << query << endl;
 #if MEASURE_MODE == 1
 	procTime = DmUtil::getTimeMicrosec();
 #endif
 	// サーバに送信
 	int retLen;
 	if(!isSSL)
-		retLen = send(sock, queryXML.c_str(), queryXML.length(), 0);
+		retLen = send(sock, serializedQuery.c_str(), serializedQuery.length(), 0);
 	else
-		retLen = SSL_write(ssl, queryXML.c_str(), queryXML.length());
-#if DEBUG == 1
-	cout << "[execute] dataSize: " << queryXML.length() << " retSize : " << retLen << endl;
-#endif
+		retLen = SSL_write(ssl, serializedQuery.c_str(), serializedQuery.length());
+	//cout << "[execute] dataSize: " << serializedQuery.length() << " retSize : " << retLen << endl;
 	if (retLen < 0) {
 		perror("[execute] send/SSL_write error");
 		cerr << "[execute] send/SSL_write TCP Connection Timeout. errno:" << errno << endl;
@@ -235,6 +184,7 @@ ResultSet Connection::execute(const string &query)
 	procTime = DmUtil::getTimeMillisec();
 #endif
 	string bufStr;
+	struct ProtobufHeaderInfo headerInfo;
 
 	/* サーバからデータを受信 */
 	while (1) {
@@ -254,7 +204,15 @@ ResultSet Connection::execute(const string &query)
 		}
 		bufStr = string(buffer, data);
 		if (receiveData.length() == 0) {
-			bufSize = stringUtil.getXMLSize(bufStr);
+			// 先頭データがprotobufヘッダかチェック
+			pp.getProtobufHeaderInfo(bufStr, headerInfo);
+			if (headerInfo.headerSize != 0)
+			{
+				// ヘッダサイズ+protobufデータ長分を待ち受ける
+				bufSize = headerInfo.headerSize + headerInfo.header.payload_size;
+			} else {
+				bufSize = data;
+			}
 		}
 		receiveData.append(bufStr);
 		sumLen = sumLen + data;
@@ -266,19 +224,19 @@ ResultSet Connection::execute(const string &query)
 	cout << "[STAT] read/SSL_read processTime(msec):" << msec << endl;
 #endif
 	
-#if DEBUG == 1
-	/*受信したデータを表示*/
-	cout << "[execute] ---------------- RESULT RECV ----------------" << endl;
-	cout << "[execute] " << receiveData << endl;
-	printf("[execute] size : %d\n", sumLen);
-#endif
+	//cout << "[execute]RESULT " << dumpBinStr(receiveData) << endl;
 #if MEASURE_MODE == 1
 	procTime = DmUtil::getTimeMicrosec();
 #endif
-	// SQLエラーのハンドリング
-	if (isp.getErrorCode(buffer) != 0) {
-		cerr << "[execute] ERROR occured, throw SQLException. code:" << isp.getErrorCode(buffer) << endl;
-		throw SQLException("[execute] ErrorCode:" + to_string(isp.getErrorCode(buffer)) + " Msg:" + isp.getErrorMessage(buffer));
+	// Protobufヘッダが付加されていないため、エラーレスポンスと解釈
+	if (headerInfo.headerSize == 0 || headerInfo.header.flag != '3')
+	{
+		// SQLエラーのハンドリング
+		int errCode = 0;
+		string errMsg = "";
+		pp.queryErrorReponseDeserialize(receiveData, errCode, errMsg);
+		cerr << "[execute] ERROR occured, throw SQLException. code:" << errCode << endl;
+		throw SQLException("[execute] ErrorCode:" + to_string(errCode) + " Msg:" + errMsg);
 	}
 #if MEASURE_MODE == 1
 	now = DmUtil::getTimeMicrosec();
@@ -288,8 +246,37 @@ ResultSet Connection::execute(const string &query)
 	procTime = DmUtil::getTimeMicrosec();
 #endif
 	// ResultSetに変換
-	ResultSet ret;
-	isp.getResultSetBySAX(receiveData, ret);
+	vector<Tuple> tuples;
+	Schema schema;
+	
+	vector<string> nameList, typeList;
+	pp.DeserializeToTupleDynamically(headerInfo.payload_p, tuples, schema, nameList, typeList, false);
+
+	vector<std::unordered_map<string, string>> valList, timeList, nullList;
+
+	ResultSetMetaData meta(headerInfo.header.mngId, nameList, typeList);
+
+	for (Tuple& tuple : tuples)
+	{
+		std::unordered_map<string, string> valmap, timemap, nullValmap;
+		for (int i = 0; i < tuple.size(); i++)
+		{
+			bool isnull;
+			any val;
+			long timestamp;
+
+			tuple.getValue(i, val, timestamp, isnull);
+
+			valmap.insert(std::pair<string, string>(nameList[i], isnull ? "" : stringUtil.getAnyString(val)));
+			timemap.insert(std::pair<string, string>(nameList[i], to_string(timestamp)));
+			nullValmap.insert(std::pair<string, string>(nameList[i], isnull ? "1" : "0"));
+		}
+
+		valList.push_back(valmap);	
+		timeList.push_back(timemap);
+		nullList.push_back(nullValmap);
+	}
+	ResultSet result(valList, timeList, nullList, meta);
 #if MEASURE_MODE == 1
 	now = DmUtil::getTimeMicrosec();
 	msec = (now - procTime) / 1000.0;
@@ -297,7 +284,7 @@ ResultSet Connection::execute(const string &query)
 	msec = (now - startTime) / 1000.0;
 	cout << "[STAT] execute processTime(msec):" << msec << endl;
 #endif
-	return ret;
+	return result;
 
 }
 
@@ -330,13 +317,13 @@ unsigned int Connection::registerQuery(const string &query, FUNC_CALLBACK func_c
 	long startTime = DmUtil::getTimeMicrosec();
 	long procTime = startTime;
 #endif
-	// ポート確認
-	struct sockaddr_in confirm_addr;
 
 	if (isTransportMode == false) {
+		// ポート確認
+		struct sockaddr_in confirm_addr;
 		int Sock = socket(AF_INET, SOCK_DGRAM, 0);
-		addr.sin_family = AF_INET;
-		addr.sin_addr.s_addr = INADDR_ANY;
+		confirm_addr.sin_family = AF_INET;
+		confirm_addr.sin_addr.s_addr = INADDR_ANY;
 
 		bool bindUdp = false;
 		if (func_c != NULL) {
@@ -349,8 +336,8 @@ unsigned int Connection::registerQuery(const string &query, FUNC_CALLBACK func_c
 			for (int i = 0; i < 30; i++)
 			{
 				udpReceptionPort = udpReceptionPort + i;
-				addr.sin_port = htons(udpReceptionPort);
-				int ret = bind(Sock, (struct sockaddr *)&addr, sizeof(addr));
+				confirm_addr.sin_port = htons(udpReceptionPort);
+				int ret = bind(Sock, (struct sockaddr *)&confirm_addr, sizeof(confirm_addr));
 				if (ret == 0) {
 					close(Sock);
 					break;
@@ -366,28 +353,24 @@ unsigned int Connection::registerQuery(const string &query, FUNC_CALLBACK func_c
 
 	procTime = DmUtil::getTimeMicrosec();
 #endif
-	// クエリをQueryXMLに変換
-	string queryXML;
-	IS::InformationSourceParser isp;
-	isp.createQueryXML(query, udpReceptionPort, this->key, queryXML, isTransportMode);
+	// クエリをシリアライズ
+	string serializedQuery;
+	IS::ProtobufParser &pp = IS::ProtobufParser::get_instance();
+	pp.init();
+	serializedQuery = pp.createQuery(query, this->key, udpReceptionPort, isTransportMode, true);
 #if MEASURE_MODE == 1
 	now = DmUtil::getTimeMicrosec();
 	msec = (now - procTime) / 1000.0;
 	cout << "[STAT] createQueryXML processTime(msec):" << msec << endl;
+	proc = now;
 #endif
-#if DEBUG == 1
-	cout << "[registerQuery] ---------------- REQUEST XML ----------------" << endl;
-	cout << "[registerQuery] " << query << endl;
-#endif
-#if MEASURE_MODE == 1
-	procTime = DmUtil::getTimeMicrosec();
-#endif
+	//cout << "[registerQuery] REQUEST query:" << query << endl;
 	// サーバに送信
 	int ret;
 	if (!isSSL)
-		ret = send(sock, queryXML.c_str(), queryXML.length(), 0);
+		ret = send(sock, serializedQuery.c_str(), serializedQuery.length(), 0);
 	else
-		ret = SSL_write(ssl, queryXML.c_str(), queryXML.length());
+		ret = SSL_write(ssl, serializedQuery.c_str(), serializedQuery.length());
 
 	if (ret < 0) {
 		perror("[registerQuery] send/SSL_write error");
@@ -401,9 +384,7 @@ unsigned int Connection::registerQuery(const string &query, FUNC_CALLBACK func_c
 
 	procTime = DmUtil::getTimeMicrosec();
 #endif
-#if DEBUG == 1
-	cout << "[registerQuery] dataSize: " << queryXML.length() << " retSize : " << ret << endl;
-#endif
+	//cout << "[registerQuery] dataSize: " << serializedQuery.length() << " retSize : " << ret << endl;
 	/* サーバからデータを受信 */
 	memset(buffer, 0, sizeof(buffer));
 
@@ -420,30 +401,28 @@ unsigned int Connection::registerQuery(const string &query, FUNC_CALLBACK func_c
 	else if (data == 0) {
 		throw SQLException("[registerQuery] After read/SSL_read, Response size is 0");
 	}
+	ProtobufHeaderInfo headerInfo;
+	pp.getProtobufHeaderInfo(string(buffer, data), headerInfo);
 #if MEASURE_MODE == 1
 	now = DmUtil::getTimeMicrosec();
 	msec = (now - procTime) / 1000.0;
 	cout << "[STAT] read/SSL_read processTime(msec):" << msec << endl;
 #endif
-#if DEBUG == 1
 	/*受信したデータを表示*/
-	cout << "[registerQuery] ---------------- RESULT RECV ----------------" << endl;
-	printf("[registerQuery] %s\n", buffer);
-	printf("[registerQuery] size : %d\n", data);
-#endif
+	//cout << "[registerQuery] RESULT RECV: " << dumpBinStr(buffer) << endl;
+	unsigned int mngId = 0;
+	int tcpPort = 0;
+	int errCode = 0;
+	string errMsg = "";
+	pp.queryReponseDeserialize(buffer, mngId, tcpPort, errCode, errMsg);
+
 	// SQLエラーのハンドリング
-	if (isp.getErrorCode(buffer) != 0) {
-		cerr << "[registerQuery] ERROR occured, throw SQLException. code:" << isp.getErrorCode(buffer) << endl;
-		throw SQLException("[registerQuery] ErrorCode:" + to_string(isp.getErrorCode(buffer)) + " Msg : " + isp.getErrorMessage(buffer));
+	if (errCode != 0) {
+		cerr << "[registerQuery] ERROR occured, throw SQLException. code:" << errCode << endl;
+		throw SQLException("[registerQuery] ErrorCode:" + to_string(errCode) + " Msg : " + errMsg);
 	}
 #if MEASURE_MODE == 1
 	procTime = DmUtil::getTimeMicrosec();
-#endif
-	int tcpPort = 0;
-	// レスポンスからクエリ番号を取得
-	unsigned int mngId = isp.getMngId(buffer, tcpPort);
-#if DEBUG == 1
-	printf("Set mngId:%d\n", mngId);
 #endif
 	if (func_c != NULL) {
 		// クエリ管理番号を保持
@@ -467,14 +446,12 @@ unsigned int Connection::registerQuery(const string &query, FUNC_CALLBACK func_c
 	if (isTransportMode) {
 		usleep(5000);
 		DmManager dm;
-		struct sockaddr_in addr;
 		int dataSock;
 		SSL *dataSsl = NULL;
-		isTransportMode = true;
 		if (!isSSL) {
-			dataSock = dm.connectSock(this->ip, tcpPort, addr);
+			dataSock = dm.connectSock(this->ip, tcpPort);
 		} else {
-			dataSsl = dm.connectSSLSock(dataSock, this->ip, tcpPort, addr, this->ctx);
+			dataSsl = dm.connectSSLSock(dataSock, this->ip, tcpPort, this->ctx);
 			this->ssl2 = dataSsl;
 		}
 		this->sock2 = dataSock;
@@ -680,16 +657,17 @@ unsigned int Connection::registerQuery(const string &query, const unsigned long 
 		cerr << "[registerQuery] ERROR occured, throw SQLException. cause: Illigal SQL statement" << endl;
 		throw SQLException("[registerQuery] ERROR occured, throw SQLException. cause: Illigal SQL statement");
 	}
-	// クエリをQueryXMLに変換
-	string queryXML;
-	IS::InformationSourceParser isp;
-	isp.createQueryXML(query, this->key, queryXML, destSID, executerSID);
+	// クエリをシリアライズ
+	string serializedQuery;
+	IS::ProtobufParser &pp = IS::ProtobufParser::get_instance();
+	serializedQuery = pp.createQuery(query, this->key, destSID, true);
+	pp.init();
 	// サーバに送信
 	int ret;
 	if (!isSSL)
-		ret = send(sock, queryXML.c_str(), queryXML.length(), 0);
+		ret = send(sock, serializedQuery.c_str(), serializedQuery.length(), 0);
 	else
-		ret = SSL_write(ssl, queryXML.c_str(), queryXML.length());
+		ret = SSL_write(ssl, serializedQuery.c_str(), serializedQuery.length());
 
 	if (ret < 0) {
 		perror("[registerQuery] send/SSL_write error");
@@ -709,14 +687,17 @@ unsigned int Connection::registerQuery(const string &query, const unsigned long 
 		cerr << "[registerQuery] recv TCP Connection Timeout. errno:" << errno << endl;
 		throw ConnectionTimeoutException();
 	}
-	// SQLエラーのハンドリング
-	if (isp.getErrorCode(buffer) != 0) {
-		cerr << "[registerQuery] ERROR occured, throw SQLException. code:" << isp.getErrorCode(buffer) << endl;
-		throw SQLException("[registerQuery] ErrorCode:" + to_string(isp.getErrorCode(buffer)) + " Msg : " + isp.getErrorMessage(buffer));
-	}
+	unsigned int mngId = 0;
+	int errCode = 0;
 	int tcpPort = 0;
-	// レスポンスからクエリ番号を取得
-	unsigned int mngId = isp.getMngId(buffer, tcpPort);
+	string errMsg = "";
+	pp.queryReponseDeserialize(buffer, mngId, tcpPort, errCode, errMsg);
+
+	// SQLエラーのハンドリング
+	if (errCode != 0) {
+		cerr << "[registerQuery] ERROR occured, throw SQLException. code:" << errCode << endl;
+		throw SQLException("[registerQuery] ErrorCode:" + to_string(errCode) + " Msg : " + errMsg);
+	}
 	return mngId;
 }
 /**
@@ -737,13 +718,12 @@ void Connection::cancelQuery(const unsigned int mngId)
 
 	// DBシステムに対して継続クエリのキャンセル要求を投げる
 	string cancelQuery;
-	IS::InformationSourceParser isp;
-	isp.createCancelXML(mngId, this->key, cancelQuery);
+	IS::ProtobufParser &pp = IS::ProtobufParser::get_instance();
+	pp.init();
 
-#if DEBUG == 1
-	cout << "[cancelQuery] ---------------- REQUEST XML ----------------" << endl;
-	cout << "[cancelQuery] " << cancelQuery << endl;
-#endif
+	cancelQuery = pp.createCancel(mngId, this->key);
+
+	//cout << "[cancelQuery] REQUEST:" << cancelQuery << endl;
 #if MEASURE_MODE == 1
 	long procTime = DmUtil::getTimeMicrosec();
 #endif
@@ -753,9 +733,7 @@ void Connection::cancelQuery(const unsigned int mngId)
 	else
 		ret = SSL_write(ssl, cancelQuery.c_str(), cancelQuery.length());
 
-#if DEBUG == 1
-	cout << "[cancelQuery] dataSize: " << cancelQuery.length() << " retSize : " << ret << endl;
-#endif
+	//cout << "[cancelQuery] dataSize: " << cancelQuery.length() << " retSize : " << ret << endl;
 	if (ret < 0) {
 		perror("[cancelQuery] send/SSL_write error");
 		cerr << "[cancelQuery] TCP Connection Timeout. errno:" << errno << endl;
@@ -786,16 +764,17 @@ void Connection::cancelQuery(const unsigned int mngId)
 	msec = (now - procTime) / 1000.0;
 	cout << "[STAT] read/SSL_read processTime(msec):" << msec << endl;
 #endif
-#if DEBUG == 1
-	/*受信したデータを表示*/
-	cout << "[cancelQuery] ---------------- RESULT RECV ----------------" << endl;
-	printf("[cancelQuery] %s\n", buffer);
-	printf("[cancelQuery] size : %d\n", data);
-#endif
+	//cout << "[cancelQuery] RESULT RECV:" << dumpBinStr(buffer) << endl;
+	struct ProtobufHeaderInfo headerInfo;
+
+	unsigned int resMngID = 0;
+	int errCode = 0;
+	string errMsg = "";
+	pp.cancelResponseDeserialize(buffer, resMngID, errCode, errMsg);
 	// SQLエラーのハンドリング
-	if (isp.getErrorCode(buffer) != 0) {
-		cerr << "[cancelQuery] ERROR occured, throw SQLException. code:" << isp.getErrorCode(buffer) << endl;
-		throw InvalidArgumentException("ErrCd:" + to_string(isp.getErrorCode(buffer)) + ", ErrMsg: " + isp.getErrorMessage(buffer));
+	if (errCode != 0) {
+		cerr << "[cancelQuery] ERROR occured, throw SQLException. code:" << errCode << endl;
+		throw InvalidArgumentException("ErrCd:" + to_string(errCode) + ", ErrMsg: " + errMsg);
 	}
 
 	try {
@@ -901,69 +880,23 @@ void Connection::disconnect(bool doClear)
 
 void Connection::reconnect()
 {
-	struct sockaddr_in addr;
-	int sock;
-
-	//if (isTransportMode) {
-		if (callBackMp.size() > 0 || callBackClassMp.size() > 0) {
-			return;
-		}
-	//}
+	if (callBackMp.size() > 0 || callBackClassMp.size() > 0) {
+		return;
+	}
 	// 接続中の場合は一旦Close
 	disconnect();
 
-	/* ソケットの作成 */
-	sock = socket(AF_INET, SOCK_STREAM, 0);
-
-	/* 接続先指定用構造体の準備 */
-	addr.sin_family = AF_INET;
-	addr.sin_port = htons(this->port);
-	addr.sin_addr.s_addr = inet_addr(this->ip.c_str());
-
-	//タイムアウト時間設定
-	struct timeval timeout;
-	timeout.tv_sec = tcpSslTimeoutSec;
-	timeout.tv_usec = 0;
-	// TCPのタイムアウト設定
-	if (setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)) < 0) {
-		perror("[reconnect] setsockopt Error");
+	DmManager dm;
+	int dataSock;
+	SSL *dataSsl = NULL;
+	if (!isSSL) {
+		dataSock = dm.connectSock(this->ip, this->port);
+	} else {
+		dataSsl = dm.connectSSLSock(dataSock, this->ip, this->port, this->ctx);
+		this->ssl2 = dataSsl;
 	}
-
-	/* サーバに接続 */
-#if DEBUG == 1
-	printf("[reconnect] Server connect START\n");
-	printf("[reconnect] Connect to %s:%d\n", this->ip.c_str(), this->port);
-#endif
-	if (connect(sock, (struct sockaddr*)&addr, sizeof(addr))) {
-		printf("Faild Connect to %s:%d\n", this->ip.c_str(), this->port);
-		throw ConnectionFailedException("[recconect] Faild Connect to " + this->ip + ":" + to_string(this->port));
-	}
-#if DEBUG == 1
-	printf("[reconnect] Server Connect SUCCESS\n");
-#endif
-	
-
-	if (isTransportMode) {
-		int sock2;
-		/* ソケットの作成 */
-		sock2 = socket(AF_INET, SOCK_STREAM, 0);
-
-		/* 接続先指定用構造体の準備 */
-		addr.sin_family = AF_INET;
-		addr.sin_port = htons(this->port2);
-		addr.sin_addr.s_addr = inet_addr(this->ip.c_str());
-
-		// TCPのタイムアウト設定
-		if (setsockopt(sock2, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)) < 0) {
-			perror("[reconnect] setsockopt Error");
-		}
-
-		/* サーバに接続 */
-		if (connect(sock2, (struct sockaddr*)&addr, sizeof(addr))) {
-			printf("Faild Connect to %s:%d\n", this->ip.c_str(), this->port2);
-			throw ConnectionFailedException("[recconect] Faild Connect to " + this->ip + ":" + to_string(this->port2));
-		}
-	}
+	this->sock2 = dataSock;
+/*
 	if (isSSL) {
 		OpenSSL_add_all_algorithms();
 		ERR_load_BIO_strings();
@@ -984,14 +917,7 @@ void Connection::reconnect()
 			SSL_connect(ssl2);
 		}
 	}
-#if DEBUG == 1
-	printf("[reconnect] Server Connect SUCCESS\n");
-#endif
-
-	this->sock = sock;
-	this->sock2 = sock2;
-	this->addr = addr;
-
+*/
 	return;
 }
 
@@ -1024,7 +950,7 @@ void Connection::receiveData(const int port)
 	} else {
 		// UDPのタイムアウト設定
 		Sock = socket(AF_INET, SOCK_DGRAM, 0);
-
+		struct sockaddr_in addr;
 		addr.sin_family = AF_INET;
 		addr.sin_port = htons(port);
 		addr.sin_addr.s_addr = INADDR_ANY;
@@ -1066,9 +992,7 @@ void Connection::receiveData(const int port)
 			}
 			string bufStr = string(buf, len);
 			//cout << "[receiveData] bufStr = [" << bufStr << "]" << << endl;
-#if DEBUG == 1
-			cout << "[receiveData] recvfrom : " << bufStr.length() << " bytes" << endl;
-#endif
+			//cout << "[receiveData] recvfrom : " << bufStr.length() << " bytes" << endl;
 			if (isTransportMode) {
 				if (bufStr == "") {
 					continue;
@@ -1076,22 +1000,53 @@ void Connection::receiveData(const int port)
 			}
 			// データを統合
 			dataIntegration(bufStr, recvDataMap, receiveData);
-#if DEBUG == 1
-				cout << "[receiveData] recvfrom after (addrlen == 0)" << endl;
-#endif
 			if (receiveData.length() != 0) break;
 		}
 		if (isExit) break;
-#if DEBUG == 1
 		//cout << "[receiveData] recvData(Integrated) : " << receiveData.length() << " bytes" << endl;
-#endif
 		ResultSet ret;
 		unsigned int mngId = 0;
 		try {
-			IS::InformationSourceParser isp;
-			isp.getResultSetBySAX(receiveData, ret);
-			mngId = ret.getResultSetMetaData().getManagementId();
-			ret.setReference(referenceMp[mngId]);
+			IS::ProtobufParser &pp = IS::ProtobufParser::get_instance();
+			vector<Tuple> tuples;
+			struct ProtobufHeaderInfo headerInfo;
+			pp.getProtobufHeaderInfo(receiveData, headerInfo);
+			// cout << "headerSize:" << headerInfo.headerSize << ",payload_size:" << headerInfo.header.payload_size << endl;
+			if (headerInfo.headerSize != 0)
+			{
+				vector<Tuple> tuples;
+				Schema schema;
+
+				vector<string> nameList, typeList;
+				vector<std::unordered_map<string, string>> valList, timeList, nullList;
+				std::unordered_map<string, string> valmap, timemap, nullValmap;
+				string protobufStr = string(headerInfo.payload_p, headerInfo.header.payload_size);
+				pp.queryResultDeserialize(protobufStr, headerInfo.header.table_name, tuples, nameList, typeList);
+				mngId = headerInfo.header.mngId;
+
+				ResultSetMetaData meta(headerInfo.header.mngId, nameList, typeList);
+
+				for (Tuple& tuple : tuples)
+				{
+					for (int i = 0; i < tuple.size(); i++)
+					{
+						bool isnull;
+						any val;
+						long timestamp;
+
+						tuple.getValue(i, val, timestamp, isnull);
+
+						valmap.insert(std::pair<string, string>(nameList[i], stringUtil.getAnyString(val)));
+						timemap.insert(std::pair<string, string>(nameList[i], to_string(timestamp)));
+						nullValmap.insert(std::pair<string, string>(nameList[i], isnull ? "1" : "0"));
+					}
+
+					valList.push_back(valmap);	
+					timeList.push_back(timemap);
+					nullList.push_back(nullValmap);
+				}
+				ret = ResultSet(valList, timeList, nullList, meta);
+			}
 		}
 		catch (...) {
 			cerr << "[receiveData] Unexpected Exception. Can't parse QueryResult. So continue.";
@@ -1675,14 +1630,19 @@ cleanup:
 
 inline void Connection::dataIntegration(string &buf, std::unordered_map<string, vector<string>> &recvDataMap, string &result)
 {
-	int flagment = 0, flagmentMax = 0;
+	int flagment = 0, flagmentMax = 0, protobufSize = 0;
 	string key;
 
+
 	// ヘッダ情報を取得する
-	stringUtil.getHeaderInfo(buf, key, flagment, flagmentMax);
-#if DEBUG == 1
-	cout << "[dataIntegration] UDP recv headerInfo  key:" << key << " flagment:" << flagment << " max:" << flagmentMax << endl;
-#endif
+	ProtobufParser &pp = IS::ProtobufParser::get_instance();
+	struct ProtobufHeaderInfo headerInfo;
+	pp.getProtobufHeaderInfo(buf, headerInfo);
+	flagment = headerInfo.header.fragment_index;
+	flagmentMax = headerInfo.header.total_fragments;
+	protobufSize = headerInfo.headerSize + headerInfo.header.payload_size;
+	key = headerInfo.header.key;
+	//cout << "[dataIntegration] UDP recv headerInfo  key:" << key << " flagment:" << flagment << " max:" << flagmentMax << endl;
 	// resultMapに受信途中がないかチェック
 	auto itr = recvDataMap.find(key);
 	if (itr != recvDataMap.end()) {
@@ -1771,6 +1731,10 @@ int Connection::recvUsingHeader(int sock, char *outBuf, SSL *ssl, bool isTcp, bo
 			if (headerInfo.header.compressFlg != '1' && headerInfo.header.compressFlg != '2') {
 				if (headerInfo.header.compressFlg == '0') {
 					memcpy(outBuf, bufTmp_p, now_len);
+				} else if (headerInfo.header.compressFlg == '3') {
+					// protobufヘッダを含んだデータを渡す
+					now_len += headerInfo.headerSize;
+					memcpy(outBuf, bufTmp, now_len);
 				} else {
 					memcpy(outBuf, bufTmp, now_len);
 				}

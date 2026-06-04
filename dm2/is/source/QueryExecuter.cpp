@@ -28,7 +28,7 @@ using namespace std;
 namespace IS {
 
 	/**
-	 * コンストラクタ
+	 * コンストラクタ (アプリ / CS経由でクエリが転送された場合)
 	 *
 	 * @author	Nagoya University
 	 * @date	2018/03/13
@@ -38,17 +38,37 @@ namespace IS {
 	 * @param	data	受信データ
 	 */
 
-	QueryExecuter::QueryExecuter(const string &user, const unsigned int mngId, const RecvData &data, const bool &doReturn)
+	QueryExecuter::QueryExecuter(const string &user, const unsigned int mngId, const RecvData &data, const bool &doReturn, const query_header &_query_header)
 	{
 		this->user = user;
 		this->recvInfo = data;
 		this->mngId = mngId;
 		this->doReturn = doReturn;
+		this->query_header_ = _query_header;
 		pthread_mutex_init(&opListMtx, NULL);
 	}
 
 	/**
-	* コンストラクタ(CS経由でオペレータツリーが転送された場合)
+	 * コンストラクタ (アプリ経由でオペレータツリーが転送された場合)
+	 *
+	 * @author	Nagoya University
+	 * @date	2018/03/13
+	 *
+	 * @param	user	ユーザ名
+	 * @param	mngId	クエリ管理番号
+	 * @param	data	受信データ
+	 */
+
+	QueryExecuter::QueryExecuter(const string &user, const unsigned int mngId, const RecvData &data)
+	{
+		this->user = user;
+		this->recvInfo = data;
+		this->mngId = mngId;
+		this->doReturn = true;
+		pthread_mutex_init(&opListMtx, NULL);
+	}
+	/**
+	* コンストラクタ (CS経由でオペレータツリーが転送された場合)
 	*
 	* @author	Nagoya University
 	* @date	2018/08/24
@@ -125,31 +145,25 @@ namespace IS {
 					}
 				}
 				else {
-					query = "";
-					isp.getQueryString(this->recvInfo.payload, query);
-					if (query == "") {
+					if (this->recvInfo.payload == "") {
 						isErr = true;
 					} else {
-						unsigned long long dstSID = 0;
-						dstSID = isp.getDestinationSID(this->recvInfo.payload);
-						logger->info("MNGID:" + std::to_string(this->mngId) + ", destSID:" + std::to_string(dstSID) + ", QUERY:" + query);
+						logger->info("MNGID:" + std::to_string(this->mngId) + ", destSID:" + std::to_string(query_header_.dstSID) + ", QUERY:" + this->recvInfo.payload);
 						// 継続クエリ判定暫定対応
-						if (query.find("MASTER ") == std::string::npos && query.find("master ") == std::string::npos) {
-							isOneShot = true;
-						}
+						if (!query_header_.continuous) isOneShot = true;
 						try {
 							// クエリ解析器にてクエリを解析する
-							QP = new IS::QueryParser(query);
+							QP = new IS::QueryParser(this->recvInfo.payload);
 							parseResult = QP->getGraphListXML();
 							logger->debug("MNGID:" + std::to_string(this->mngId) + ", OPERATOR_TREE():" + parseResult);
 
 						}
 						catch (const IS::ParseException& ex) {
 							string what(ex.what());
-							retErrMsg = "MNGID:" + std::to_string(this->mngId) + " Query Parser Exception : " + what + " msg:" + ex.getMessage() + " query:" + query;
+							retErrMsg = "MNGID:" + std::to_string(this->mngId) + " Query Parser Exception : " + what + " msg:" + ex.getMessage() + " query:" + this->recvInfo.payload;
 							logger->error(retErrMsg);
 							if (isOneShot) {
-								parseResult = rdbXmlPre + query + rdbXmlSur;
+								parseResult = rdbXmlPre + this->recvInfo.payload + rdbXmlSur;
 							} else {
 								isErr = true;
 								returnError(ErrorCode::QUERY_PARSE_ERR, retErrMsg);
@@ -438,6 +452,8 @@ namespace IS {
 		if (!this->isFromCS) {
 			logger->debug("[returnMngID] IN Use ResponseOperator. MyMngId:" + std::to_string(mngId));
 			IS::ResponseOperator		*opX = new IS::ResponseOperator(mngId, recvInfo);
+			// クエリ登録応答フラグを設定
+			opX->currentResponseType = ResponseOperator::responseType::RESPONSE_QUERY;
 			opX->process(ts);
 			opX->exit();
 			delete opX;
@@ -446,13 +462,12 @@ namespace IS {
 		else {
 			IS::InformationSourceParser &isp = IS::InformationSourceParser::get_instance();
 			isp.init();
-			/*
-			int destId = isp.getSenderSID(this->recvInfo.payload);
-			int reqDestId = isp.getDestinationSID(this->recvInfo.payload);
-			*/
 			unsigned long long destId = isp.getSenderSID(this->recvInfo.payload);
 			unsigned long long reqDestId = isp.getDestinationSID(this->recvInfo.payload);
 			isp.finalize();
+			// 下記Protobuf用
+			//unsigned long long destId = this->recvInfo.senderSID;
+			//unsigned long long reqDestId = this->recvInfo.destinationSID;
 			logger->debug("[returnMngID] IN Use TransferOperator. DestSID:" + std::to_string(destId) + " MyMngId:" + std::to_string(mngId) + " reqDestId(MySID):" + std::to_string(reqDestId) + " reqMngId:" + std::to_string(this->requestedMngId));
 			IS::TransferOperator		*opX = new IS::TransferOperator(mngId, destId, reqDestId, this->requestedMngId, 0, 0);
 			opX->process(ts);
@@ -603,13 +618,33 @@ namespace IS {
 				outputXmlLog(doc);
 				return firstOpe;
 			}
+
+			// クエリ解析結果にprojectionもしくはjoinが含まれていた場合は、応答結果が可変となる
+			bool isDynamicColumn = operatorTreeXml.find("projection") != string::npos || operatorTreeXml.find("join") != string::npos;
+
+			WindowOperator* inOpe = nullptr;
+			ResponseOperator* resOpe = nullptr;
+			string streamName;
 			for (unsigned int i = 0; i < nodeList->getLength(); i++)
 			{
 				string nodeId;
 				isp.getTagValue(dynamic_cast<DOMElement*>(nodeList->item(i)), "id", nodeId);
 				DOMNodeList* dataList = isp.getElementByCharTagName(dynamic_cast<DOMElement*>(nodeList->item(i)), (char*)"data");
-				Operator* opeObj = getOperator(dataList, graphList, nodeId);
+				Operator* opeObj = getOperator(dataList, graphList, nodeId, isDynamicColumn);
 				if (opeObj != NULL) {
+					// WindowOperatorからテーブル名を取り出して、ResponseOperatorに設定する
+					if (auto ope = dynamic_cast<WindowOperator*>(opeObj)) {
+						inOpe = ope;
+						streamName = inOpe->getTargetStreamName();
+						// 既にResponseOperatorが出現していた場合は設定する
+						if (resOpe != nullptr)
+							resOpe->protobufMessageName = streamName;
+					} else if (auto ope = dynamic_cast<ResponseOperator*>(opeObj)) {
+						resOpe = ope;
+						// WindowOperatorから取り出したテーブル名を設定
+						if (streamName != "")
+							resOpe->protobufMessageName = streamName;
+					}
 					opeObj->setNodeId(nodeId);
 					opeMap[nodeId] = opeObj;
 					addOperator(opeObj);
@@ -695,11 +730,247 @@ namespace IS {
 			retErrMsg = "[parseOperatorTree] DOMException Line:" + std::to_string(__LINE__);
 			logger->error(retErrMsg);
 		}
-		isp.finalize();
-		domBuilder->release();
 		input->release();
+		domBuilder->release();
+		isp.finalize();
 		//REL_COMMENT logger->trace("[parseOperatorTree] OUT");
 		return firstOpe;
+		
+		/*
+		cout << operatorTreeXml << endl;
+logger->error("operatorTreeXml.size() = " +
+              std::to_string(operatorTreeXml.size()));
+logger->error("strlen(c_str) = " +
+              std::to_string(strlen(operatorTreeXml.c_str())));
+		static const XMLCh GRAPHML_NS[] =
+    u"http://graphml.graphdrawing.org/xmlns";
+		static const XMLCh TAG_KEY[]   = { chLatin_k, chLatin_e, chLatin_y, chNull };
+		static const XMLCh TAG_GRAPH[] = { chLatin_g, chLatin_r, chLatin_a, chLatin_p, chLatin_h, chNull };
+		static const XMLCh TAG_NODE[]  = { chLatin_n, chLatin_o, chLatin_d, chLatin_e, chNull };
+		static const XMLCh TAG_EDGE[]  = { chLatin_e, chLatin_d, chLatin_g, chLatin_e, chNull };
+		//REL_COMMENT logger->trace("[parseOperatorTree] IN");
+		map<std::string, Operator*> opeMap;
+		Operator* firstOpe = NULL;
+		XMLCh tempStr[operatorTreeXml.length() + 1];
+		static const XMLCh gLS[] = { chLatin_L, chLatin_S, chNull };
+		DOMImplementationLS *impl = (DOMImplementationLS*)DOMImplementationRegistry::getDOMImplementation(gLS);
+		DOMLSParser       *domBuilder = impl->createLSParser(DOMImplementationLS::MODE_SYNCHRONOUS, 0);
+		DOMLSInput        *input = impl->createLSInput();
+		//domBuilder->getDomConfig()->setParameter(XMLUni::fgDOMNamespaces, false);
+
+		XMLCh* xmlCh = XMLString::transcode(operatorTreeXml.c_str());
+		input->setStringData(xmlCh);
+		
+		IS::InformationSourceParser &isp = IS::InformationSourceParser::get_instance();
+		isp.init();
+		try
+		{
+			domBuilder->getDomConfig()->setParameter(XMLUni::fgDOMComments, false);
+			domBuilder->getDomConfig()->setParameter(XMLUni::fgDOMDatatypeNormalization, true);
+			domBuilder->getDomConfig()->setParameter(XMLUni::fgDOMEntities, false);
+			domBuilder->getDomConfig()->setParameter(XMLUni::fgDOMNamespaces, true);
+			domBuilder->getDomConfig()->setParameter(XMLUni::fgDOMElementContentWhitespace, false);
+			DOMDocument* doc = domBuilder->parse(input);
+			dumpDom(doc->getDocumentElement());
+			// verify that we get only 3 calls: for the text node, the CDATA section and the root element
+			if (doc == NULL || doc->getDocumentElement() == NULL)
+			{
+				retErrMsg = "[parseOperatorTree] document is Null Line:" + std::to_string(__LINE__);
+				logger->error(retErrMsg);
+				outputXmlLog(doc);
+				return firstOpe;
+			}
+
+			DOMElement* root = doc->getDocumentElement();
+
+			// キー解析
+			DOMNodeList* keyList = root->getElementsByTagNameNS(GRAPHML_NS, TAG_KEY);
+			if (!keyList || keyList->getLength() == 0) {
+				retErrMsg = "[parseOperatorTree] <key></key> is not defined";
+				logger->error(retErrMsg);
+				outputXmlLog(doc);
+				return firstOpe;
+			}
+
+			for (unsigned int i = 0; i < keyList->getLength(); i++)
+			{
+				string id, forStr, attrName, attrType;
+				isp.getTagValue(dynamic_cast<DOMElement*>(keyList->item(i)), "id", id);
+				isp.getTagValue(dynamic_cast<DOMElement*>(keyList->item(i)), "for", forStr);
+				isp.getTagValue(dynamic_cast<DOMElement*>(keyList->item(i)), "attr.name", attrName);
+				isp.getTagValue(dynamic_cast<DOMElement*>(keyList->item(i)), "attr.type", attrType);
+				logger->debug("id:" + id + " for:" + forStr + " attrName:" + attrName + " attrType:" + attrType);
+			}
+
+			// グラフ解析(オペレーターツリー単位)
+			DOMNodeList* graphList = root->getElementsByTagNameNS(GRAPHML_NS, TAG_GRAPH);
+			if (!graphList || graphList->getLength() == 0) {
+				retErrMsg = "[parseOperatorTree] <graph></graph> is not defined";
+				logger->error(retErrMsg);
+				outputXmlLog(doc);
+				return firstOpe;
+			}
+			DOMElement* graphElem =
+				dynamic_cast<DOMElement*>(graphList->item(0));
+
+static const XMLCh ANY_NS[] = { chAsterisk, chNull };
+DOMNodeList* edgeListAnyNS =
+    graphElem->getElementsByTagNameNS(
+        ANY_NS,
+        TAG_EDGE
+    );
+
+DOMNodeList* nodeListAnyNS =
+    graphElem->getElementsByTagNameNS(
+        ANY_NS,
+        TAG_NODE
+    );
+logger->error("edgeListAnyNS length = " +
+              std::to_string(edgeListAnyNS ? edgeListAnyNS->getLength() : 0));
+logger->error("nodeListAnyNS length = " +
+              std::to_string(nodeListAnyNS ? nodeListAnyNS->getLength() : 0));
+char* geName = XMLString::transcode(graphElem->getNodeName());
+char* geLocal = XMLString::transcode(graphElem->getLocalName());
+char* geNS = XMLString::transcode(graphElem->getNamespaceURI());
+
+logger->error(std::string("graphElem nodeName=") +
+              (geName ? geName : "null"));
+logger->error(std::string("graphElem localName=") +
+              (geLocal ? geLocal : "null"));
+logger->error(std::string("graphElem ns=") +
+              (geNS ? geNS : "null"));
+
+XMLString::release(&geName);
+XMLString::release(&geLocal);
+XMLString::release(&geNS);
+			// リレーション解析
+			DOMNodeList* edgeList = graphElem->getElementsByTagNameNS(GRAPHML_NS, TAG_EDGE);
+			
+			if (!edgeList || edgeList->getLength() == 0) {
+				retErrMsg = "[parseOperatorTree] <edge></edge> is not defined";
+				logger->error(retErrMsg);
+				outputXmlLog(doc);
+				return firstOpe;
+			}
+DOMElement* e =
+    dynamic_cast<DOMElement*>(edgeList->item(0));
+char* ns = XMLString::transcode(e->getNamespaceURI());
+char* ln = XMLString::transcode(e->getLocalName());
+
+	cout << ns << endl;
+	cout << ln << endl;
+
+XMLString::release(&ns);
+XMLString::release(&ln);
+			// ノード解析(オペレータ単位)
+			DOMNodeList* nodeList = graphElem->getElementsByTagNameNS(GRAPHML_NS, TAG_NODE);
+			if (!nodeList || nodeList->getLength() == 0) {
+				retErrMsg = "[parseOperatorTree] <node></node> is not defined";
+				logger->error(retErrMsg);
+				outputXmlLog(doc);
+				return firstOpe;
+			}
+
+			// クエリ解析結果にprojectionもしくはjoinが含まれていた場合は、応答結果が可変となる
+			bool isDynamicColumn = operatorTreeXml.find("projection") != string::npos || operatorTreeXml.find("join") != string::npos;
+
+			WindowOperator* inOpe = nullptr;
+			ResponseOperator* resOpe = nullptr;
+			string streamName;
+			for (unsigned int i = 0; i < nodeList->getLength(); i++)
+			{
+				string nodeId;
+				isp.getTagValue(dynamic_cast<DOMElement*>(nodeList->item(i)), "id", nodeId);
+				DOMNodeList* dataList = isp.getElementByCharTagName(dynamic_cast<DOMElement*>(nodeList->item(i)), (char*)"data");
+				Operator* opeObj = getOperator(dataList, graphList, nodeId, isDynamicColumn);
+				if (opeObj != NULL) {
+					// WindowOperatorからテーブル名を取り出して、ResponseOperatorに設定する
+					if (auto ope = dynamic_cast<WindowOperator*>(opeObj)) {
+						inOpe = ope;
+						streamName = inOpe->getTargetStreamName();
+						// 既にResponseOperatorが出現していた場合は設定する
+						if (resOpe != nullptr)
+							resOpe->protobufMessageName = streamName;
+					} else if (auto ope = dynamic_cast<ResponseOperator*>(opeObj)) {
+						resOpe = ope;
+						// WindowOperatorから取り出したテーブル名を設定
+						if (streamName != "")
+							resOpe->protobufMessageName = streamName;
+					}
+					opeObj->setNodeId(nodeId);
+					opeMap[nodeId] = opeObj;
+					addOperator(opeObj);
+				}
+				else {
+					logger->error("[parseOperatorTree] getOperator return NULL. nodeId:" + nodeId);
+					outputXmlLog(doc);
+					return firstOpe;
+				}
+			}
+
+#if MEASURE_MODE == 1
+			// 性能測定時はオペレータ単体の場合も許容
+			if (opeMap.size() == 1) {
+				for (auto itr = opeMap.begin(); itr != opeMap.end(); ++itr) {
+					firstOpe = itr->second;
+					logger->debug("[parseOperatorTree] firstOpe SET nid:" + itr->first);
+				}
+			}
+#endif
+			for (unsigned int i = 0; i < edgeList->getLength(); i++)
+			{
+				string sourceId, targetId;
+				isp.getTagValue(dynamic_cast<DOMElement*>(edgeList->item(i)), "source", sourceId);
+				isp.getTagValue(dynamic_cast<DOMElement*>(edgeList->item(i)), "target", targetId);
+				if (sourceId.length() == 0 || targetId.length() == 0) {
+					retErrMsg = "[parseOperatorTree] lack of edge information. (source or target is not exists)";
+					logger->error(retErrMsg);
+					outputXmlLog(doc);
+					return firstOpe;
+				}
+				if (returnNodeIdMap.find(sourceId) != returnNodeIdMap.end()) {
+					// 再帰オペレータのaddReturnを判別し、登録
+					bool addReturn = false;
+					vector<string> paramList;
+					stringUtil.split(returnNodeIdMap[sourceId], ",", paramList);
+					for (string nodeId : paramList) {
+						if (nodeId == targetId) {
+							opeMap[sourceId]->addReturn(opeMap[targetId]);
+							logger->debug("[parseOperatorTree] reterningOperator info:" + sourceId + " => " + targetId);
+							addReturn = true;
+							break;
+						}
+					}
+					if (addReturn) continue;
+				}
+				relationingOperator(opeMap[sourceId], opeMap[targetId]);
+				logger->debug("[parseOperatorTree] relationingOperator info:" + sourceId + " => " + targetId);
+				if (firstOpe == NULL && i == 0) {
+					firstOpe = opeMap[sourceId];
+				}
+
+				// ToDo: isExistJoinを条件から外したが、それで良いか？Join時に重複が許容・不要の判断が別途必要
+				if (isExistsAggregateFunc || query.find("DUPLICATION") != std::string::npos || query.find("duplication") != std::string::npos) {
+					WindowOperator *wOpe = dynamic_cast<WindowOperator*>(opeMap[sourceId]);
+					if (wOpe != NULL) {
+						wOpe->setAllowDuplicateData(true);
+					}
+				}
+			}
+
+		}
+		catch (DOMException&)
+		{
+			retErrMsg = "[parseOperatorTree] DOMException Line:" + std::to_string(__LINE__);
+			logger->error(retErrMsg);
+		}
+    	XMLString::release(&xmlCh);
+		input->release();
+		domBuilder->release();
+		isp.finalize();
+		//REL_COMMENT logger->trace("[parseOperatorTree] OUT");
+		return firstOpe;
+		*/
 	}
 
 	/**
@@ -713,7 +984,7 @@ namespace IS {
 	 * @return	オペレータオブジェクト
 	 */
 
-	Operator* QueryExecuter::getOperator(DOMNodeList* dataList, DOMNodeList* graphList, const string &nodeId)
+	Operator* QueryExecuter::getOperator(DOMNodeList* dataList, DOMNodeList* graphList, const string &nodeId, bool isDynamicColumn)
 	{
 		//REL_COMMENT logger->trace("[getOperator] IN");
 		Operator* ope = NULL;
@@ -882,48 +1153,35 @@ namespace IS {
 #if MEASURE_MODE == 1
 				long procTime = DmUtil::getTimeMicrosec();
 #endif
-				IS::InformationSourceParser &isp = IS::InformationSourceParser::get_instance();
-				isp.init();
-				string dmiName = isp.getAttrValueStrFromRootTag("dmi", this->recvInfo.payload);
-				// UDP返却先ポートの取得
-				int port = isp.getReceptionPort(this->recvInfo.payload);
 #if MEASURE_MODE == 1
 				long now = DmUtil::getTimeMicrosec();
 				double msec = (now - procTime) / 1000.0;
 				cout << "[getOperator] getReceptionPort processTime(msec):" << msec << endl;
 #endif
-				logger->debug("MNGID:" + std::to_string(this->mngId) + ", OutputType:Continuous Query, ResponsePort:" + std::to_string(port));
-				if (!(dmiName.empty())) {
-					ope = new DmiOperator(this->user, mngId, recvInfo, dmiName);
+				logger->debug("MNGID:" + std::to_string(this->mngId) + ", OutputType:Continuous Query, ResponsePort:" + std::to_string(query_header_.port));
+				if (!(query_header_.dmiName.empty())) {
+					ope = new DmiOperator(this->user, mngId, query_header_.dmiName);
 				}
-				else if (port != 0) {
-					ope = new ResponseOperator(this->user, mngId, recvInfo, port);
-				}
-				else {
-					// TODO : 暫定対応、本来はTransferOperator用の識別子にて生成すべき
-					// ネットワークを介さない問い合わせ(定義クエリ)
-#if MEASURE_MODE == 1
-					procTime = DmUtil::getTimeMicrosec();
-#endif
-					// 転送先SIDの取得
-					//int dstSID = isp.getDestinationSID(this->recvInfo.payload);
-					unsigned long long dstSID = isp.getDestinationSID(this->recvInfo.payload);
-#if MEASURE_MODE == 1
-					now = DmUtil::getTimeMicrosec();
-					msec = (now - procTime) / 1000.0;
-					cout << "[getOperator] getDestinationSID processTime(msec):" << msec << endl;
-#endif
+				else if (query_header_.dstSID != 0) {
 					int retry = 0;
 					int lifeTime = 0;
 
 					// 定義済みクエリの場合、再送設定の読込み
-					if (recvInfo.sock < 0) {
-						lifeTime = isp.getRetryParam(recvInfo.payload);
-						if (lifeTime != 0) retry = 1;
-					}
-					ope = new IS::TransferOperator(this->mngId, dstSID, "", retry, lifeTime);
+					// Protobuf化に伴い、OFF。Todo: 再送の在り方について再検討
+					//if (recvInfo.sock < 0) {
+					//	isp.init();
+					//	lifeTime = isp.getRetryParam(recvInfo.payload);
+					//	isp.finalize();
+					//	if (lifeTime != 0) retry = 1;
+					//}
+					ope = new IS::TransferOperator(this->mngId, query_header_.dstSID, "", retry, lifeTime);
 				}
-				isp.finalize();
+				else if (query_header_.port != 0) {
+					ope = new ResponseOperator(this->user, mngId, recvInfo, query_header_.port, isDynamicColumn);
+				}
+				else {
+					logger->warn("MNGID:" + std::to_string(this->mngId) + ", OutputType:Continuous Query, no output");
+				}
 			}
 		}
 		// transfer operator
@@ -961,13 +1219,14 @@ namespace IS {
 			int lifeTime = 0;
 
 			// 定義済みクエリの場合、再送設定の読込み
-			if (recvInfo.sock < 0) {
-				IS::InformationSourceParser &isp = IS::InformationSourceParser::get_instance();
-				isp.init();
-				lifeTime = isp.getRetryParam(recvInfo.payload);
-				isp.finalize();
-				if (lifeTime != 0) retry = 1;
-			}
+			// Protobuf化に伴い、OFF。Todo: 再送の在り方について再検討
+			//if (recvInfo.sock < 0) {
+			//	IS::InformationSourceParser &isp = IS::InformationSourceParser::get_instance();
+			//	isp.init();
+			//	lifeTime = isp.getRetryParam(recvInfo.payload);
+			//	isp.finalize();
+			//	if (lifeTime != 0) retry = 1;
+			//}
 
 			try {
 				//ope = new TransferOperator(this->mngId, std::stoi(destId), streamName, retry, lifeTime);
@@ -987,11 +1246,7 @@ namespace IS {
 		}
 		// RDBAccess operator
 		else if ("RDB" == operatorStr) {
-			if (isOneShot) {
-				ope = new RDBAccessOperator(this->mngId, query, master);
-			} else {
-				ope = new RDBAccessOperator(this->mngId, parameterStr, master);
-			}
+			ope = new RDBAccessOperator(this->mngId, parameterStr, master);
 		}
 		// eval opearator
 		else if ("eval" == operatorStr) {

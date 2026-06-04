@@ -17,7 +17,7 @@ namespace IS {
 		rotateLoginHistory();
 		readLoginHistory();
 		// DB接続
-		connection Conn(("dbname=" + settings.getParameter("DATABASE_IS_NAME") + " user=" + settings.getParameter("USER_NAME") + " password=" + settings.getParameter("DB_PASS") + " hostaddr=" + settings.getParameter("DATABASE_ADDR") + " port=" + settings.getParameter("DATABASE_PORT")));
+		connection Conn(("dbname=" + settings.getParameter("DATABASE_IS_NAME") + " user=" + settings.getParameter("USER_NAME") + " password=" + settings.getParameter("DB_PASS") + " host=" + settings.getParameter("DATABASE_ADDR") + " port=" + settings.getParameter("DATABASE_PORT")));
 
 		try {
 			work T(Conn);
@@ -94,8 +94,9 @@ namespace IS {
 	*/
 	bool SessionManager::createSession(const RecvData &data, const string &user, const string &hash, const string &pid)
 	{
+		IS::ProtobufParser &pp = IS::ProtobufParser::get_instance();
 		IS::InformationSourceParser &isp = IS::InformationSourceParser::get_instance();
-		isp.init();
+		pp.init();
 		bool isExistUser = false;
 		string sessionKey = "", res = "";
 
@@ -105,7 +106,7 @@ namespace IS {
 		if (!isExistUser) {
 			// ユーザ認証失敗
 			logger->warn("Access from the user who is not registered user_login. user:" + user);
-			isp.createErrorResult(0, ErrorCode::AUTHORITY_ERR, "Login failed due to unregistered user or password. user:" + user, res);
+			res = pp.createCreateSessionErrorResponse(to_string((int)ErrorCode::AUTHORITY_ERR), "Login failed due to unregistered user or password. user:" + user);
 		} else {
 			string ip = string(inet_ntoa(data.client.sin_addr));
 			string loginKey = user + "," + ip + "," + pid;
@@ -125,14 +126,14 @@ namespace IS {
 			}
 			sessionMap[sessionKey] = user;
 			// 正常レスポンス生成
-			isp.createGeneralSingleResponseXML("create_session", sessionKey, res);
+			res = pp.createCreateSessionResponse(sessionKey);
 		}
 		// レスポンスの返却
 		IS::ResponseOperator		*opX = new IS::ResponseOperator(data);
 		opX->TCPSend(res);
 		opX->exit();
 		delete opX;
-		isp.finalize();
+		pp.finalize();
 
 		return true;
 	}
@@ -153,7 +154,7 @@ namespace IS {
 	{
 		// userとhashの照合
 		// DB接続
-		connection Conn(("dbname=" + settings.getParameter("DATABASE_IS_NAME") + " user=" + settings.getParameter("USER_NAME") + " password=" + settings.getParameter("DB_PASS") + " hostaddr=" + settings.getParameter("DATABASE_ADDR") + " port=" + settings.getParameter("DATABASE_PORT")));
+		connection Conn(("dbname=" + settings.getParameter("DATABASE_IS_NAME") + " user=" + settings.getParameter("USER_NAME") + " password=" + settings.getParameter("DB_PASS") + " host=" + settings.getParameter("DATABASE_ADDR") + " port=" + settings.getParameter("DATABASE_PORT")));
 		string sessionKey = "", res = "";
 		bool isExistUser = false;
 		IS::InformationSourceParser &isp = IS::InformationSourceParser::get_instance();
@@ -263,7 +264,7 @@ namespace IS {
 
 			// hashの照合
 			// DB接続
-			connection Conn(("dbname=" + settings.getParameter("DATABASE_IS_NAME") + " user=" + settings.getParameter("USER_NAME") + " password=" + settings.getParameter("DB_PASS") + " hostaddr=" + settings.getParameter("DATABASE_ADDR") + " port=" + settings.getParameter("DATABASE_PORT")));
+			connection Conn(("dbname=" + settings.getParameter("DATABASE_IS_NAME") + " user=" + settings.getParameter("USER_NAME") + " password=" + settings.getParameter("DB_PASS") + " host=" + settings.getParameter("DATABASE_ADDR") + " port=" + settings.getParameter("DATABASE_PORT")));
 			bool isExistUser = false;
 
 			try {

@@ -10,8 +10,6 @@
 using namespace log4cxx;
 
 namespace CS{
-	//unsigned char SocketDTLS::cookie_secret[COOKIE_SECRET_LENGTH] = {};
-	//int SocketDTLS::cookie_initialized = 0;
 	pthread_mutex_t* SocketDTLS::mutex_buf = NULL;
 	LoggerPtr logger = Logger::getLogger("SocketDTLS");
 	volatile sig_atomic_t stop_flag = 0;
@@ -887,6 +885,7 @@ namespace CS{
 					break;
 				}
 			}
+			//sleep(combination_map_clear_time_th);
 			sleep(1);
 		}
 	}

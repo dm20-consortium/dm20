@@ -41,7 +41,7 @@ namespace CS{
 	*/
 	addrinfo UdpMcNwClient::InitClient(std::string port_no, std::string dst_ip, std::string interface_name, std::string src_ip, const int _IP_version){
 		int hops=3;
-		hints = {0};
+		memset(&hints, 0, sizeof(hints));
 		hints.ai_family = AF_UNSPEC; //IPv4/IPv6両方対応
 		hints.ai_socktype = SOCK_DGRAM; //UDP送信
 

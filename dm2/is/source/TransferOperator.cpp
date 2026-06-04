@@ -181,6 +181,8 @@ namespace IS {
 
 		//自身のStationIDの読込(dm2.confから読み込む)
 		string mySid = settings.getParameter("MY_STATION_ID");
+		string cs_ip = settings.getParameter("CS_IP_ADDRESS");
+		string cs_port = settings.getParameter("CS_PORT_NUMBER");
 
 		// DEBUG 与えられたタプル情報の出力
 		printInputInfo(tupleset, this->argument);
@@ -194,7 +196,8 @@ namespace IS {
 		string tblName = tupleset.getSchemaRef().getTableName();
 
 		UdpSendInterface udpsendinterface;
-		sockaddr_un server_addr = udpsendinterface.Init(this->fdDirPath + FD_IStoCS);
+		sockaddr_un server_addr;
+		udpsendinterface.Init(this->fdDirPath + FD_IStoCS, cs_port, cs_ip);
 		struct send_message buf;
 		buf.src_station_id = 0;
 		buf.lane_id = 0;
@@ -341,11 +344,11 @@ namespace IS {
 			long key = DmUtil::getTimeMicrosec();
 			int sendSize = stringUtil.setCompressedBufWithHeader(retXML, outbuf, compressFlg, key);
 			if (sendSize > 0) {
-				udpsendinterface.IsStreamSendtoCs(server_addr, buf.lane_id, buf.src_station_id, buf.dst_station_id, this->retry, this->lifeTime, outbuf, sendSize, fdDirPath);
+				udpsendinterface.IsStreamSendtoCs(buf.lane_id, buf.src_station_id, buf.dst_station_id, this->retry, this->lifeTime, outbuf, sendSize, fdDirPath);
 			} else {
 				logger->warn("[" + this->type + "] CompressProc is Failed. Retry by Uncompressed Data");
 				string s = "0" + retXML;
-				udpsendinterface.IsStreamSendtoCs(server_addr, buf.lane_id, buf.src_station_id, buf.dst_station_id, this->retry, this->lifeTime, s, fdDirPath);
+				udpsendinterface.IsStreamSendtoCs(buf.lane_id, buf.src_station_id, buf.dst_station_id, this->retry, this->lifeTime, s, fdDirPath);
 			}
 			if (tupleCntSizeMap.find(tupleCnt) == tupleCntSizeMap.end()) {
 				tupleCntSizeMap[tupleCnt] = sendSize;
@@ -353,7 +356,7 @@ namespace IS {
 			}
 		} else {
 			string s = retXML;
-			udpsendinterface.IsStreamSendtoCs(server_addr, buf.lane_id, buf.src_station_id, buf.dst_station_id, this->retry, this->lifeTime, s, fdDirPath);
+			udpsendinterface.IsStreamSendtoCs(buf.lane_id, buf.src_station_id, buf.dst_station_id, this->retry, this->lifeTime, s, fdDirPath);
 		}
 		logger->debug("[" + this->type + "] Transfer by UDP(CS).  MNGID:" + std::to_string(mngId) + " sendto(dstId):" + std::to_string(buf.dst_station_id) + " srcId:" + std::to_string(buf.src_station_id) + " Size:" + std::to_string(retXML.length()) + " byte TupleSize:" + std::to_string(tupleset.size()) );
 		logger->debug("[" + this->type + "] Send payload:" + retXML + "\n");
@@ -417,9 +420,13 @@ namespace IS {
 
 			//自身のStationIDの読込(dm2.confから読み込む)
 			string mySid = settings.getParameter("MY_STATION_ID");
+			string cs_ip = settings.getParameter("CS_IP_ADDRESS");
+			string cs_port = settings.getParameter("CS_PORT_NUMBER");
+
 
 			UdpSendInterface udpsendinterface;
-			sockaddr_un server_addr = udpsendinterface.Init(this->fdDirPath + FD_IStoCS);
+			sockaddr_un server_addr;
+			udpsendinterface.Init(this->fdDirPath + FD_IStoCS, cs_port, cs_ip);
 			struct send_message buf;
 			
 			buf.src_station_id = stoull(mySid);
@@ -432,15 +439,15 @@ namespace IS {
 					long key = DmUtil::getTimeMicrosec();
 					int sendSize = stringUtil.setCompressedBufWithHeader(queryXML, outbuf, compressFlg, key);
 					if (sendSize > 0) {
-							udpsendinterface.IsStreamSendtoCs(server_addr, 0, buf.src_station_id, buf.dst_station_id, this->retry, this->lifeTime, outbuf, sendSize, fdDirPath);
+							udpsendinterface.IsStreamSendtoCs(0, buf.src_station_id, buf.dst_station_id, this->retry, this->lifeTime, outbuf, sendSize, fdDirPath);
 					} else {
 							logger->warn("[" + this->type + "] CompressProc is Failed. Retry by Uncompressed Data");
 							string s = "0" + queryXML;
-							udpsendinterface.IsStreamSendtoCs(server_addr, 0, buf.src_station_id, buf.dst_station_id, this->retry, this->lifeTime, s, fdDirPath);
+							udpsendinterface.IsStreamSendtoCs(0, buf.src_station_id, buf.dst_station_id, this->retry, this->lifeTime, s, fdDirPath);
 					}
 			} else {
 					string s = queryXML;
-					udpsendinterface.IsStreamSendtoCs(server_addr, 0, buf.src_station_id, buf.dst_station_id, this->retry, this->lifeTime, s, fdDirPath);
+					udpsendinterface.IsStreamSendtoCs(0, buf.src_station_id, buf.dst_station_id, this->retry, this->lifeTime, s, fdDirPath);
 			}
 			logger->debug("[" + this->type + "] Transfer by UDP(CS).  MNGID:" + std::to_string(mngId) + " sendto(dstId):" + std::to_string(buf.dst_station_id) + " srcId:" + std::to_string(buf.src_station_id) + " Size:" + std::to_string(queryXML.length()) + " byte");
 			logger->debug("[" + this->type + "] Send payload:" + queryXML + "\n");

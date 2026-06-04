@@ -2,6 +2,7 @@
 #define DATAGRAM_SOCKET_H
 
 #include "is/InformationSourceParser.h"
+#include "is/ProtobufParser.h"
 #include "is/Tuple.h"
 #include "is/StringUtil.h"
 #include "is/DmException.h"
@@ -43,14 +44,13 @@ private:
 	string ip;
 	int port;
 	int sock = -1;
-	struct sockaddr_in addr;
 	string key;
 	SSL *ssl = NULL;
 	SSL_CTX *ctx = NULL;
 
 public:
-	DatagramSocket(const string &ip, const int port, const int sock, const struct sockaddr_in addr, const string &key);
-	DatagramSocket(const string &ip, const int port, const int sock, const struct sockaddr_in addr, const string &key, SSL *ssl, SSL_CTX *ctx);
+	DatagramSocket(const string &ip, const int port, const int sock, const string &key);
+	DatagramSocket(const string &ip, const int port, const int sock, const string &key, SSL *ssl, SSL_CTX *ctx);
 	~DatagramSocket();
 
 	bool sendStreamData(const string &streamName, const vector<Tuple> &tuples);

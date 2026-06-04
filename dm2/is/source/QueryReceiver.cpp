@@ -171,46 +171,38 @@ namespace IS {
 			return;
 		}
 		if (data.payload == "") return;
-		IS::InformationSourceParser &isp = IS::InformationSourceParser::get_instance();
-		isp.init();
-		// XMLの種別を取得
-		string rootTagName, key, user;
-		if (!isp.getRootTagNameAndKey(data.payload, rootTagName, key)) {
-			isp.finalize();
-			return;
+		string user, key;
+		IS::ProtobufParser &pp = IS::ProtobufParser::get_instance();
+		pp.init();
+
+		// Protobufの接続要求、クエリ登録、キャンセル
+		dm2_proto::System_request request = pp.systemRequestDeserialize(data.payload);
+		query_header query_header_;
+		query_header_.dstSID = request.destination();
+		query_header_.port = request.port();
+		query_header_.continuous = request.continuous();
+		query_header_.dmiName = "";
+		// 接続要求
+		if ("session" == request.type()) {
+			user = request.body();
+			key = request.key();
+			string pid = to_string(request.pid());
+			SM.createSession(data, user, key, pid);
 		}
-#if MEASURE_MODE == 1
-		long now = DmUtil::getTimeMicrosec();
-		double msec = (now - procTime) / 1000.0;
-		logger->info("[receiveProcess] getAttrValueFromRootTag processTime(msec):" + to_string(msec));
-#endif
-		if ("create_session" == rootTagName) {
-			// セッションの生成
-			string hash, pid;
-			isp.getUserAuthInfo(data.payload, user, hash, pid);
-			SM.createSession(data, user, hash, pid);
-		}
-		else {
+		else if ("query" == request.type() || "cancel" == request.type()) {
+			key = request.key();
 			// セッションの確認
 			if (!SM.checkSession(key, user)) {
-				isp.finalize();
+				pp.finalize();
 				return;
 			}
 
-			if ("info" == rootTagName) {
-				// 統計情報の取得要求
-				string funcName = isp.getAttrValueStrFromRootTag("func", data.payload);
-				ProcessingExecuter *PE = new ProcessingExecuter(data, funcName);
-				PE->start();
-			}
-			else if ("query" == rootTagName) {
-				string tcp_session = isp.getStringByTagName(data.payload, "tcp_session");
-				logger->debug("tcp_session:" + tcp_session);
-
-				if (tcp_session == "1" || tcp_session == "true") {
-					string query;
-					isp.getQueryString(data.payload, query);
-					string errMsg = QM.parseQuery(query);
+			if ("query" == request.type()) {
+				// クエリ文で上書き
+				data.payload = request.body();
+				if (request.tcp_session())
+				{
+					string errMsg = QM.parseQuery(data.payload);
 					if (errMsg != "") {
 						TupleSet tupleset;
 						vector<TupleSet> ts;
@@ -244,7 +236,7 @@ namespace IS {
 						}
 						logger->debug("tcp_session dataSock:" + to_string(dataSock));
 						data.sock2 = dataSock;
-						QM.addQuery(mngId, user, data, false);
+						QM.addQuery(mngId, user, data, false, query_header_);
 						if (data.ssl == NULL) {
 							thread checkThread(&NetworkSource::checkTCPSocket, this, dataSock);
 							checkThread.detach();
@@ -254,47 +246,51 @@ namespace IS {
 						}
 					}
 				} else {
-					unsigned long long dstSID = isp.getDestinationSID(data.payload);
-					unsigned long long execSID = isp.getSenderSID(data.payload);
-					string mySid = settings.getParameter("MY_STATION_ID");
-					if (execSID != 0 && execSID != stoull(mySid)) {
-						string query;
-						isp.getQueryString(data.payload, query);
-						transferQuery(execSID, data, query);
+					if (query_header_.dstSID == 0) {
+						// クエリの登録
+						int mngId = QM.getMngId();
+						QM.addQuery(mngId, user, data, true, query_header_);
 					} else {
-						if (dstSID == 0) {
-							// クエリの登録
-							int mngId = QM.getMngId();
-							QM.addQuery(mngId, user, data, true);
+						string ip = inet_ntoa(data.client.sin_addr);
+						if (ip == "127.0.0.1") {
+							QM.addQuery("public", data, query_header_);
 						} else {
-							string ip = inet_ntoa(data.client.sin_addr);
-							if (ip == "127.0.0.1") {
-								QM.addQuery("public", data);
-							} else {
-								QM.addQuery(user, data);
-							}
+							QM.addQuery(user, data, query_header_);
 						}
 					}
 				}
-			}
-			else if ("cancel" == rootTagName) {
+			} else if ("cancel" == request.type()) {
+				unsigned int mngId = stoi(request.body());
 				// 継続クエリのキャンセル要求
-				QM.cancelQuery(user, data, isp.getAttrValueFromRootTag("id", data.payload));
+				QM.cancelQuery(user, data, mngId);
+			}
+		} else {
+			string rootTagName;
+			IS::InformationSourceParser &isp = IS::InformationSourceParser::get_instance();
+			isp.init();
+			// XMLの種別を取得
+			if (!isp.getRootTagNameAndKey(data.payload, rootTagName, key)) {
+				isp.finalize();
+				pp.finalize();
+				return;
+			}
+
+			if ("info" == rootTagName) {
+				// 統計情報の取得要求
+				string funcName = isp.getAttrValueStrFromRootTag("func", data.payload);
+				ProcessingExecuter *PE = new ProcessingExecuter(data, funcName);
+				PE->start();
 			}
 			else if ("operatorTree" == rootTagName) {
 				// オペレーターツリーの登録
 				QM.addOperatorTree(user, data);
 			}
-			else if ("change_id" == rootTagName) {
-				string message;
-				isp.getQueryString(data.payload, message);
-				QM.changeid(message);
-			}
 			else
 			{
 				logger->error("[ERROR] Not Define RootTagName. : " + rootTagName);
 			}
+			isp.finalize();
 		}
-		isp.finalize();
+		pp.finalize();
 	}
 }

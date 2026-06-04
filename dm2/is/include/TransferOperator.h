@@ -10,7 +10,7 @@
 #include "LocationManager.h"
 #include "UdpSendInterface.h"
 #include "InformationSourceParser.h"
-#include "ProtobufParser.h"
+#include "is/ProtobufParser.h"
 #include "Settings.h"
 
 using namespace CS;

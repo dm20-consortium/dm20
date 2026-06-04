@@ -27,7 +27,7 @@ namespace CS{
 		
 		void run(const char* fd_name, std::function<void(send_message_upper)>notify);
 
-		void run_is(const std::string &fd_name, std::function<void(send_message_upper)>notify);
+		void run_is(const std::string &fd_name, const std::string &nic, const std::string &port, std::function<void(send_message_upper)>notify);
 
 		void run_sec(const std::string &fd_name, std::function<void(send_message_upper)>notify);
 

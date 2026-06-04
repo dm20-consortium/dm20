@@ -190,6 +190,10 @@ bool NwRcvSettings::load_dm2conf(const std::string &confDirPath)
 
 	if (!dm2util.chk_dm2conf_int_item("RECEIVE_NETWORK_NUM", network_num, true)) return false;
 
+	if (!dm2util.chk_dm2conf_str_item("IS_IP_ADDRESS", is_ip_address, false)) is_ip_address = "";
+
+	if (!dm2util.chk_dm2conf_str_item("IS_PORT_NUMBER", is_port_number, false)) is_port_number = "";
+
 	for (int count = 1; count < network_num + 1; count++) {
 		string item_str;
 		int item_int;
