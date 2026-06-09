@@ -31,8 +31,8 @@ ROS2DMI や UDPDMI は、ROS2 や UDP を用いて外部端末とデータ連携
     - [送信API説明付き](send_object_info/README.md)
 
 - DM2.0 Platform の DB システムから Query を用いて物標情報を受信する
-    - [受信サンプルプログラム](send_object_info/send_object_info.cpp)
-    - [受信API説明付き](send_object_info/README.md)
+    - [受信サンプルプログラム](recv_object_info/recv_object_info.cpp)
+    - [受信API説明付き](./recv_object_info/README.md)
 
 # サンプルプログラム動作手順
 
