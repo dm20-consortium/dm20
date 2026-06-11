@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import argparse
+import csv
 import struct
 import sys
 import yaml
@@ -22,6 +23,7 @@ TYPE_MAP = {
 
 
 def load_format_yaml(path):
+
     with open(path, "r") as f:
         y = yaml.safe_load(f)
 
@@ -33,112 +35,102 @@ def load_format_yaml(path):
         y["message"]["body"]["item"]["fields"].items()
     )
 
-    return header_fields, data_fields
+    max_count = y["message"]["body"].get(
+        "max_count",
+        1
+    )
+
+    return header_fields, data_fields, max_count
 
 
-def decode_payload(payload, header_fields, data_fields):
+def unpack_value(packet, offset, field_type):
 
-    offset = 0
+    fmt, size = TYPE_MAP[field_type]
+
+    if offset + size > len(packet):
+        raise ValueError(
+            f"packet too short "
+            f"(offset={offset}, need={size}, len={len(packet)})"
+        )
+
+    value = struct.unpack_from(
+        fmt,
+        packet,
+        offset
+    )[0]
+
+    return value, size
+
+
+def decode_packet(packet, header_fields, data_fields):
+
     result = {}
+    offset = 0
 
     #
-    # header
+    # Header
     #
-    for name, ftype in header_fields:
+    for name, field_type in header_fields:
 
-        if ftype not in TYPE_MAP:
-            raise ValueError(
-                f"unsupported type '{ftype}'"
-            )
-
-        fmt, size = TYPE_MAP[ftype]
-
-        if offset + size > len(payload):
-            raise ValueError(
-                f"header field '{name}' exceeds payload size"
-            )
-
-        value = struct.unpack_from(
-            fmt,
-            payload,
-            offset
-        )[0]
+        value, size = unpack_value(
+            packet,
+            offset,
+            field_type
+        )
 
         result[name] = value
         offset += size
 
-    if "data_count" not in result:
-        raise ValueError(
-            "data_count not found in header"
-        )
-
     data_count = result["data_count"]
 
-    result["objects"] = []
-
     #
-    # body
+    # Body
     #
     for i in range(data_count):
 
-        obj = {}
+        for name, field_type in data_fields:
 
-        for name, ftype in data_fields:
+            value, size = unpack_value(
+                packet,
+                offset,
+                field_type
+            )
 
-            if ftype not in TYPE_MAP:
-                raise ValueError(
-                    f"unsupported type '{ftype}'"
-                )
-
-            fmt, size = TYPE_MAP[ftype]
-
-            if offset + size > len(payload):
-                raise ValueError(
-                    f"object[{i}] field '{name}' exceeds payload size"
-                )
-
-            value = struct.unpack_from(
-                fmt,
-                payload,
-                offset
-            )[0]
-
-            obj[name] = value
+            result[f"{name}_{i}"] = value
             offset += size
-
-        result["objects"].append(obj)
-
-    #
-    # 残りデータ確認
-    #
-    if offset != len(payload):
-        raise ValueError(
-            f"decoded={offset} bytes "
-            f"but payload={len(payload)} bytes "
-            f"(remaining={len(payload)-offset})"
-        )
 
     return result
 
 
-def print_result(index, decoded):
+def build_csv_header(
+    header_fields,
+    data_fields,
+    max_count
+):
 
-    print("=" * 80)
-    print(f"PACKET {index}")
+    header = []
+
+    for name, _ in header_fields:
+        header.append(name)
+
+    for i in range(max_count):
+
+        for name, _ in data_fields:
+            header.append(
+                f"{name}_{i}"
+            )
+
+    return header
+
+
+def print_decoded(decoded):
+
+    print("========================================")
 
     for k, v in decoded.items():
-
-        if k == "objects":
-            continue
-
         print(f"{k}: {v}")
 
-    for idx, obj in enumerate(decoded["objects"]):
-
-        print(f"\nOBJECT[{idx}]")
-
-        for k, v in obj.items():
-            print(f"  {k}: {v}")
+    print("========================================")
 
 
 def main():
@@ -156,47 +148,78 @@ def main():
     )
 
     parser.add_argument(
-        "--udp-port",
-        type=int,
-        default=None
+        "--csv"
+    )
+
+    parser.add_argument(
+        "--udp_port",
+        type=int
     )
 
     args = parser.parse_args()
 
-    header_fields, data_fields = load_format_yaml(
-        args.format
-    )
+    header_fields, data_fields, max_count = \
+        load_format_yaml(args.format)
+
+    csv_writer = None
+    csv_file = None
+
+    if args.csv:
+
+        csv_header = build_csv_header(
+            header_fields,
+            data_fields,
+            max_count
+        )
+
+        csv_file = open(
+            args.csv,
+            "w",
+            newline=""
+        )
+
+        csv_writer = csv.DictWriter(
+            csv_file,
+            fieldnames=csv_header
+        )
+
+        csv_writer.writeheader()
 
     packets = rdpcap(args.pcap)
 
+    total = 0
     success = 0
     failed = 0
 
-    for index, pkt in enumerate(packets, start=1):
+    for idx, pkt in enumerate(packets):
+
+        if UDP not in pkt:
+            continue
+
+        udp = pkt[UDP]
+
+        if args.udp_port:
+
+            if udp.dport != args.udp_port and \
+               udp.sport != args.udp_port:
+                continue
+
+        payload = bytes(udp.payload)
+
+        total += 1
 
         try:
 
-            if UDP not in pkt:
-                continue
-
-            udp = pkt[UDP]
-
-            if (
-                args.udp_port is not None
-                and udp.dport != args.udp_port
-                and udp.sport != args.udp_port
-            ):
-                continue
-
-            payload = bytes(udp.payload)
-
-            decoded = decode_payload(
+            decoded = decode_packet(
                 payload,
                 header_fields,
                 data_fields
             )
 
-            print_result(index, decoded)
+            print_decoded(decoded)
+
+            if csv_writer:
+                csv_writer.writerow(decoded)
 
             success += 1
 
@@ -205,14 +228,18 @@ def main():
             failed += 1
 
             print(
-                f"[ERROR] packet={index}: {e}",
+                f"[ERROR] packet #{idx} decode failed: {e}",
                 file=sys.stderr
             )
 
-    print(
-        f"\nsummary: success={success}, failed={failed}",
-        file=sys.stderr
-    )
+    if csv_file:
+        csv_file.close()
+
+    print()
+    print("========== Summary ==========")
+    print(f"UDP Packets : {total}")
+    print(f"Success     : {success}")
+    print(f"Failed      : {failed}")
 
 
 if __name__ == "__main__":
