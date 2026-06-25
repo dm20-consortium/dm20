@@ -187,6 +187,14 @@ dm2をビルドする前に、[ROS2 Humble](https://docs.ros.org/en/humble/Insta
 
 ROS2 Humbleおよびcolcon buildではC++17が使用されるため、dm2およびdmiもC++17でビルドする必要があります。
 
+dm2のmakefileやdmiのCMakeLists.txtにて、ROSのディストリビューションを検出し、C++17ビルドに切り替えるように設定しています。
+そのため、setup.bashを読み込んでからのビルドをお願いします。
+
+```bash
+source /opt/ros/humble/setup.bash
+```
+上記後に[ビルド](#ビルド)
+
 dm2をビルドした後にROS2 Humbleをインストールした場合は、dm2を以下の通り、再ビルドしてください。自動でC++17に切り替わったビルドが行われます。
 
 ```bash
