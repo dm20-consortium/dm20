@@ -195,12 +195,7 @@ source /opt/ros/humble/setup.bash
 ```
 上記後に[ビルド](#ビルド)
 
-dm2をビルドした後にROS2 Humbleをインストールした場合は、dm2を以下の通り、再ビルドしてください。自動でC++17に切り替わったビルドが行われます。
-
-```bash
-make clean
-```
-上記後に[ビルド](#ビルド)
+- もしdm2をビルドした後にROS2 Humbleをインストールした場合は、まずは `make clean` を行ってから、build.bashを読み込み、ビルドの手順になります。
 
 ## 例
 [一般的な使用例は、こちら](../example/README.md)
