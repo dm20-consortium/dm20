@@ -1,6 +1,8 @@
 #!/bin/bash
 set -e
 
+cd dm2
+
 echo "=== Initialize database ==="
 
 until pg_isready
