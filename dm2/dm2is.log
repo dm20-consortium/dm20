@@ -1,0 +1,8 @@
+[INFO] Config Directory set from arg [-d]
+FILE:../csLib/source/socket/UdpProcServer.cpp, LINE:66 Bind fail.
+FILE:source/dm2SocketInterface/UdpReceiveInterface.cpp, LINE:62 udpprocserver.Init fail:-100
+2026-07-02 13:27:29,061 0x72437cff9700  INFO QueryExecuter - MNGID:1, destSID:0, QUERY:CREATE STREAM sysTimer1000msec (time long) TIMER_FIX [1000]
+2026-07-02 13:27:29,064 0x724366ffd700  INFO QueryExecuter - MNGID:2, destSID:0, QUERY:CREATE STREAM sysTimer100msec (time long) TIMER_FIX [100]
+2026-07-02 13:27:29,068 0x7243d6e839c0  INFO Main - ===== DM2.0PF DB SYSTEM START =====
+2026-07-02 13:27:29,861 0x72434e7fc700  INFO QueryExecuter - MNGID:3, destSID:0, QUERY:MASTER message_info SELECT * FROM message_info [rows 1]
+attr_size:1, attrNameList[i]: message,  attrTypeList[i]:string

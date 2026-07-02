@@ -1,32 +1,46 @@
-name: Basic Test
+name: Basic CI
 
 on:
   push:
     branches:
       - main
       - develop
-      - '**'
   pull_request:
 
 jobs:
   basic-test:
+
     runs-on: ubuntu-24.04
 
+    defaults:
+      run:
+        shell: bash
+
     steps:
+
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install packages
+      - name: Install dependencies
         run: |
           chmod +x .github/scripts/install.sh
           ./.github/scripts/install.sh
 
-      - name: Build
+      - name: Build DM2
         run: |
           chmod +x .github/scripts/build.sh
           ./.github/scripts/build.sh
 
-      - name: Basic Test
+      - name: Run test scenario
+        working-directory: dm2
         run: |
-          chmod +x .github/scripts/test_basic.sh
-          ./.github/scripts/test_basic.sh
+          python3 tests/runner.py \
+            tests/scenarios/T001_basic_send_receive.yaml
+
+      - name: Upload logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-logs
+          path: |
+            /tmp/dm2*.log
