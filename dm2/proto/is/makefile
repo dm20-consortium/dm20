@@ -1,6 +1,6 @@
 # デフォルトのインストール先
 PREFIX ?= /usr/local
-INSTALL_INCLUDEDIR := $(PREFIX)/include/is/proto
+INSTALL_INCLUDEDIR := $(PREFIX)/include/is
 INSTALL_LIBDIR     := $(PREFIX)/lib
 
 # build

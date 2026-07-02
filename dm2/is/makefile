@@ -55,11 +55,16 @@ $(TARGET): bin $(OBJECTS)
 $(OBJDIR)/%.o: $(SRCDIR)/%.cpp
 	$(COMPILER) $(CFLAGS) $(INCLUDE) -o $@ -c $<
 
+TUPLE_LIB = ../tupleLib/lib/libtuple.a
+
 .PHONY: all clean install uninstall bin
 all: clean $(TARGET)
 
 bin:
 	install -d bin obj
+
+link: $(TUPLE_LIB)
+	$(COMPILER) $(DEBUGS) -o $(TARGET) $(OBJECTS) $(LDFLAGS) $(LIBS)
 
 install:
 	install -d $(BINDIR)

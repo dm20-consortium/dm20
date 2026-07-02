@@ -159,8 +159,14 @@ namespace IS {
 
 	void QueryManager::addQuery(const int &mngId, const string &user, const RecvData &data, const bool &returnMngId, const query_header &query_header_)
 	{
+		bool startUpMode = false;
+		if (user == "public") {
+			string s = data.payload;
+			stringUtil.toUpper(s);
+			if (stringUtil.contain(s, "CREATE TIMER")) startUpMode = true;
+		}
 		// QueryExecuterに処理を委譲
-		QueryExecuter *QE = new QueryExecuter(user, mngId, data, returnMngId, query_header_);
+		QueryExecuter *QE = new QueryExecuter(user, mngId, data, returnMngId, query_header_, startUpMode);
 		QE->start();
 		// QEオブジェクトの管理
 		QueryInfo info(mngId, data.sock, data.client, data.payload, QE, query_header_.continuous);
@@ -212,6 +218,7 @@ namespace IS {
         RecvData info;
 		info.sock = -1;
         struct sockaddr_in addr;
+		bzero( &addr, sizeof(addr) );
 		info.client = addr;
 		info.payload = query;
 		info.isClose = false;
@@ -281,6 +288,7 @@ namespace IS {
 
 		// QEオブジェクトの管理
 		struct sockaddr_in addr;
+		bzero( &addr, sizeof(addr) );
 		QueryInfo info(mngId, 0, addr, query, QE, true);
 		pthread_mutex_lock(&QImapMtx);
 		mp.insert(std::pair<unsigned int, IS::QueryInfo>(mngId, info));
@@ -391,6 +399,7 @@ namespace IS {
 
 	void QueryManager::cancelQuery(const string &user, const RecvData &data, const unsigned int mngId)
 	{
+		logger->debug("user:" + user + ", mngId" + to_string(mngId)); 
 		bool ret = false;
 		try {
 			pthread_mutex_lock(&QImapMtx);
@@ -468,6 +477,7 @@ namespace IS {
 	 */
 	bool QueryManager::cancelQuery(const unsigned int mngId, const string &user)
 	{
+		logger->debug("[cancelQuery] user:" + user + ", mngId:" + to_string(mngId)); 
 		bool isContinuousQuery;
 		try {
 			pthread_mutex_lock(&QImapMtx);
@@ -475,6 +485,7 @@ namespace IS {
 			isContinuousQuery = QI.isContinuousQuery;
 			if (isContinuousQuery) {
 				while (true) {
+					logger->debug("[cancelQuery] isExitRun: " + to_string(QI.QE->isExitRun));
 					if (QI.QE->isExitRun == false) {
 						usleep(100 * 1000);
 					} else {
@@ -494,14 +505,8 @@ namespace IS {
 			logger->warn("[cancelQuery] Not Found QueryExecuter. MngId : " + std::to_string(mngId));
 			return false;
 		}
-		if (isContinuousQuery) {
-			if (stringUtil.contain(settings.getParameter("HISTORY_RECORD_CLASS"), stringUtil.getClassName(typeid(*this)))) {
-				createQueryHistory("cancel", mngId, 0, "", "", user);
-			}
-		}
 		return true;
 	}
-
 	/**
 	* クエリをキャンセル（終了）する (IS連携。ユーザチェックなし)
 	*
@@ -795,19 +800,9 @@ namespace IS {
 			QueryStatus qs = i->second.QE->getQueryStatus();
 			qsList.push_back(qs);
 
-			//cout << "mngId:" << qs.mngId << endl;
-			//cout << "query:" << qs.query << endl;
-			//cout << "user:" << qs.user << endl;
-			//cout << "operatorTreeXML:" << qs.operatorTreeXML << endl;
-			//cout << "operatorNum:" << qs.operatorNum << endl;
-			//cout << "notifiedIntervalAVG:" << qs.notifiedIntervalAVG << endl;
-			//cout << "totalProcessTimeAVG:" << qs.totalProcessTimeAVG << endl;
-			//cout << "unprocessedDataNum:" << qs.unprocessedDataNum << endl;
-			//cout << "latestOperatorName:" << qs.latestOperatorName << endl;
-			//cout << "latestOpeProcAVG:" << qs.latestOpeProcAVG << endl;
-			//cout << "inputStreamTupleNumPerSec:" << qs.inputStreamTupleNumPerSec << endl;
-			//cout << "inputRelationTupleNumPerSec:" << qs.inputRelationTupleNumPerSec << endl;
-			//cout << "outputTupleNumPerSec:" << qs.outputTupleNumPerSec << endl;
+			//cout << "mngId:" << qs.mngId << ",query:" << qs.query << ",user:" << qs.user << ",operatorTreeXML:" << qs.operatorTreeXML << ",operatorNum:" << qs.operatorNum << ",notifiedIntervalAVG:" << qs.notifiedIntervalAVG << endl;
+			//cout << "totalProcessTimeAVG:" << qs.totalProcessTimeAVG << ",unprocessedDataNum:" << qs.unprocessedDataNum << ",latestOperatorName:" << qs.latestOperatorName << ",latestOpeProcAVG:" << qs.latestOpeProcAVG << endl;
+			//cout << "inputStreamTupleNumPerSec:" << qs.inputStreamTupleNumPerSec << ",inputRelationTupleNumPerSec:" << qs.inputRelationTupleNumPerSec << ",outputTupleNumPerSec:" << qs.outputTupleNumPerSec << endl;
 		}
 		return qsList;
 	}

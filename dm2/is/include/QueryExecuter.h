@@ -63,6 +63,7 @@ namespace IS {
 		string user;
 		RecvData recvInfo;
 		query_header query_header_;
+		bool startupMode = false;
 
 		unsigned int mngId;
 		unsigned int requestedMngId;
@@ -96,7 +97,7 @@ namespace IS {
 		Operator* getOperator(DOMNodeList* dataList, DOMNodeList* graphList, const string &nodeId, bool isDynamicColumn);
 
 	public:
-		QueryExecuter(const string &user, const unsigned int mngId, const RecvData &data, const bool &returnMngId, const query_header &_query_header);
+		QueryExecuter(const string &user, const unsigned int mngId, const RecvData &data, const bool &returnMngId, const query_header &_query_header, const bool &_startupMode);
 		QueryExecuter(const string &user, const unsigned int mngId, const RecvData &data);
 		QueryExecuter(const string &user, const unsigned int mngId, const string query);
 

@@ -1,4 +1,4 @@
-SUBDIRS := secLib csLib cs commonLib tupleLib dmClientLib is apl/dm2mes conf/is_func
+SUBDIRS := secLib csLib cs commonLib proto tupleLib dmClientLib is apl/dm2mes conf/is_func
 .PHONY: all clean install uninstall $(SUBDIRS)
 
 all:
@@ -24,6 +24,20 @@ uninstall:
 	@for dir in $(SUBDIRS); do \
 		$(MAKE) -C $$dir uninstall || exit $$?; \
 	done
+
+apllink:
+	$(MAKE) -C dmClientLib
+	$(MAKE) -C apl/dm2mes link
+
+islink:
+	$(MAKE) -C tupleLib
+	$(MAKE) -C is link
+	$(MAKE) -C apl/dm2mes link
+
+cslink:
+	$(MAKE) -C csLib
+	$(MAKE) -C commonLib
+	$(MAKE) -C cs
 
 $(SUBDIRS):
 	$(MAKE) -C $@

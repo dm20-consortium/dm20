@@ -38,13 +38,14 @@ namespace IS {
 	 * @param	data	受信データ
 	 */
 
-	QueryExecuter::QueryExecuter(const string &user, const unsigned int mngId, const RecvData &data, const bool &doReturn, const query_header &_query_header)
+	QueryExecuter::QueryExecuter(const string &user, const unsigned int mngId, const RecvData &data, const bool &doReturn, const query_header &_query_header, const bool &_startupMode)
 	{
 		this->user = user;
 		this->recvInfo = data;
 		this->mngId = mngId;
 		this->doReturn = doReturn;
 		this->query_header_ = _query_header;
+		this->startupMode = _startupMode;
 		pthread_mutex_init(&opListMtx, NULL);
 	}
 
@@ -119,9 +120,7 @@ namespace IS {
 	 */
 
 	void QueryExecuter::run()
-	{
-		//REL_COMMENT logger->trace("[run] IN MngId:" + std::to_string(this->mngId));
-		
+	{		
 #if MEASURE_MODE == 1
 		long startTime = DmUtil::getTimeMicrosec();
 		long procTime = startTime;
@@ -135,6 +134,7 @@ namespace IS {
 		isp.init();
 		try {
 			Operator* startOp = NULL;
+			logger->debug("[run] 1. Query => operatorTree");
 			if ( !this->isFromCS ) {
 				if (isOperatorTreeXML) {
 					isp.getOperatorTreeXML(this->recvInfo.payload, parseResult);
@@ -179,14 +179,13 @@ namespace IS {
 				logger->debug("MNGID:" + std::to_string(this->mngId) + ", OPERATOR_TREE(CS):" + parseResult);
 			}
 			if (!isErr) {
+				logger->debug("[run] 2.parse operatorTree");
 				// オペレータツリーの構築
 				startOp = parseOperatorTree(parseResult);
 				if (startOp == NULL) {
 					isErr = true;
 					logger->error("MNGID:" + std::to_string(this->mngId) + " parseOperatorTree Error ");
 					returnError(retErrCode, retErrMsg);
-					IS::QueryManager &QeryM = IS::QueryManager::get_instance();
-					QeryM.cancelQuery(this->mngId);
 				}
 			}
 
@@ -197,6 +196,7 @@ namespace IS {
 			procTime = now;
 #endif
 			if (!isErr) {
+				logger->debug("[run] 3.start operator");
 				startOperator();
 				if (isOneShot) {
 					TupleSet ts;
@@ -239,10 +239,15 @@ namespace IS {
 			logger->error(retErrMsg);
 			returnError(ErrorCode::UNKNOWN_ERR, retErrMsg);
 		}
+		logger->debug("[run] 4.exit run");
 		// 終了処理
 		isp.finalize();
 		if (QP != NULL) delete QP;
 		isExitRun = true;
+		if (isErr) {
+			IS::QueryManager &QeryM = IS::QueryManager::get_instance();
+			QeryM.cancelQuery(this->mngId);
+		}
 #if MEASURE_MODE == 1
 		now = DmUtil::getTimeMicrosec();
 		msec = (now - startTime) / 1000.0;
@@ -267,7 +272,7 @@ namespace IS {
 	{
 		// NEARBY指定かつデータ要求範囲を指定している場合
 		// LocationManagerに処理を登録
-		logger->info("[run] Request from another IS. senderId:" + to_string(senderId) + " destId:" + to_string(destId) + " requestVehicleId:" + to_string(requestVehicleId) + " range:" + to_string(range) + " mngId:" + to_string(mngId) + " reception (edgeID:" + to_string(receptionEdgeId) + " mngId:" + to_string(receptionMngId) + ")");
+		logger->info("[runForNearBy] Request from another IS. senderId:" + to_string(senderId) + " destId:" + to_string(destId) + " requestVehicleId:" + to_string(requestVehicleId) + " range:" + to_string(range) + " mngId:" + to_string(mngId) + " reception (edgeID:" + to_string(receptionEdgeId) + " mngId:" + to_string(receptionMngId) + ")");
 		IS::LocationManager &LM = IS::LocationManager::get_instance();
 
 		// 宛先が0(最寄エッジ)の場合は、自身のクエリ管理番号を車両に返却するため
@@ -283,7 +288,7 @@ namespace IS {
 		mngKey = to_string(receptionEdgeId) + "_" + to_string(receptionMngId);
 		unsigned int cancelMngId = 0;
 		if (LM.isExistTask(requestVehicleId, mngKey, cancelMngId)) {
-			logger->info("[run] Task is already exist.(VehicleID:" + to_string(requestVehicleId) + " mngKey:" + mngKey + ") So return MngID(ID:" + to_string(cancelMngId) + ") and clear MngID(ID:" + to_string(this->mngId) + ").");
+			logger->info("[runForNearBy] Task is already exist.(VehicleID:" + to_string(requestVehicleId) + " mngKey:" + mngKey + ") So return MngID(ID:" + to_string(cancelMngId) + ") and clear MngID(ID:" + to_string(this->mngId) + ").");
 			returnMngID(cancelMngId);
 			IS::QueryManager &QeryM = IS::QueryManager::get_instance();
 			QeryM.cancelQuery(this->mngId);
@@ -366,7 +371,11 @@ namespace IS {
 	void QueryExecuter::start()
 	{
 		thread queuingThread(&QueryExecuter::run, this);
-		queuingThread.detach();
+		if (startupMode) {
+			queuingThread.join();
+		} else {
+			queuingThread.detach();
+		}
 	}
 
 	/**
@@ -651,7 +660,7 @@ namespace IS {
 				}
 				else {
 					logger->error("[parseOperatorTree] getOperator return NULL. nodeId:" + nodeId);
-					outputXmlLog(doc);
+					//outputXmlLog(doc);
 					return firstOpe;
 				}
 			}
@@ -1071,20 +1080,6 @@ XMLString::release(&ln);
 				logger->warn(retErrMsg);
 				retErrCode = ErrorCode::QUERY_PARSE_ERR;
 				return ope;
-			}
-			if (!QM.isFound(master)) {
-				bool isFound = false;
-				for (int i = 0; i < 10; i++) {
-					sleep(1);
-					isFound = QM.isFound(master);
-					if (isFound) break;
-				}
-				if (!isFound) {
-					retErrMsg = "[getOperator] Can't generating operator Because not found '" + master + "' stream.";
-					logger->warn(retErrMsg);
-					retErrCode = ErrorCode::AUTHORITY_ERR;
-					return ope;
-				}
 			}
 			if (!QM.isSelect(master, this->user)) {
 				retErrMsg = "[getOperator] Can't generating operator Because User '" + this->user + "' doesn't have permission to read '" + master + "' stream.";

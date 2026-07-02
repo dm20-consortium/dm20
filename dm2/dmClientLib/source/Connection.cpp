@@ -723,15 +723,16 @@ void Connection::cancelQuery(const unsigned int mngId)
 
 	cancelQuery = pp.createCancel(mngId, this->key);
 
-	//cout << "[cancelQuery] REQUEST:" << cancelQuery << endl;
 #if MEASURE_MODE == 1
 	long procTime = DmUtil::getTimeMicrosec();
 #endif
 	int ret;
-	if(!isSSL)
+	if(!isSSL) {
 		ret = send(sock, cancelQuery.c_str(), cancelQuery.length(), 0);
-	else
+		//cout << "[cancelQuery] send ret=" << ret << " errno=" << errno << endl;
+	} else {
 		ret = SSL_write(ssl, cancelQuery.c_str(), cancelQuery.length());
+	}
 
 	//cout << "[cancelQuery] dataSize: " << cancelQuery.length() << " retSize : " << ret << endl;
 	if (ret < 0) {
@@ -749,11 +750,12 @@ void Connection::cancelQuery(const unsigned int mngId)
 #if MEASURE_MODE == 1
 	procTime = DmUtil::getTimeMicrosec();
 #endif
-	if(!isSSL)
+	if(!isSSL) {
 		data = read(sock, buffer, sizeof(buffer));
-	else
+		//cout << "[cancelQuery] send data =" << data << endl;
+	} else {
 		data = SSL_read(ssl, buffer, sizeof(buffer));
-
+	}
 	if (data < 0) {
 		perror("[cancelQuery] read/SSL_read error");
 		cerr << "[cancelQuery] recv TCP Connection Timeout. errno:" << errno << endl;
@@ -881,43 +883,22 @@ void Connection::disconnect(bool doClear)
 void Connection::reconnect()
 {
 	if (callBackMp.size() > 0 || callBackClassMp.size() > 0) {
+		//cout << "[reconnect]return. size1:" << callBackMp.size() << ",size2:" << callBackClassMp.size()  << endl;
 		return;
 	}
 	// 接続中の場合は一旦Close
 	disconnect();
 
 	DmManager dm;
-	int dataSock;
+	int dataSock = 0;
 	SSL *dataSsl = NULL;
 	if (!isSSL) {
 		dataSock = dm.connectSock(this->ip, this->port);
 	} else {
 		dataSsl = dm.connectSSLSock(dataSock, this->ip, this->port, this->ctx);
-		this->ssl2 = dataSsl;
 	}
-	this->sock2 = dataSock;
-/*
-	if (isSSL) {
-		OpenSSL_add_all_algorithms();
-		ERR_load_BIO_strings();
-		ERR_load_crypto_strings();
-		SSL_load_error_strings();
-		if (SSL_library_init() < 0) {
-			cerr << "[reconnect] Could not initialize the OpenSSL library !" << endl;
-		}
-		ctx = SSL_CTX_new(SSLv23_client_method());
-		SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv2);
-
-		ssl = SSL_new(ctx);
-		SSL_set_fd(ssl, sock);
-		SSL_connect(ssl);
-		if (isTransportMode) {
-			ssl2 = SSL_new(ctx);
-			SSL_set_fd(ssl2, sock2);
-			SSL_connect(ssl2);
-		}
-	}
-*/
+	this->sock = dataSock;
+	this->ssl = dataSsl;
 	return;
 }
 

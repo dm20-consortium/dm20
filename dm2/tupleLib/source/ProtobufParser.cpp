@@ -48,6 +48,7 @@ namespace IS {
 	const int signalInfo_0_6_0_normal_size = signalInfoTypeList_0_6_0.size() - is_tuple_size;
 	const int sensorInfo_0_8_0_normal_size = sensorInfoTypeList_0_8_0.size() - is_tuple_size;
 	const int sensorInfo_0_8_1_normal_size = sensorInfoTypeList_0_8_1.size() - is_tuple_size;
+	// 注意）下記のtypeStringMapはヘッダファイルに移動すると、コアダンプエラーになります
 	std::map<std::type_index, std::string> typeStringMap = {
 		{typeid(int), "int"},
 		{typeid(long), "long"},
@@ -57,6 +58,7 @@ namespace IS {
 		{typeid(bool), "bool"},
 		{typeid(unsigned int), "uint"},
 		{typeid(unsigned long), "ulong"},
+		{typeid(unsigned long long), "ulong"},
 		{typeid(vector<int>), "vector(int)"},
 		{typeid(vector<long>), "vector(long)"},
 		{typeid(vector<double>), "vector(double)"},
@@ -64,13 +66,15 @@ namespace IS {
 		{typeid(vector<bool>), "vector(bool)"},
 		{typeid(vector<unsigned int>), "vector(uint)"},
 		{typeid(vector<unsigned long>), "vector(ulong)"},
+		{typeid(vector<unsigned long long>), "vector(ulong)"},
 		{typeid(vector<vector<int>>), "vector(vector(int))"},
 		{typeid(vector<vector<long>>), "vector(vector(long))"},
 		{typeid(vector<vector<double>>), "vector(vector(double))"},
 		{typeid(vector<vector<string>>), "vector(vector(string))"},
 		{typeid(vector<vector<bool>>), "vector(vector(bool))"},
 		{typeid(vector<vector<unsigned int>>), "vector(vector(uint))"},
-		{typeid(vector<vector<unsigned long>>), "vector(vector(ulong))"}
+		{typeid(vector<vector<unsigned long>>), "vector(vector(ulong))"},
+		{typeid(vector<vector<unsigned long long>>), "vector(vector(ulong))"}
 	};
 	/**
 	* 初期処理
@@ -705,32 +709,14 @@ namespace IS {
 		vector<string> retStrList;
 		
 		string retStr = streamSerializeToString(tableName, tuples);
-		/*
-		cout << "createStreamList:retStr:" << retStr << endl;
-		cout << "createStreamList:sepSize:" << sepSize << endl;
-		cout << "createStreamList:PROTOBUF_HEADER_FIXED_SIZE:" << PROTOBUF_HEADER_FIXED_SIZE << endl;
-		cout << "createStreamList:key:" << key.size() << endl;
-		cout << "createStreamList:calc:" << sepSize - PROTOBUF_HEADER_FIXED_SIZE - key.size() << endl;
-		cout << "createStreamList:retStr.size():" << retStr.size() << endl;
-		*/
+		// cout << "[createStreamList] retStrSize: " << retStr.size() << ",sepSize: " << sepSize << ",PROTOBUF_HEADER_FIXED_SIZE: " << PROTOBUF_HEADER_FIXED_SIZE << ",keySize:" << key.size() << endl;
 		StringUtil stringUtil;
 		stringUtil.splitBySize(retStr, sepSize - PROTOBUF_HEADER_FIXED_SIZE - key.size(), retStrList);
 
-		/*
-		if (retStrList.size() == 1) {
-			retStrList[0] = createHeader(0, tableName, retStr, retStr.size(), 0, retStrList.size(), key) + retStr;
-			//cout << "createStreamList:retStrList[0].size():" << retStrList[0].size() << endl;
-		} else {
-		*/
 		for(int i = 0; i < retStrList.size() ; i++)
 		{
 			retStrList[i] = createHeader(0, tableName, retStrList[i], retStr.size(), i, retStrList.size(), key) + retStrList[i];
-			/*
-			cout << "createStreamList:retStrList[i] size:" << retStrList[i].size() << endl;
-			cout << "createStreamList:retStr size:" << retStr.size() << endl;
-			cout << "createStreamList:retStrList size:" << retStrList.size() << endl;
-			cout << "createStreamList:Serialized+Header:" << retStrList[i] << endl;
-			*/
+			//cout << "[createStreamList] retStrList[i] size:" << retStrList[i].size() << ", retStrList.size(): " << retStrList.size() << endl;
 		}
 		return retStrList;
 	}
@@ -3244,75 +3230,41 @@ namespace IS {
 			}
 		}
 	}
-	string ProtobufParser::FieldTypeToString(const FieldDescriptorProto& field) {
-		std::string type_string;
-		if (field.label() == FieldDescriptorProto_Label_LABEL_REPEATED) {
-			type_string += "repeated ";
+	/**
+	* protobufのフィールド情報から型名を判別する
+	*
+	* @author	Shinichi Kusayama
+	* @date	2023/12/10
+	*
+	* @param [in]	field	フィールド情報
+	*
+	* @return	型名
+	 */
+	string ProtobufParser::FieldTypeToString(const FieldDescriptor *field) {
+		//cout << "Field Name: " << field->name() << ",Type: " << FieldDescriptor::TypeName(field->type()) << ",IsRepeated: " << field->is_repeated() << endl;
+		string field_type;
+		string prefix = "";
+		string suffix = "";
+		if (field->cpp_type() == FieldDescriptor::CPPTYPE_MESSAGE) {
+			prefix = "vector(vector(";
+			suffix = "))";
+			const Descriptor* child = field->message_type();
+			const FieldDescriptor* childField = child->field(0);
+			field_type = FieldDescriptor::TypeName(childField->type());
+		} else {
+			field_type = FieldDescriptor::TypeName(field->type());
+			if (field->is_repeated()) {
+				prefix = "vector(";
+				suffix = ")";
+			}
 		}
-		
-		switch (field.type()) {
-			case FieldDescriptorProto_Type_TYPE_DOUBLE:
-				type_string += "double";
-				break;
-			case FieldDescriptorProto_Type_TYPE_FLOAT:
-				type_string += "float";
-				break;
-			case FieldDescriptorProto_Type_TYPE_INT32:
-				type_string += "int32";
-				break;
-			case FieldDescriptorProto_Type_TYPE_INT64:
-				type_string += "int64";
-				break;
-			case FieldDescriptorProto_Type_TYPE_UINT32:
-				type_string += "uint32";
-				break;
-			case FieldDescriptorProto_Type_TYPE_UINT64:
-				type_string += "uint64";
-				break;
-			case FieldDescriptorProto_Type_TYPE_SINT32:
-				type_string += "sint32";
-				break;
-			case FieldDescriptorProto_Type_TYPE_SINT64:
-				type_string += "sint64";
-				break;
-			case FieldDescriptorProto_Type_TYPE_FIXED32:
-				type_string += "fixed32";
-				break;
-			case FieldDescriptorProto_Type_TYPE_FIXED64:
-				type_string += "fixed64";
-				break;
-			case FieldDescriptorProto_Type_TYPE_SFIXED32:
-				type_string += "sfixed32";
-				break;
-			case FieldDescriptorProto_Type_TYPE_SFIXED64:
-				type_string += "sfixed64";
-				break;
-			case FieldDescriptorProto_Type_TYPE_BOOL:
-				type_string += "bool";
-				break;
-			case FieldDescriptorProto_Type_TYPE_STRING:
-				type_string += "string";
-				break;
-			case FieldDescriptorProto_Type_TYPE_BYTES:
-				type_string += "bytes";
-				break;
-			case FieldDescriptorProto_Type_TYPE_ENUM:
-				type_string += "enum";
-				break;
-			case FieldDescriptorProto_Type_TYPE_MESSAGE:
-				type_string += "message";
-				break;
-			default:
-				type_string += "unknown";
-				break;
-		}
-		return type_string;
+		return prefix + field_type + suffix;
 	}
 
 	void ProtobufParser::loggerWarn(const char * func, const string &msg)
 	{
 		string s = __func__;
-		//logger->warn("[" + s + "]" + msg);
+		cerr << "[" << func << "]" + msg << endl;
 	}
 	/**
 	* 物標情報のデバッグ出力 (API 仕様案 Ver.0.6.0)
@@ -4214,20 +4166,24 @@ namespace IS {
 		FileDescriptorProto fileDescriptor;
 		fileDescriptor.ParseFromString(metadataStr);
 
-		string message_name;
+		DescriptorPool descriptor_pool;
+		const FileDescriptor* dynamic_fd = descriptor_pool.BuildFile(fileDescriptor);
+		if (dynamic_fd == nullptr) {
+			loggerWarn(__func__, "BuildFile failed.");
+			return;
+		}
 		//メタデータの情報表示
-		for (int i = 0; i < fileDescriptor.message_type_size(); ++i) {
-			const DescriptorProto& message = fileDescriptor.message_type(i);
-			message_name = message.name();
-			//std::cout << "Message: " << message_name << std::endl;
-			
-			for (int j = 0; j < message.field_size(); ++j) {
-				const FieldDescriptorProto& field = message.field(j);
-				string filed_type = FieldTypeToString(field);
-				// std::cout << "[DeserializeToTupleDynamically] Field Name: " << field.name() << ", Type: " << filed_type << ", Label: " << field.label() << ", Number: " << field.number() << std::endl;
+		for (int i = 0; i < dynamic_fd->message_type_count(); ++i) {
+			const Descriptor* desc = dynamic_fd->message_type(i);
+			string message_name = desc->name();
+			//cout << "message_type_count: " << dynamic_fd->message_type_count() << ", message_index: " << i << ",message_name: " << message_name << ",field_count : " << desc->field_count() << endl;
+			for (int j = 0; j < desc->field_count(); ++j) {
+				const FieldDescriptor* field = desc->field(j);
+				string field_type = FieldTypeToString(field);
+				//cout << "  FieldTypeToString: " << field_type << ", field_index:" << j << endl;
 				if (message_name == "Tuple_set") {
-					fieldNameList.push_back(field.name());
-					fieldTypeList.push_back(filed_type);
+					fieldNameList.push_back(field->name());
+					fieldTypeList.push_back(field_type);
 				}
 			}
 		}
@@ -4235,8 +4191,6 @@ namespace IS {
 		// message DynamicMessage_dm2is {
 		//	repeated Tuple_set tuple_set = 1;
 		// }
-		DescriptorPool descriptor_pool;
-		const FileDescriptor* dynamic_fd = descriptor_pool.BuildFile(fileDescriptor);
 		const Descriptor* top_level_des = dynamic_fd->FindMessageTypeByName("DynamicMessage_dm2is");
 		DynamicMessageFactory factory;
 		Message* top_level_mes = factory.GetPrototype(top_level_des)->New();
@@ -4295,7 +4249,6 @@ namespace IS {
 			tuples.push_back(tuple);
 		}
 		delete top_level_mes;
-
 		// 返却用にdm2_create_tsの情報を削除
 		fieldNameList.pop_back();
 		fieldTypeList.pop_back();
@@ -4375,6 +4328,7 @@ namespace IS {
 	{
 		FieldDescriptor::Type field_type = fd->type();
 		FieldDescriptor::Label field_label = fd->label();
+		//cout << "field_name:" << field_name << ", field_label:" << field_label << ", field_type:" << field_type << ", t_idx:" << t_idx << endl;
 		if (field_label == FieldDescriptor::LABEL_REPEATED) {
 			//1次元配列用
 			int size = reflection->FieldSize(mes, fd);
@@ -4488,7 +4442,7 @@ namespace IS {
 				else if (v2field_type == FieldDescriptor::TYPE_BOOL) tuple.setValue(t_idx, v2val_bool, ts);
 				else if (v2field_type == FieldDescriptor::TYPE_UINT32) tuple.setValue(t_idx, v2val_uint, ts);
 				else if (v2field_type == FieldDescriptor::TYPE_UINT64) tuple.setValue(t_idx, v2val_ulong, ts);
-				//else logger->warn("[" + to_string(__func__) + "] Unknown FieldType");
+				//else loggerWarn(__func__, "Unknown FieldType");
 			}
 		} else {
 			// not 配列
@@ -4514,7 +4468,7 @@ namespace IS {
 				unsigned long long val = reflection->GetUInt64(mes, fd);
 				tuple.setValue(t_idx, val, ts, isNull);
 			} else {
-				cout << "unknown field_type:" << field_type << endl;
+				loggerWarn(__func__, "unknown field_type");
 			}
 		}			
 	}
@@ -4754,6 +4708,10 @@ namespace IS {
 					any value;
 					tuples.at(0).getValueByIdx(i, value);
 					std::type_index ti(value.type());
+					if (typeStringMap.find(ti) == typeStringMap.end()) {
+						Tuple t = tuples.at(0);
+						throw std::runtime_error(string(" unknown type - ") + t.getDumpAny(value));
+					}
 					attrTypeList[i] = typeStringMap[ti];
 				} else {
 					attrNameList[i] = schema->getAttributeName(i);
@@ -4763,8 +4721,8 @@ namespace IS {
 						attrNameList[i] = attrNameList[i].substr(attrNameList[i].find(".") + 1);
 					}
 				}
+				cout << "attr_size:" << attr_size << ", attrNameList[i]: " << attrNameList[i] << ",  attrTypeList[i]:" << attrTypeList[i] << endl;
 				type = AttributeNameToFieldType(attrTypeList[i], repeated);
-				//cout << attr_size << "," << attrNameList[i] << "," << attrTypeList[i] << endl;
 				
 				FieldDescriptorProto* field = tuplesetDescriptor->add_field();
 				field->set_name(attrNameList[i]);
@@ -4795,7 +4753,7 @@ namespace IS {
 				}
 			} catch (const exception &e) {
 				string what(e.what());
-				//logger->warn(string("[") + __func__ + "]" + what);
+				loggerWarn(__func__, what);
 				return "";
 			}
 		}
@@ -4808,7 +4766,10 @@ namespace IS {
 		// ファイルの構築
 		DescriptorPool descriptor_pool;
 		const FileDescriptor* dynamic_fd = descriptor_pool.BuildFile(fileDescriptor);
-
+		if (dynamic_fd == nullptr) {
+			loggerWarn(__func__, "BuildFile failed.");
+			return "";
+		}
 		// ファイルから最上位となるメッセージ名を検索し、factoryクラスを使ってメッセージを実体化
 		// message DynamicMessage_dm2is {
 		//	repeated Tuple_set tuple_set = 1;
@@ -4836,15 +4797,13 @@ namespace IS {
 				bool isnull;
 				tuple.getValue(i, val, ts_tmp, isnull);
 				if (i == 0) ts_first = ts_tmp;
-				//cout << attrTypeList[i] << endl;
-				//tuple.dumpAny(val);
+				//cout << attrTypeList[i] << " - " << tuple.getDumpAny(val) << endl;
 				if (!isnull) {
 					try {
 						setAttrValue(reflection, tuple_set_mes, tuple_set_des, val, attrTypeList[i], attrNameList[i], dynamic_fd);
 					} catch (const exception &e) {
 						string what(e.what());
-						loggerWarn(__func__, what);
-						tuple.dumpAny(val);
+						loggerWarn(__func__, what + tuple.getDumpAny(val));
 						return "";
 					}
 				} else {
@@ -4963,7 +4922,7 @@ namespace IS {
 			}
 		} else if (attrType == "vector(bool)") {
 			try {
-				vector<long> vany = any_cast<vector<long>>(val);
+				vector<bool> vany = any_cast<vector<bool>>(val);
 				for (int i = 0; i < (int)vany.size(); i++) {
 					reflection->AddBool(mes, tuple_set_des->FindFieldByName(attrName), vany[i]);
 				}
@@ -4971,7 +4930,7 @@ namespace IS {
 				try {
 					vector<any> vany = any_cast<vector<any>>(val);
 					for (int i = 0; i < (int)vany.size(); i++) {
-						reflection->AddBool(mes, tuple_set_des->FindFieldByName(attrName), any_cast<long>(vany[i]));
+						reflection->AddBool(mes, tuple_set_des->FindFieldByName(attrName), any_cast<bool>(vany[i]));
 					}
 				} catch (...) {
 				}
@@ -5303,7 +5262,7 @@ namespace IS {
 	{
 		auto it = typeMap.find(expectedType);
 		if (it == typeMap.end())
-			throw std::runtime_error("[ProtobufParser::normalizeAny]unknown expected type");
+			throw std::runtime_error("[ProtobufParser::normalizeAny]unknown expected type: " + expectedType);
 
 		// すでに正しい型
 		if (std::type_index(value.type()) == it->second)

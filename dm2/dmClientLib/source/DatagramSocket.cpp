@@ -121,7 +121,7 @@ bool DatagramSocket::sendStreamData(const string &streamName, const vector<Tuple
 
 	// ストリームデータXMLに変換
 	int len;
-	vector<string> sendXMLList;
+	vector<string> sendDataList;
 #if MEASURE_MODE == 1
 	long now = DmUtil::getTimeMicrosec();
 	double msec = (now - procTime) / 1000.0;
@@ -131,8 +131,10 @@ bool DatagramSocket::sendStreamData(const string &streamName, const vector<Tuple
 #endif
 
 	IS::ProtobufParser &pp = IS::ProtobufParser::get_instance();
-	sendXMLList = pp.createStreamList(streamName, tuples, this->key, IPv4_UDP_MAX_BYTE);
-	
+	sendDataList = pp.createStreamList(streamName, tuples, this->key, IPv4_UDP_MAX_BYTE);
+	if (sendDataList.empty()) {
+		cerr << "[sendStreamData] Serialization failure using protobuf" << endl;
+	}
 #if MEASURE_MODE == 1
 	now = DmUtil::getTimeMicrosec();
 	msec = (now - procTime) / 1000.0;
@@ -140,7 +142,7 @@ bool DatagramSocket::sendStreamData(const string &streamName, const vector<Tuple
 
 	procTime = DmUtil::getTimeMicrosec();
 #endif
-	//cout << "[sendStreamData REQUEST] All length:" << len << " part:" << sendXMLList.size() <<endl;
+	//cout << "[sendStreamData REQUEST] All length:" << len << " part:" << sendDataList.size() <<endl;
 
 	IS::StringUtil stringUtil;
 	char compressFlg = '0';
@@ -148,13 +150,13 @@ bool DatagramSocket::sendStreamData(const string &streamName, const vector<Tuple
 		compressFlg = COMPRESS_FLG_DEFAULT;
 	}
 	unsigned int sendSumLen = 0;
-	for (string sendXML : sendXMLList) {
-		char *sendPointer = (char *)sendXML.c_str();
-		int sendSize = sendXML.length();
+	for (string sendData : sendDataList) {
+		char *sendPointer = (char *)sendData.c_str();
+		int sendSize = sendData.length();
 		if (compressFlg == '1' || compressFlg == '2') {
 			char outbuf[IPv4_UDP_MAX_BYTE];
 			long key = DmUtil::getTimeMicrosec();
-			int compressedSize = stringUtil.setCompressedBufWithHeader(sendXML, outbuf, compressFlg, key);
+			int compressedSize = stringUtil.setCompressedBufWithHeader(sendData, outbuf, compressFlg, key);
 			if (compressedSize > 0) {
 				sendPointer = outbuf;
 				sendSize = compressedSize;

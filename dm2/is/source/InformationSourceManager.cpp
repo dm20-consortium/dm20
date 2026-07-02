@@ -370,7 +370,14 @@ namespace IS {
 							if (dom != NULL) {
 								streamSchemaDomMap[tableName] = dom;
 								streamSchemaMap[tableName] = getStreamSchemaFromFile(tableName, tmp_schema_path);
-								streamSchemaMap[tableName].appendAdminColumn();
+								string errmsg = streamSchemaMap[tableName].getErrMsg();
+								if (errmsg != "") {
+									logger->warn("Schema [" + tableName + "] is not supported. Reason [" + errmsg + "]");
+									streamSchemaDomMap.erase(tableName);
+									streamSchemaMap.erase(tableName);
+								} else {
+									streamSchemaMap[tableName].appendAdminColumn();
+								}
 							}
 						}
 					}

@@ -279,7 +279,7 @@ bool ProcRcvSettings::load_dm2conf(const std::string &confDirPath)
 	for (int count = 1; count < network_num + 1; count++) {
 		string item_str;
 		int item_int;
-		if (!dm2util.chk_dm2conf_str_item("INTERFACE_NAME_" + to_string(count), item_str, true)) return false;
+		if (!dm2util.chk_dm2conf_str_item("INTERFACE_NAME_" + to_string(count), item_str, false)) item_str = "";
 		interface_names.push_back(item_str);
 
 		if (!dm2util.chk_dm2conf_str_item("UDP_PORT_NUMBER_" + to_string(count), item_str, true)) return false;

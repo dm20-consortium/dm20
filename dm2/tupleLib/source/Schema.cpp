@@ -435,6 +435,32 @@ namespace IS {
     }
 
     /**
+     * エラーメッセージを取得する
+     *
+     * @author	Shinichi Kusayama
+     * @date	2026/07/01
+     *
+     * @return	エラーメッセージ
+     */
+
+    string Schema::getErrMsg()
+	{
+		return errMsg;
+	}
+    /**
+     * エラーメッセージを設定する
+     *
+     * @author	Shinichi Kusayama
+     * @date	2026/07/01
+     *
+     * @param	エラーメッセージ
+     */
+
+    void Schema::addErrMsg(string _errMsg)
+	{
+		errMsg += _errMsg;
+	}
+    /**
      * 列情報リストを取得する
      *
      * @author	Nagoya University

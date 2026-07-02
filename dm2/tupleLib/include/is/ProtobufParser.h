@@ -119,7 +119,7 @@ namespace IS {
 		void debugSensorInfo(const cool4_api_0_8_0::Sensor_info_0_8_0* sig, dm2_proto::Is_tuple_info *is_info);
 		void debugSensorInfo(const cool4_api_0_8_0::Sensor_info_0_8_1* sig, dm2_proto::Is_tuple_info *is_info);
 
-		string FieldTypeToString(const FieldDescriptorProto& field);
+		string FieldTypeToString(const FieldDescriptor *field);
 		FieldDescriptorProto_Type AttributeNameToFieldType(const string& attrName, int &repeated);
 		void setAttrValue(const Reflection* reflection, Message *mes, const Descriptor* tuple_set_des, any val, const string &attrType, const string &attrName, const FileDescriptor* dynamic_fd);
 		void setAttrValue(const Reflection* reflection, Message *mes, const Descriptor* tuple_set_des, any val, const string &attrName, const FileDescriptor* dynamic_fd);
@@ -141,13 +141,26 @@ namespace IS {
 
 		TypeMap typeMap = {
 			{"int",            typeid(int)},
+			{"uint",           typeid(unsigned int)},
 			{"long",           typeid(long)},
-			{"string",         typeid(std::string)},
-			{"double",         typeid(double)},
 			{"ulong",          typeid(unsigned long long)},
+			{"double",         typeid(double)},
+			{"string",         typeid(std::string)},
+			{"bool",           typeid(bool)},
 			{"vector(int)",    typeid(std::vector<int>)},
+			{"vector(uint)",    typeid(std::vector<unsigned int>)},
+			{"vector(long)",   typeid(std::vector<long>)},
 			{"vector(ulong)",  typeid(std::vector<unsigned long long>)},
-			{"vector(string)",  typeid(std::vector<string>)}
+			{"vector(double)", typeid(std::vector<double>)},
+			{"vector(string)", typeid(std::vector<std::string>)},
+			{"vector(bool)",   typeid(std::vector<bool>)},
+			{"vector(vector(int))",    typeid(std::vector<std::vector<int>>)},
+			{"vector(vector(uint))",    typeid(std::vector<std::vector<unsigned int>>)},
+			{"vector(vector(long))",   typeid(std::vector<std::vector<long>>)},
+			{"vector(vector(ulong))",  typeid(std::vector<std::vector<unsigned long long>>)},
+			{"vector(vector(double))", typeid(std::vector<std::vector<double>>)},
+			{"vector(vector(string))", typeid(std::vector<std::vector<std::string>>)},
+			{"vector(vector(bool))",   typeid(std::vector<std::vector<bool>>)}
 		};
 		map<FieldDescriptor::Type, string> protoTypeMap = {
 			{FieldDescriptor::TYPE_INT32, "int"}, 

@@ -47,6 +47,9 @@ all: clean $(TARGET)
 bin:
 	install -d bin obj
 
+link: bin $(OBJECTS)
+	$(COMPILER) -o $(TARGET) $(OBJECTS) $(OFLAGS) $(LDFLAGS) $(LIBS)
+
 install:
 	install -d $(BINDIR)
 	rm -f $(BINDIR)/$(MODULE_NAME)

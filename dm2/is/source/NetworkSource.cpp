@@ -924,7 +924,7 @@ namespace IS {
 		timeout.tv_sec = 0;
 		timeout.tv_usec = 0;
 		if (setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)) < 0) {
-			logger->error("[sockProcess] setsockopt error.");
+			logger->error("[checkTCPSocket] setsockopt error.");
 		}
 		while (true) {
 			int result = recv(sock, buf, BUF_MAX, 0);
@@ -1025,7 +1025,7 @@ namespace IS {
 		
 		while (1)
 		{
-			logger->debug("[sockProcess] recv START...");
+			logger->debug("[sockProcess] recv START. sock:" + to_string(sock));
 			query = "";
 			sumLen = 0;
 			bool isClose;
@@ -1037,7 +1037,7 @@ namespace IS {
 				string state = "recv";
 				memset(buf, 0, sizeof(buf));
 				int result = recv(sock, buf, BUF_MAX, 0);
-				int result2 = 0;
+				//cout << "[sockProcess] sock: " << sock << ", exit_flag: " << exit_flag << ", result:" << result << endl;
 				if (exit_flag) {
 					close(sock);
 					isExit = true;
@@ -1071,13 +1071,8 @@ namespace IS {
 						isBreak = true;
 					}
 				}
+				//cout << "[sockProcess] isBreak: " << isBreak << ", isExit:" << isExit << ", isClose:" << isClose << endl;
 				if (isBreak) {
-					/*
-					if (stringUtil.contain(settings.getParameter("HISTORY_RECORD_CLASS"), stringUtil.getClassName(typeid(*this)))) {
-						thread createThread(&NetworkSource::createRecvHistory, this, "TCP", client, client2, sock, sock2, state, result, result2, query, mes);
-						createThread.detach();
-					}
-						*/
 					break;
 				}
 			}
@@ -1098,7 +1093,7 @@ namespace IS {
 			logger->info("[sockProcess] receive complete NowMicroSec:" + to_string(DmUtil::getTimeMicrosec()));
 #endif
 			logger->debug("[TCP] " + sourcename + " received data from " + ip + ":" + std::to_string(ntohs(client.sin_port)) + " Size : " + std::to_string(sumLen) + " byte");
-			logger->debug("[TCP] " + query);
+			logger->debug("[TCP] query: " + query);
 
 			RecvData data;
 			data.sock = sock;
@@ -1394,7 +1389,6 @@ namespace IS {
 				string state = "recv";
 				memset(buf, 0, sizeof(buf));
 				int result = SSL_read(ssl, buf, sizeof(buf));
-				int result2 = 0;
 
 				if (result < 0) {
 					state = "close";
@@ -1441,12 +1435,6 @@ namespace IS {
 					}
 				}
 				if (isBreak) {
-					/*
-					if (stringUtil.contain(settings.getParameter("HISTORY_RECORD_CLASS"), stringUtil.getClassName(typeid(*this)))) {
-						thread createThread(&NetworkSource::createRecvHistory, this, "SSL", client, client2, sock, sock2, state, result, result2, query, mes);
-						createThread.detach();
-					}
-						*/
 					break;
 				}
 			}

@@ -90,6 +90,7 @@ namespace IS {
 
         void dump();        // for Debug
 		void dumpAny(any val);        // for Debug
+		string getDumpAny(any val);        // for Debug
 
     private:
         bool checkIndex(int index) const;

@@ -638,26 +638,31 @@ namespace IS {
 			getSchema(tableName, schema);
 			// protobufを使ったメッセージ作成
 			IS::ProtobufParser &pp = IS::ProtobufParser::get_instance();
-			if (tableName == "object_info" || tableName == "object_info_processed") {
-				pp.objectInfoDeserializeToTuple_0_6_0(payload, tuples, schema);
-			} else if (tableName == "object_info_0_8_0" || tableName == "object_info_0_8_0_processed") {
-				pp.objectInfoDeserializeToTuple_0_8_0(payload, tuples, schema);
-			} else if (tableName == "object_info_0_8_1" || tableName == "object_info_0_8_1_processed") {
-				pp.objectInfoDeserializeToTuple_0_8_1(payload, tuples, schema);
-			} else if (tableName == "freespace_info") {
-				pp.freespaceInfoDeserializeToTuple_0_6_0(payload, tuples, schema);
-			} else if (tableName == "freespace_info_0_8_0") {
-				pp.freespaceInfoDeserializeToTuple_0_8_0(payload, tuples, schema);
-			} else if (tableName == "freespace_info_0_8_1") {
-				pp.freespaceInfoDeserializeToTuple_0_8_1(payload, tuples, schema);
-			} else if (tableName == "signal_info") {
-				pp.signalInfoDeserializeToTuple_0_6_0(payload, tuples, schema);
-			} else if (tableName == "sensor_info") {
-				pp.sensorInfoDeserializeToTuple_0_8_0(payload, tuples, schema);
-			} else if (tableName == "sensor_info_0_8_1") {
-				pp.sensorInfoDeserializeToTuple_0_8_1(payload, tuples, schema);
-			} else {
-				pp.DeserializeToTupleDynamically(payload, tuples, schema, payloadCheck);
+			try {
+				if (tableName == "object_info" || tableName == "object_info_processed") {
+					pp.objectInfoDeserializeToTuple_0_6_0(payload, tuples, schema);
+				} else if (tableName == "object_info_0_8_0" || tableName == "object_info_0_8_0_processed") {
+					pp.objectInfoDeserializeToTuple_0_8_0(payload, tuples, schema);
+				} else if (tableName == "object_info_0_8_1" || tableName == "object_info_0_8_1_processed") {
+					pp.objectInfoDeserializeToTuple_0_8_1(payload, tuples, schema);
+				} else if (tableName == "freespace_info") {
+					pp.freespaceInfoDeserializeToTuple_0_6_0(payload, tuples, schema);
+				} else if (tableName == "freespace_info_0_8_0") {
+					pp.freespaceInfoDeserializeToTuple_0_8_0(payload, tuples, schema);
+				} else if (tableName == "freespace_info_0_8_1") {
+					pp.freespaceInfoDeserializeToTuple_0_8_1(payload, tuples, schema);
+				} else if (tableName == "signal_info") {
+					pp.signalInfoDeserializeToTuple_0_6_0(payload, tuples, schema);
+				} else if (tableName == "sensor_info") {
+					pp.sensorInfoDeserializeToTuple_0_8_0(payload, tuples, schema);
+				} else if (tableName == "sensor_info_0_8_1") {
+					pp.sensorInfoDeserializeToTuple_0_8_1(payload, tuples, schema);
+				} else {
+					pp.DeserializeToTupleDynamically(payload, tuples, schema, payloadCheck);
+				}
+			} catch (const std::runtime_error& e) {
+				string errMsg = e.what();
+				logger->warn(errMsg);
 			}
 		}
 	}

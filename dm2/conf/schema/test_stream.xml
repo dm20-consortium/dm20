@@ -19,23 +19,71 @@
 		<type>string</type>
 	</column>
 	<column>
-		<name>s2</name>
-		<type>string</type>
-	</column>
-	<column>
-		<name>vd</name>
-		<type>vector(double)</type>
-	</column>
-	<column>
-		<name>vs</name>
-		<type>vector(string)</type>
-	</column>
-	<column>
 		<name>ui</name>
 		<type>uint</type>
 	</column>
 	<column>
 		<name>ul</name>
 		<type>ulong</type>
+	</column>
+	<column>
+		<name>b</name>
+		<type>bool</type>
+	</column>
+	<column>
+		<name>vector_i</name>
+		<type>vector(int)</type>
+	</column>
+	<column>
+		<name>vector_l</name>
+		<type>vector(long)</type>
+	</column>
+	<column>
+		<name>vector_d</name>
+		<type>vector(double)</type>
+	</column>
+	<column>
+		<name>vector_s</name>
+		<type>vector(string)</type>
+	</column>
+	<column>
+		<name>vector_ui</name>
+		<type>vector(uint)</type>
+	</column>
+	<column>
+		<name>vector_ul</name>
+		<type>vector(ulong)</type>
+	</column>
+	<column>
+		<name>vector_b</name>
+		<type>vector(bool)</type>
+	</column>
+	<column>
+		<name>vector2_i</name>
+		<type>vector(vector(int))</type>
+	</column>
+	<column>
+		<name>vector2_l</name>
+		<type>vector(vector(long))</type>
+	</column>
+	<column>
+		<name>vector2_d</name>
+		<type>vector(vector(double))</type>
+	</column>
+	<column>
+		<name>vector2_s</name>
+		<type>vector(vector(string))</type>
+	</column>
+	<column>
+		<name>vector2_ui</name>
+		<type>vector(vector(uint))</type>
+	</column>
+	<column>
+		<name>vector2_ul</name>
+		<type>vector(vector(ulong))</type>
+	</column>
+	<column>
+		<name>vector2_b</name>
+		<type>vector(vector(bool))</type>
 	</column>
 </schema>
