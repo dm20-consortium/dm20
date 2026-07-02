@@ -1,0 +1,32 @@
+name: Basic Test
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+      - '**'
+  pull_request:
+
+jobs:
+  basic-test:
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install packages
+        run: |
+          chmod +x .github/scripts/install.sh
+          ./.github/scripts/install.sh
+
+      - name: Build
+        run: |
+          chmod +x .github/scripts/build.sh
+          ./.github/scripts/build.sh
+
+      - name: Basic Test
+        run: |
+          chmod +x .github/scripts/test_basic.sh
+          ./.github/scripts/test_basic.sh
