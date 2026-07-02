@@ -4,22 +4,18 @@ sudo apt update
 sudo apt install -y \
   g++ \
   build-essential \
-  postgresql \
-  postgresql-contrib \
+  postgresql postgresql-contrib \
   postgis \
-  postgresql-16-postgis-3 \
   libproj-dev \
-  libpq-dev \
-  libpqxx-7.8t64 \
-  liblog4cxx-dev \
+  libpq-dev libpqxx-dev \
+  liblog4cxx-dev liblog4cxx-doc \
   libssl-dev \
-  zlib1g-dev \
-  libzstd-dev \
+  zlib1g-dev libzstd-dev \
   libyaml-cpp-dev \
-  libgeos++-dev \
-  libgeos-dev \
-  libxerces-c-dev \
-  protobuf-compiler \
-  libprotobuf-dev
+  postgresql-16-postgis-3 \
+  libpqxx-7.8t64 \
+  libgeos++-dev libgeos-c1t64 libgeos-dev \
+  libxerces-c3.2t64 libxerces-c-dev \
+  protobuf-compiler libprotobuf-dev
 
 sudo ldconfig
