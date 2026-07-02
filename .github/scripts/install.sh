@@ -27,4 +27,6 @@ do
     sleep 1
 done
 
+cd dm2
+
 sudo -u postgres bash rdb/init.sh
