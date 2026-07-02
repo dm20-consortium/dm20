@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - main
-      - develop
+      - feature
   pull_request:
 
 jobs:
@@ -43,4 +43,5 @@ jobs:
         with:
           name: test-logs
           path: |
-            /tmp/dm2*.log
+            dm2/*.log
+            dm2/logs/**
