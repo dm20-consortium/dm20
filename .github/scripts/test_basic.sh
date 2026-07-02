@@ -3,15 +3,6 @@ set -e
 
 cd dm2
 
-echo "=== Initialize database ==="
-
-until pg_isready
-do
-    sleep 1
-done
-
-sudo -u postgres bash rdb/init.sh
-
 echo "=== Start dm2is ==="
 
 dm2is -d conf >is.log 2>&1 &

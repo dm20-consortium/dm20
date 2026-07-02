@@ -19,3 +19,12 @@ sudo apt install -y \
   protobuf-compiler libprotobuf-dev
 
 sudo ldconfig
+
+sudo service postgresql start
+
+until pg_isready
+do
+    sleep 1
+done
+
+sudo -u postgres bash rdb/init.sh
