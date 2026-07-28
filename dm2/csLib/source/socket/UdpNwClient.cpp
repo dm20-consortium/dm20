@@ -275,8 +275,4 @@ namespace CS{
 		int ret = Sendto(buf_, *res);
 		return ret;
 	}
-	int UdpNwClient::SendtoDivision(struct send_message &buf_, char *payload_, const int &fragment_size_) {
-		// ToDo: 未実装
-		return 0;
-	}
 }

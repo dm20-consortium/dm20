@@ -101,9 +101,6 @@ namespace CS{
 	int UdpProcClient::SendPacket(struct send_message &buf_) {
 		return Socket::Sendto(buf_, server_addr_);
 	}
-	int UdpProcClient::SendtoDivision(struct send_message &buf_, char *payload_, const int &fragment_size_) {
-		return Socket::SendtoDivision(buf_, server_addr_,payload_, fragment_size_);
-	}
 }
 
 

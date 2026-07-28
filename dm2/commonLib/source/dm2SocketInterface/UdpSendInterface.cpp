@@ -198,9 +198,7 @@ namespace CS{
 				if (doLog) std::cout << "FILE:" << __FILE__ <<  ", LINE:" << __LINE__ << " " << "Sendto fail." << std::endl;
 			}
 		}else{
-			if (SendtoDivision(buf_, payload_, fragment_size) < 0) {
-				if (doLog) std::cout << "FILE:" << __FILE__ <<  ", LINE:" << __LINE__ << " " << "Sendto fail." << std::endl;
-			}
+			if (doLog) std::cout << "送信データ廃棄" << std::endl;
 		}
 		#endif //LID_PRIORITY
 	}

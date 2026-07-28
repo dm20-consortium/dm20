@@ -73,7 +73,6 @@ namespace CS{
 		
 		int SendClientData(struct clientdata &buf_) override;
 		int SendPacket(struct send_message &buf_) override;
-		int SendtoDivision(struct send_message &buf_, char *payload_, const int &fragment_size_);
 
 		addrinfo Init_v6(std::string port_no, std::string dst_ip, std::string if_name);
 

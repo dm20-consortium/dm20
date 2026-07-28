@@ -22,7 +22,6 @@ namespace CS{
 		void Init(const std::string &fd_name);
 		int SendClientData(struct clientdata &buf_);
 		int SendPacket(struct send_message &buf_);
-		int SendtoDivision(struct send_message &buf_, char *payload_, const int &fragment_size_);
 		void CloseSocketFd();
 	};
 }
