@@ -539,26 +539,21 @@ namespace IS {
 	{
 		int flagment = 0, flagmentMax = 0;
 		string key;
-
-		// ヘッダ情報を取得する
-		stringUtil.getHeaderInfo(buf, key, flagment, flagmentMax);
-		if (flagmentMax == 0) {
-			// 全体のフラグメント数が取得できていない場合、電文がXMLではない可能性があるためprotobufヘッダをチェック
-			IS::ProtobufParser &pp = IS::ProtobufParser::get_instance();
-			struct ProtobufHeaderInfo headerInfo;
-			pp.getProtobufHeaderInfo(buf, headerInfo);
-			// protobufヘッダでない場合
-			if (headerInfo.headerSize == 0)
-			{
-				logger->warn("[dataIntegration] Received invalied header, So continue...");
-				return;
-			}
-			else {
-				key = headerInfo.header.key;
-				flagment = headerInfo.header.fragment_index;
-				flagmentMax = headerInfo.header.total_fragments;
-			}
+		IS::ProtobufParser &pp = IS::ProtobufParser::get_instance();
+		struct ProtobufHeaderInfo headerInfo;
+		pp.getProtobufHeaderInfo(buf, headerInfo);
+		// protobufヘッダでない場合
+		if (headerInfo.headerSize == 0)
+		{
+			logger->warn("[dataIntegration] Received invalied header, So continue...");
+			return;
 		}
+		else {
+			key = headerInfo.header.key;
+			flagment = headerInfo.header.fragment_index;
+			flagmentMax = headerInfo.header.total_fragments;
+		}
+		cout << "flagment:" << flagment << ",flagmentMax:" << flagmentMax << endl;
 #if DEBUG == 1
 		cout << "UDP recv headerInfo  key:" << key << " flagment:" << flagment << " max:" << flagmentMax << endl;
 #endif
@@ -584,7 +579,7 @@ namespace IS {
 		if (recvFinish) {
 			// 全てのデータを受信出来たらデータを繋ぎ合わせてMapは削除
 			for (string str : recvDataMap[key]) {
-				result.append(str);
+				result += str;
 			}
 			recvDataMap.erase(key);
 		}

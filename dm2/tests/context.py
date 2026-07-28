@@ -28,6 +28,8 @@ class Context:
         # {"dm2is": open()}
         self.logfiles = {}
 
+        self.step_results = {}
+        
     def add_process(self, name, process):
         self.processes[name] = process
 
@@ -39,3 +41,9 @@ class Context:
 
     def get_logfile(self, name):
         return self.logfiles.get(name)
+    
+    def add_step_result(self, step_id, result):
+        self.step_results[step_id] = result
+
+    def get_step_result(self, step_id):
+        return self.step_results.get(step_id)

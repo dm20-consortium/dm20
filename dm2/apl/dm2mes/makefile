@@ -3,16 +3,8 @@ PREFIX ?= /usr/local
 BINDIR     := $(PREFIX)/bin
 COMPLETIONS_DIR = /usr/share/bash-completion/completions
 
-#/etc/os-releaseからメジャーバージョンを判定する
-UBUNTU_VERSION := $(shell . /etc/os-release && echo $$VERSION_ID | cut -d. -f1)
-
-CPLUS_VER=c++17
-ifeq ($(shell [ $(UBUNTU_VERSION) -le 22 ] && echo yes),yes)
-  ROS_DISTRO := $(shell echo $$ROS_DISTRO)
-  ifneq ($(ROS_DISTRO),humble)
-    CPLUS_VER=c++14
-  endif
-endif
+# C_PLUSのバージョン設定, PROTOBUF関連の設定
+include ../../common.mk
 
 #ディレクトリ名を実行ファイルとする
 MODULE_NAME = $(shell basename `readlink -f .`)
@@ -21,10 +13,9 @@ TARGET    = ./bin/$(MODULE_NAME)
 COMPILER  = g++
 SRCDIR    = ./source
 
-INCLUDE   = -I./include -I../../dmClientLib/include -I../../tupleLib/include -I../../proto/is/include -I../../proto/api/include -I/usr/local/include/is/proto -I../../commonLib/include/dm2SocketInterface -I../../csLib/include
+INCLUDE   = -I./include -I../../dmClientLib/include -I../../tupleLib/include -I../../proto/is/include -I../../proto/api/include -I/usr/local/include/is/proto -I../../commonLib/include/dm2SocketInterface -I../../csLib/include $(PROTOBUF_CFLAGS)
 
-PROTOBUF_LIBS   := $(shell pkg-config --libs protobuf)
-LDFLAGS   = -L../../dmClientLib/lib -L../../tupleLib/lib -L../../proto/is/lib -L../../proto/api/lib -L../../commonLib/lib -L../../secLib/lib 
+LDFLAGS   = -L../../dmClientLib/lib -L../../tupleLib/lib -L../../proto/is/lib -L../../proto/api/lib -L../../commonLib/lib -L../../secLib/lib  $(PROTOBUF_LDFLAGS)
 LIBS      = -lxerces-c -ldmclient -ltuple -ldm2proto_is -ldm2proto_api -lcrypto -lssl -lz -lzstd -lgeos_c -ldm2SocketInterface -ldm2security $(PROTOBUF_LIBS)
 
 CFLAGS    = -std=${CPLUS_VER} `pkg-config --cflags libpqxx` -pthread -Wall

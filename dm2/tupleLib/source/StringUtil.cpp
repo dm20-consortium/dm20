@@ -478,7 +478,6 @@ namespace IS {
 	* @param [in,out]	flagment	フラグメント値
 	* @param [in,out]	flagmentMax	フラグメント最大値
 	*/
-
 	void StringUtil::getHeaderInfo(string &target, string &key, int &flagment, int &flagmentMax)
 	{
 		vector<string> rows, data, number;

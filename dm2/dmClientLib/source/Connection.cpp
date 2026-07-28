@@ -218,16 +218,6 @@ ResultSet Connection::execute(const string &query)
 		sumLen = sumLen + data;
 		if (sumLen == bufSize) break;
 	}
-#if MEASURE_MODE == 1
-	now = DmUtil::getTimeMicrosec();
-	msec = (now - procTime) / 1000.0;
-	cout << "[STAT] read/SSL_read processTime(msec):" << msec << endl;
-#endif
-	
-	//cout << "[execute]RESULT " << dumpBinStr(receiveData) << endl;
-#if MEASURE_MODE == 1
-	procTime = DmUtil::getTimeMicrosec();
-#endif
 	// Protobufヘッダが付加されていないため、エラーレスポンスと解釈
 	if (headerInfo.headerSize == 0 || headerInfo.header.flag != '3')
 	{
@@ -238,13 +228,6 @@ ResultSet Connection::execute(const string &query)
 		cerr << "[execute] ERROR occured, throw SQLException. code:" << errCode << endl;
 		throw SQLException("[execute] ErrorCode:" + to_string(errCode) + " Msg:" + errMsg);
 	}
-#if MEASURE_MODE == 1
-	now = DmUtil::getTimeMicrosec();
-	msec = (now - procTime) / 1000.0 ;
-	cout << "[STAT] ErrorCheck processTime(msec):" << msec << endl;
-
-	procTime = DmUtil::getTimeMicrosec();
-#endif
 	// ResultSetに変換
 	vector<Tuple> tuples;
 	Schema schema;
@@ -995,7 +978,6 @@ void Connection::receiveData(const int port)
 			// cout << "headerSize:" << headerInfo.headerSize << ",payload_size:" << headerInfo.header.payload_size << endl;
 			if (headerInfo.headerSize != 0)
 			{
-				vector<Tuple> tuples;
 				Schema schema;
 
 				vector<string> nameList, typeList;
@@ -1016,15 +998,14 @@ void Connection::receiveData(const int port)
 						long timestamp;
 
 						tuple.getValue(i, val, timestamp, isnull);
-
-						valmap.insert(std::pair<string, string>(nameList[i], stringUtil.getAnyString(val)));
-						timemap.insert(std::pair<string, string>(nameList[i], to_string(timestamp)));
-						nullValmap.insert(std::pair<string, string>(nameList[i], isnull ? "1" : "0"));
+						valmap.emplace(nameList[i], stringUtil.getAnyString(val));
+						timemap.emplace(nameList[i], to_string(timestamp));
+						nullValmap.emplace(nameList[i], isnull ? "1" : "0");
 					}
 
-					valList.push_back(valmap);	
-					timeList.push_back(timemap);
-					nullList.push_back(nullValmap);
+					valList.push_back(std::move(valmap));
+					timeList.push_back(std::move(timemap));
+					nullList.push_back(std::move(nullValmap));
 				}
 				ret = ResultSet(valList, timeList, nullList, meta);
 			}

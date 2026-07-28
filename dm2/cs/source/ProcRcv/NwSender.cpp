@@ -169,6 +169,7 @@ void NwSender::sender(const NwSender* param, const string confDirPath)
 	string interface_name = me->settings.interface_names[me->setting_num];
 	string sid2ipFileName = me->settings.send_lists[me->setting_num];
 	int socket_type = me->settings.socket_types[me->setting_num];
+	int socket_priority = me->settings.socket_priorities[me->setting_num];
 
 	LOG4CXX_DEBUG(me->logger, interface_name + " " + "start");
 	string udp_port_number = me->settings.udp_port_numbers[me->setting_num];
@@ -228,7 +229,7 @@ void NwSender::sender(const NwSender* param, const string confDirPath)
 			// キューを受け取ったタイミングで送り先へ接続を行う
 			switch(socket_type) {
 				case 0:
-					res_addr_first_ = ((UdpNwClient*)(me->client))->Init(udp_port_number, ip_address);
+					res_addr_first_ = ((UdpNwClient*)(me->client))->Init(udp_port_number, ip_address, socket_priority);
 					break;
 				case 10:
 				case 11:

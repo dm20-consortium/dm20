@@ -74,7 +74,9 @@ namespace IS {
 		{typeid(vector<vector<bool>>), "vector(vector(bool))"},
 		{typeid(vector<vector<unsigned int>>), "vector(vector(uint))"},
 		{typeid(vector<vector<unsigned long>>), "vector(vector(ulong))"},
-		{typeid(vector<vector<unsigned long long>>), "vector(vector(ulong))"}
+		{typeid(vector<vector<unsigned long long>>), "vector(vector(ulong))"},
+		// Tuple.hで定義クラス
+		{typeid(Bytes), "bytes"}
 	};
 	/**
 	* 初期処理
@@ -820,9 +822,13 @@ namespace IS {
 		for (Tuple tuple : tuples)
 		{
 			try {
-				setObjectInfo(msg.add_object_info(), msg.add_is_tuple_info(), tuple);
+				if (!setObjectInfo(msg.add_object_info(), msg.add_is_tuple_info(), tuple)) {
+					msg.mutable_object_info()->RemoveLast();
+					msg.mutable_is_tuple_info()->RemoveLast();
+				}
 			} catch (...) {
 				msg.mutable_object_info()->RemoveLast();
+				msg.mutable_is_tuple_info()->RemoveLast();
 				loggerWarn(__func__, "]Serialize Failed");
 			}
 		}
@@ -2425,9 +2431,13 @@ namespace IS {
 	*
 	* @return	シリアライズされた文字列
 	 */
-	void ProtobufParser::setObjectInfo(cool4_api_0_8_0::Object_info_0_8_1 *obj, dm2_proto::Is_tuple_info *is_info, Tuple tuple)
+	bool ProtobufParser::setObjectInfo(cool4_api_0_8_0::Object_info_0_8_1 *obj, dm2_proto::Is_tuple_info *is_info, Tuple tuple)
 	{
 		int tuple_size = tuple.size();
+		if (tuple_size < (int)OBJECT_INFO_POS_0_8_1::information_source_list + 1) {
+			cerr << "[ProtobufParser] Skipped input data. Reason: The number of tuples [" + to_string(tuple_size) + "] is small."<< endl;;
+			return false;
+		}
 		cool4_api_0_8_0::Position_and_movement* obj_pm = obj->mutable_position_and_movement();
 		cool4_api_0_8_0::Vehicle_condition* obj_vc = obj->mutable_vehicle_condition();
 		cool4_api_0_8_0::Tracking_information* obj_ti = obj->mutable_tracking_information();
@@ -2542,7 +2552,7 @@ namespace IS {
 		}
 		setIsTupleInfo(is_info, vals, (int)OBJECT_INFO_POS_0_8_1::information_source_list + 1);
 		//debugObjectInfo(obj, is_info);
-		return;
+		return true;
 	}
 	/**
 	* フリースペース情報のセット (API 仕様案 Ver.0.6.0)
@@ -4455,7 +4465,7 @@ namespace IS {
 			} else if (field_type == FieldDescriptor::TYPE_DOUBLE) {
 				double val = reflection->GetDouble(mes, fd);
 				tuple.setValue(t_idx, val, ts, isNull);
-			} else if (field_type == FieldDescriptor::TYPE_STRING) {
+			} else if (field_type == FieldDescriptor::TYPE_STRING || field_type == FieldDescriptor::TYPE_BYTES) {
 				string val = reflection->GetString(mes, fd);
 				tuple.setValue(t_idx, val, ts, isNull);
 			} else if (field_type == FieldDescriptor::TYPE_BOOL) {
@@ -4658,6 +4668,7 @@ namespace IS {
 	*/
 	string ProtobufParser::SerializeToStringDynamically(const vector<Tuple> &tuples, const Schema *schema)
 	{
+		if (tuples.size() <= 0) return "";
 		string retStr = "";
 		FileDescriptorProto fileDescriptor;
 
@@ -4693,9 +4704,9 @@ namespace IS {
 		} else {
 			if (tuples.size() > 0) attr_size = schema->getAttributeSize();
 		}
+		if (attr_size <= 0) return "";
 		string attrTypeList[attr_size];
 		string attrNameList[attr_size];
-		
 		// *** フィールド（列情報）の構築
 		for (int i = 0; i < attr_size; i++) {
 			int repeated = 0;
@@ -4721,9 +4732,9 @@ namespace IS {
 						attrNameList[i] = attrNameList[i].substr(attrNameList[i].find(".") + 1);
 					}
 				}
-				cout << "attr_size:" << attr_size << ", attrNameList[i]: " << attrNameList[i] << ",  attrTypeList[i]:" << attrTypeList[i] << endl;
+				//cout << "[SerializeToStringDynamically] attr_size:" << attr_size << ", Name:" << attrNameList[i] << ", List: " << attrTypeList[i] << endl;
 				type = AttributeNameToFieldType(attrTypeList[i], repeated);
-				
+				//cout << "[SerializeToStringDynamically] type:" << type << endl;
 				FieldDescriptorProto* field = tuplesetDescriptor->add_field();
 				field->set_name(attrNameList[i]);
 				field->set_number(i + 1);
@@ -4797,13 +4808,13 @@ namespace IS {
 				bool isnull;
 				tuple.getValue(i, val, ts_tmp, isnull);
 				if (i == 0) ts_first = ts_tmp;
-				//cout << attrTypeList[i] << " - " << tuple.getDumpAny(val) << endl;
+				//cout << "[SerializeToStringDynamically] attrTypeList:" << attrTypeList[i] << " - dump: " << tuple.getDumpAny(val) << endl;
 				if (!isnull) {
 					try {
 						setAttrValue(reflection, tuple_set_mes, tuple_set_des, val, attrTypeList[i], attrNameList[i], dynamic_fd);
 					} catch (const exception &e) {
 						string what(e.what());
-						loggerWarn(__func__, what + tuple.getDumpAny(val));
+						loggerWarn(__func__, what + ", No." + to_string(i) + "/" + to_string(tuple_size) + "Dump=>" + tuple.getDumpAny(val));
 						return "";
 					}
 				} else {
@@ -4860,6 +4871,14 @@ namespace IS {
 			reflection->SetUInt32(mes, tuple_set_des->FindFieldByName(attrName), any_cast<uint>(val));
 		} else if (attrType == "ulong") {
 			reflection->SetUInt64(mes, tuple_set_des->FindFieldByName(attrName), any_cast<unsigned long long>(val));
+		} else if (attrType == "bytes") {
+			try {
+				// アプリからの場合
+				reflection->SetString(mes, tuple_set_des->FindFieldByName(attrName), any_cast<Bytes>(val).value);
+			} catch (...) {
+				// ISからの場合
+				reflection->SetString(mes, tuple_set_des->FindFieldByName(attrName), any_cast<string>(val));
+			}
 		} else if (attrType == "vector(int)" || attrType == "vector(int4)") {
 			try {
 				vector<int> vany = any_cast<vector<int>>(val);
@@ -5172,6 +5191,8 @@ namespace IS {
 			return FieldDescriptorProto_Type_TYPE_UINT32;
 		} else if (attrType == "ulong") {
 			return FieldDescriptorProto_Type_TYPE_UINT64;
+		} else if (attrType == "bytes") {
+			return FieldDescriptorProto_Type_TYPE_BYTES;
 		} else if (attrType == "vector(int)" || attrType == "vector(int4)") {
 			repeated = 1;
 			return FieldDescriptorProto_Type_TYPE_INT32;

@@ -39,6 +39,7 @@ namespace CS {
 		vector<string> send_lists;					// cs->bin内、csvファイルのファイル名。SIDからIPに変換するための設定値を記載
 		vector<int> socket_types;                   // 通信タイプ（0:UDP(エニーキャスト)、1:UDP(マルチキャスト)、DTLS）
 		vector<int> cs_packet_sizes;                // CSパケットサイズ
+		vector<int> socket_priorities;				// UDPでの優先度
 		vector<unsigned long long> dtls_dest_sids;	// DTLSでの宛先SID
 		vector<string> udp_etm_aes_keys;			// AESキー
 		int dtls_idx = -1;							// DTLSの設定が格納されているインデックス

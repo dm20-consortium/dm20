@@ -4,7 +4,7 @@
 import subprocess
 import time
 import shlex
-
+from string import Template
 
 class ServiceRunner:
 
@@ -35,7 +35,7 @@ class ServiceRunner:
     def start_service(self, service):
 
         name = service["name"]
-        command = service["command"]
+        command = Template(service["command"]).safe_substitute(self.ctx.params)
 
         logfile = open(f"{name}.log", "w")
 

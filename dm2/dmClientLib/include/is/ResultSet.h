@@ -10,7 +10,8 @@
 #include <vector>
 #include <stdexcept>
 #include <geos_c.h>
-
+#include <sstream>
+#include <iomanip>
 using namespace std;
 
 /**
@@ -80,6 +81,12 @@ public:
 	vector<vector<unsigned long long>> get2VectorUnsignedLongLong(const int columnIndex);
 	vector<vector<bool>> get2VectorBool(const string &key);
 	vector<vector<bool>> get2VectorBool(const int columnIndex);
+	std::string getBytes(const std::string& key);
+	std::string getBytes(const int columnIndex);
+	std::string getBytesHex(const int columnIndex);
+	std::string getBytesHex(const std::string& key);
+	std::string getBytesHex(const std::string& key, const size_t maxSize);
+
 	long getEpochTime(const string &key);
 	long getEpochTime(const int columnIndex);
 	bool isNull(const string &key);

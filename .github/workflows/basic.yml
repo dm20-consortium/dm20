@@ -34,8 +34,7 @@ jobs:
       - name: Run test scenario
         working-directory: dm2
         run: |
-          python3 tests/runner.py \
-            tests/scenarios/T001_basic_send_receive.yaml
+          python3 tests/runner.py tests/scenarios/implemented
 
       - name: Upload logs
         if: always()

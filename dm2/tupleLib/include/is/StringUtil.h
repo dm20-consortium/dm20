@@ -10,6 +10,7 @@
 #include <cstring>
 #include <map>
 #include <cxxabi.h>
+#include <arpa/inet.h>
 
 #if __cplusplus < 201703L || defined(USE_EXP_ANY)
 	#include <experimental/any>
@@ -45,6 +46,21 @@ struct IsDigit {
 	int operator()(int c) { return isdigit(c); }
 };
 
+struct FragmentHeader
+{
+    char        protobufFlag;
+    std::string tableName;
+
+    uint32_t payloadSize;
+    uint32_t managerId;
+
+    uint8_t fragmentIndex;
+    uint8_t totalFragments;
+
+    std::string sessionKey;
+
+    size_t headerSize;
+};
 namespace IS {
 
 	/**
@@ -91,7 +107,9 @@ namespace IS {
 			{ "varchar", STRING },
 			{ "geometry", STRING },
 			{ "geography", STRING },
-			{ "bool", BOOL}
+			{ "bool", BOOL},
+			// 以下、Tuple.hで定義したクラス
+			{ "bytes", STRING}
 		};
 
 	public:
@@ -138,8 +156,6 @@ namespace IS {
 		void getIsHeader(char *buf, IsHeaderInfo &info);
 		int setCompressedBufWithHeader(string inStr, char *outBuf, char compressFlg, long key);
 		string getValueByXMLTag(string target, string key);
-
-
 	};
 
     /**

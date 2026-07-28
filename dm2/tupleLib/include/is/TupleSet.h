@@ -67,6 +67,7 @@ namespace IS {
 		void reverse();
 		void sortByCost();
 		void debugKey();
+		void dump();
     };
 }
 #endif  //TUPLESET_H

@@ -397,21 +397,6 @@ namespace CS{
 	};
 
 
-	/**
-	 * @struct	_iwconfig_status
-	 *
-	 * @brief	Wi-Fi電波品質情報構造体
-	 *
-	 * @author	Nagoya University
-	 * @date	2018/03/14
-	 */
-	struct _iwconfig_status{
-		char essid[IW_ESSID_MAX_SIZE + 1];
-		char mac_address[18];
-		int qual;
-		int max_qual;
-	};
-
 	/******************************************
 	* Station ID(SID)の設定範囲
 	*******************************************/

@@ -98,7 +98,7 @@ namespace IS {
 		};
 		void setObjectInfo(cool4_api_0_6_0::Object_info* obj, dm2_proto::Is_tuple_info *is_info, Tuple tuple);
 		void setObjectInfo(cool4_api_0_8_0::Object_info_0_8_0* obj, dm2_proto::Is_tuple_info *is_info, Tuple tuple);
-		void setObjectInfo(cool4_api_0_8_0::Object_info_0_8_1* obj, dm2_proto::Is_tuple_info *is_info, Tuple tuple);
+		bool setObjectInfo(cool4_api_0_8_0::Object_info_0_8_1* obj, dm2_proto::Is_tuple_info *is_info, Tuple tuple);
 		void setFreespaceInfo(cool4_api_0_6_0::Freespace_info* fre, dm2_proto::Is_tuple_info *is_info, Tuple tuple);
 		void setFreespaceInfo(cool4_api_0_8_0::Freespace_info_0_8_0* fre, dm2_proto::Is_tuple_info *is_info, Tuple tuple);
 		void setFreespaceInfo(cool4_api_0_8_0::Freespace_info_0_8_1* fre, dm2_proto::Is_tuple_info *is_info, Tuple tuple);
@@ -160,7 +160,9 @@ namespace IS {
 			{"vector(vector(ulong))",  typeid(std::vector<std::vector<unsigned long long>>)},
 			{"vector(vector(double))", typeid(std::vector<std::vector<double>>)},
 			{"vector(vector(string))", typeid(std::vector<std::vector<std::string>>)},
-			{"vector(vector(bool))",   typeid(std::vector<std::vector<bool>>)}
+			{"vector(vector(bool))",   typeid(std::vector<std::vector<bool>>)},
+			// 以降、Tuple.hにて定義したクラス
+			{"bytes",           typeid(std::string)}
 		};
 		map<FieldDescriptor::Type, string> protoTypeMap = {
 			{FieldDescriptor::TYPE_INT32, "int"}, 

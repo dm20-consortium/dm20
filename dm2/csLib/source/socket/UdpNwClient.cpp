@@ -15,9 +15,28 @@ namespace CS{
 	*/
 	addrinfo UdpNwClient::Init(std::string port_no, std::string dst_ip)
 	{
-		OpenSSL_add_all_algorithms();
 		port_no_ = port_no;
-		return InitClient(port_no, dst_ip);
+		return InitClient(port_no, dst_ip, -1);
+	}
+
+	/**
+	* @fn	addrinfo UdpNwClient::Init(std::string port_no, std::string dst_ip, const int priority);
+	*
+	* @brief	Init 処理
+	*
+	* @author	Shinichi Kusayama
+	* @date	2026/07/14
+	*
+	* @param	port_no	ポート番号
+	* @param	dst_ip 	宛先IPアドレス
+	* @param	priority 	優先度
+	*
+	* @return	addrinfo構造体
+	*/
+	addrinfo UdpNwClient::Init(std::string port_no, std::string dst_ip, const int priority)
+	{
+		port_no_ = port_no;
+		return InitClient(port_no, dst_ip, priority);
 	}
 
 	/**
@@ -38,7 +57,7 @@ namespace CS{
 	{
 		port_no_ = port_no;
 		conf_dir_path_ = conf_dir_path;
-		return InitClient(port_no, dst_ip);
+		return InitClient(port_no, dst_ip, -1);
 	}
 	/**
 	* @fn	void UdpNwClient::Init(const std::string& fd_name, const std::string& port, const std::string& ip) 
@@ -79,7 +98,7 @@ namespace CS{
 	}
 
 	/**
-	* @fn	addrinfo UdpNwClient::InitClient(std::string port_no, std::string dst_ip);
+	* @fn	addrinfo UdpNwClient::InitClient(std::string port_no, std::string dst_ip, const int priority);
 	*
 	* @brief	UDP接続シーケンス 送信インタフェースが一つの場合
 	*
@@ -88,10 +107,11 @@ namespace CS{
 	*
 	* @param	port_no	ポート番号
 	* @param	dst_ip 	宛先IPアドレス
+	* @param	priority 	優先度
 	*
 	* @return	addrinfo構造体
 	*/
-	addrinfo UdpNwClient::InitClient(std::string port_no, std::string dst_ip){
+	addrinfo UdpNwClient::InitClient(std::string port_no, std::string dst_ip, const int priority){
 		memset(&hints, 0, sizeof(hints));
 		// ToDo: IPv6で動作確認
 		//hints.ai_family = AF_UNSPEC; //IPv4/IPv6両方対応
@@ -108,6 +128,11 @@ namespace CS{
 			freeaddrinfo(res);
 			std::cout << "FILE:" << __FILE__ <<  ", LINE:" << __LINE__ << " " << "CreateSocket fail." << std::endl;
 			exit(EXIT_FAILURE);
+		}
+		if (priority >= 0) {
+			if (setsockopt(sockd, SOL_SOCKET, SO_PRIORITY, &priority, sizeof(priority)) < 0) {
+				perror("setsockopt");
+			}
 		}
 		return *res;
 	}
@@ -249,5 +274,9 @@ namespace CS{
 	int UdpNwClient::SendPacket(struct send_message &buf_) {
 		int ret = Sendto(buf_, *res);
 		return ret;
+	}
+	int UdpNwClient::SendtoDivision(struct send_message &buf_, char *payload_, const int &fragment_size_) {
+		// ToDo: 未実装
+		return 0;
 	}
 }

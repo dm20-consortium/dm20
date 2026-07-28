@@ -128,7 +128,7 @@ namespace CS{
 		double start_time = 0;
 		double end_time = 0;
 
-		const int on = 1, off = 0;
+		const int on = 1;
 
 		memset(&server_addr, 0, sizeof(struct sockaddr_storage));
 		size_t bind_size = sizeof(struct sockaddr_in6);

@@ -160,7 +160,8 @@ namespace CS{
 		buf_.priority_level = 0; //優先度非対応インタフェースなので0固定
 		buf_.fd_name[0] = '\0';
 		buf_.payload_size = length_;
-		
+		const int fragment_size = MSGSIZE;
+
 		#if LID_PRIORITY == 1
 		Util dm2util;
 		// VehicleProcRcvで作成済みの共有メモリをプロセスにアタッチする
@@ -189,15 +190,17 @@ namespace CS{
 
 		#else //LID_PRIORITY
 		//分割不要のサイズであればそのまま送信
-		if(length_ <= MSGSIZE){
-			memset(buf_.dm2_payload, 0, MSGSIZE);
+		if(length_ <= fragment_size){
+			memset(buf_.dm2_payload, 0, fragment_size);
 			memcpy(buf_.dm2_payload, payload_, length_);
 			buf_.flagment_sum = 1;
 			if(SendPacket(buf_) < 0){
 				if (doLog) std::cout << "FILE:" << __FILE__ <<  ", LINE:" << __LINE__ << " " << "Sendto fail." << std::endl;
 			}
 		}else{
-			if (doLog) std::cout << "送信データ廃棄" << std::endl;
+			if (SendtoDivision(buf_, payload_, fragment_size) < 0) {
+				if (doLog) std::cout << "FILE:" << __FILE__ <<  ", LINE:" << __LINE__ << " " << "Sendto fail." << std::endl;
+			}
 		}
 		#endif //LID_PRIORITY
 	}

@@ -287,8 +287,6 @@ namespace IS {
 		string retXML = "";
 		vector<string> retXMLList;
 
-		int sepSize = IPv4_UDP_MAX_BYTE;
-		if (ssl != NULL) sepSize = IPv4_DTLS_MAX_BYTE;
 #if MEASURE_MODE == 1
 		long now = DmUtil::getTimeMicrosec();
 		double msec = (now - procTime) / 1000.0;
@@ -411,10 +409,12 @@ namespace IS {
 						}
 					} else {
 						char compressFlg = settings.getParameter("COMPRESS_FLG")[0];
+						cout << "compressFlg:" << compressFlg << endl;
 						if (compressFlg == '1' || compressFlg == '2' ) {
 							char outbuf[UNCOMPRESSED_BUF_SIZE];
 							long key = DmUtil::getTimeMicrosec();
 							int sendSize = stringUtil.setCompressedBufWithHeader(retXMLList.at(i), outbuf, compressFlg, key);
+							cout << "sendSize: " << sendSize << endl;
 							if (sendSize > 0) {
 								try {
 									ret = sendto(udpSock, outbuf, sendSize, 0, (struct sockaddr *)&udpAddr, sizeof(udpAddr));
@@ -434,6 +434,7 @@ namespace IS {
 							// 互換性のため、圧縮フラグは付与しない。
 							//string s = compressFlg + retXMLList.at(i);
 							string s = retXMLList.at(i);
+							cout << "sendSize: " << s.length() << endl;
 							ret = sendto(udpSock, s.c_str(), s.length(), 0, (struct sockaddr *)&udpAddr, sizeof(udpAddr));
 						}
 					}

@@ -109,6 +109,7 @@ namespace CS{
 
 		int SendtoDivision(send_message &buf_, addrinfo &addr_, int send_size_, std::string udp_port_number_, int socket_type, const std::string &aesKey);
 		int SendtoDivision(send_message &buf_, addrinfo &addr_, int send_size_, std::string udp_port_number_);
+		int SendtoDivision(send_message &buf_, sockaddr_un addr_, char *payload_, const int &fragment_size_);
 
 		int Getnameinfo(sockaddr_storage &ss_, char src_ip_[NI_MAXHOST]);
 

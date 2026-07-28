@@ -16,26 +16,18 @@ COMPLETIONS_DIR = /usr/share/bash-completion/completions
 MEASURE_MODE  = 0
 
 COMPILER = g++
-#/etc/os-releaseからメジャーバージョンを判定する
-UBUNTU_VERSION := $(shell . /etc/os-release && echo $$VERSION_ID | cut -d. -f1)
 
-CPLUS_VER=c++17
-ifeq ($(shell [ $(UBUNTU_VERSION) -le 22 ] && echo yes),yes)
-  ROS_DISTRO := $(shell echo $$ROS_DISTRO)
-  ifneq ($(ROS_DISTRO),humble)
-    CPLUS_VER=c++14
-  endif
-endif
+# C_PLUSのバージョン設定, PROTOBUF関連の設定
+include ../common.mk
 
 USER_HOME := $(shell eval echo ~$(SUDO_USER))
 #DEBUGS = -g -O0
 CFLAGS    = -DMEASURE_MODE=${MEASURE_MODE} -DCOMPILER_SWITCH=${COMPILER_SWITCH} -DUSE_UDP_DMI=${USE_UDP_DMI} -DUSE_ROS2DMI=${USE_ROS2DMI} -DROS2_WORKSPACE_DIR=$(ROS2_WORKSPACE_DIR) -DUSE_KOITO_DMI=${USE_KOITO_DMI} -DUSE_ASMOBI_DMI=${USE_ASMOBI_DMI} -std=${CPLUS_VER} $(DEBUGS) -MMD -MP -Wall -O3 -Wextra -Winit-self -Wno-missing-field-initializers -Wno-unused-parameter -Wno-shift-count-overflow
 
-INCLUDE   = -I./include -I./../csLib/include -I../commonLib/include/dm2SocketInterface -I../tupleLib/include -I../proto/is/include -I../proto/api/include -I/usr/local/include/is/proto
+INCLUDE   = -I./include -I./../csLib/include -I../commonLib/include/dm2SocketInterface -I../tupleLib/include -I../proto/is/include -I../proto/api/include -I/usr/local/include/is/proto $(PROTOBUF_CFLAGS)
 
-PROTOBUF_LIBS   := $(shell pkg-config --libs protobuf)
-LDFLAGS   = -L../commonLib/lib -L../tupleLib/lib -L../proto/is/lib -L../proto/api/lib -L../secLib/lib $(PROTOBUF_LIBS)
-LIBS      = -lpthread -ldl -lpqxx -lpq -lxerces-c -ldm2SocketInterface -llog4cxx -lgeos_c -luuid -lssl -lcrypto -lm -ltuple -ldm2proto_is -ldm2proto_api -lz -lzstd -lyaml-cpp -lrt -ldm2security
+LDFLAGS   = -L../commonLib/lib -L../tupleLib/lib -L../proto/is/lib -L../proto/api/lib -L../secLib/lib $(PROTOBUF_LDFLAGS)
+LIBS      = -lpthread -ldl -lpqxx -lpq -lxerces-c -ldm2SocketInterface -llog4cxx -lgeos_c -luuid -lssl -lcrypto -lm -ltuple -ldm2proto_is -ldm2proto_api -lz -lzstd -lyaml-cpp -lrt -ldm2security $(PROTOBUF_LIBS)
 SRCDIR    = ./source
 
 ifeq "$(strip $(SRCDIR))" ""
@@ -46,7 +38,8 @@ OBJDIR    = ./obj
 ifeq "$(strip $(OBJDIR))" ""
   OBJDIR  = .
 endif
-OBJECTS   = $(addprefix $(OBJDIR)/, $(notdir $(PROTOS_OUTS:.pb.cc=.pb.o))) $(addprefix $(OBJDIR)/, $(notdir $(SOURCES:.cpp=.o)))
+#OBJECTS   = $(addprefix $(OBJDIR)/, $(notdir $(PROTOS_OUTS:.pb.cc=.pb.o))) $(addprefix $(OBJDIR)/, $(notdir $(SOURCES:.cpp=.o)))
+OBJECTS   = $(addprefix $(OBJDIR)/,) $(addprefix $(OBJDIR)/, $(notdir $(SOURCES:.cpp=.o)))
 DEPENDS   = $(OBJECTS:.o=.d)
 
 $(TARGET): bin $(OBJECTS)

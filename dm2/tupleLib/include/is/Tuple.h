@@ -22,7 +22,23 @@ using std::string;                 // string
 //using namespace log4cxx;
 
 namespace IS {
+    class Bytes
+    {
+    public:
+        std::string value;
 
+        Bytes() = default;
+
+        Bytes(const void* data, size_t size)
+            : value(reinterpret_cast<const char*>(data), size)
+        {
+        }
+
+        Bytes(const std::string& s)
+            : value(s)
+        {
+        }
+    };
     /**
      * 行情報を扱うクラス
      *

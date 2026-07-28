@@ -54,7 +54,7 @@ string DMReceiver::makeQuery(string master_schema, string schema_name, string wi
 }
 
 bool DMReceiver::continuousQuery(string master_schema, string schema_name, string query, string window, int addTimestamp, 
-	string columns, string plus_schema_name, bool duplication, string paritition_keys, string where) {
+	string columns, string plus_schema_name, bool duplication, string paritition_keys, string where, bool isQuietMode) {
 	string outMsg = "";
 	string _query;
 	if (query != "") {
@@ -66,7 +66,10 @@ bool DMReceiver::continuousQuery(string master_schema, string schema_name, strin
 		}
 	}
 	this->addTimestamp = addTimestamp;
-	if (plus_schema_name == "") {
+	if (isQuietMode) {
+		mngId = this->continuousQueryExec(&_query,
+				std::bind(&DMReceiver::callbackForStreamInQuietMode, std::ref(*this), std::placeholders::_1), &outMsg);
+	} else if (plus_schema_name == "") {
 		mngId = this->continuousQueryExec(&_query,
 				std::bind(&DMReceiver::callbackForStream, std::ref(*this), std::placeholders::_1), &outMsg);
 	} else {
@@ -105,7 +108,7 @@ void DMReceiver::callbackForStream(ResultSet rs) {
 	ResultSetMetaData rsmd = rs.getResultSetMetaData();
 	int colSize = rsmd.getColumnSize();
 	string s = "";
-	/* 型チェック
+	/* 列型チェック
 	for (int i = 0; i < colSize; i++) {
 		if (i > 0) s += ",";
 		s += rsmd.getColumnType(i);
@@ -139,7 +142,7 @@ void DMReceiver::callbackForStreamPlusSendIs(ResultSet rs) {
 			string val = getValue(rs.getString(i), colSize);
 			s += val;
 			if (this->addTimestamp == -2) {
-				if (i == rsmd.getColumnSize() - 1) {
+				if (i == colSize - 1) {
 					s += "," + to_string(rs.getEpochTime(0));
 					s += "," + to_string(DmUtil::getTimeMillisec());
 				}
@@ -150,6 +153,24 @@ void DMReceiver::callbackForStreamPlusSendIs(ResultSet rs) {
 	thread createThread(&DMReceiver::SendIs, this, s);
 	createThread.detach();
 }
+
+void DMReceiver::callbackForStreamInQuietMode(ResultSet rs) {
+	ResultSetMetaData rsmd = rs.getResultSetMetaData();
+	static std::atomic<uint64_t> total_proc_ms;
+	static std::atomic<uint64_t> recvCount;
+	string s = "";
+	while (rs.next()) {
+		if (this->addTimestamp == -2) {
+			total_proc_ms += DmUtil::getTimeMillisec() - rs.getEpochTime(0);
+		}
+		recvCount++;
+	}
+	if (this->addTimestamp == -2) {
+		s += "," + to_string(total_proc_ms / recvCount);
+	}
+	cout << recvCount << s << endl;
+}
+
 void DMReceiver::SendIs(string ord_s) {
 	string s = ord_s;
 	DMSender dms;

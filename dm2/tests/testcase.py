@@ -29,6 +29,8 @@ class TestCase:
         with open(yaml_file, encoding="utf-8") as f:
             self.ctx.config = yaml.safe_load(f)
 
+        self.cases = self.ctx.config.get("cases", [])
+
     def print_header(self):
 
         cfg = self.ctx.config
@@ -47,6 +49,15 @@ class TestCase:
 
     def run(self):
 
+        if self.cases:
+            return self.run_cases()
+        else:
+            return self.run_one({})
+    
+    def run_one(self, params):
+
+        self.ctx.params = params
+
         self.print_header()
 
         success = False
@@ -63,10 +74,7 @@ class TestCase:
 
         except Exception as e:
 
-            print("")
-            print("Exception")
             print(e)
-
             success = False
 
         finally:
@@ -74,3 +82,19 @@ class TestCase:
             self.cleanup.run()
 
         return success
+    
+    def run_cases(self):
+
+        overall = True
+
+        for case in self.cases:
+
+            print("")
+            print("---------------------------------")
+            print(case)
+            print("---------------------------------")
+
+            if not self.run_one(case):
+                overall = False
+
+        return overall

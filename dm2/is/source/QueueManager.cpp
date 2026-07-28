@@ -396,7 +396,7 @@ namespace IS {
 		vector<Tuple> tuples;
 		Schema schema;
 		// 電文からタプルへ変換
-		recvDataToTuples(data, tuples, schema, tableName);
+		recvDataToTuples(data, tuples, schema, tableName, false);
 		// データが存在しない場合は処理終了
 		if (tuples.size() == 0) return;
 
@@ -477,7 +477,7 @@ namespace IS {
 		vector<Tuple> tuples;
 		Schema schema;
 		// 電文からタプルへ変換
-		recvDataToTuples(data, tuples, schema, tableName);
+		recvDataToTuples(data, tuples, schema, tableName, true);
 		// データが存在しない場合は処理終了
 		if (tuples.size() == 0) return;
 
@@ -586,9 +586,10 @@ namespace IS {
 	* @param	tuples		タプル
 	* @param	schema		スキーマ
 	* @param	tableName	テーブル名
+	* @param	fromApl	    アプリからか？
 	*/
 
-	void QueueManager::recvDataToTuples(const RecvData &data, vector<Tuple> &tuples, Schema &schema, string &tableName)
+	void QueueManager::recvDataToTuples(const RecvData &data, vector<Tuple> &tuples, Schema &schema, string &tableName, const bool &fromApl)
 	{
 		string schema_name, payload;
 		IS::ProtobufParser &pp = IS::ProtobufParser::get_instance();
@@ -598,13 +599,13 @@ namespace IS {
 		if (headerInfo.headerSize != 0)
 		{
 			schema_name = headerInfo.header.table_name;
-			payload = string(headerInfo.payload_p, headerInfo.header.payload_size);
+			payload = string(headerInfo.payload_p, data.payload.size() - headerInfo.headerSize);
 		}
 		else {
 			schema_name = data.schema_name;
 			payload = data.payload;
 		}
-		recvDataToTuples(schema_name, payload, tuples, schema, tableName, true);
+		recvDataToTuples(schema_name, payload, tuples, schema, tableName, fromApl);
 		// for (int i = 0; i < tuples.size(); i++) tuples[i].dump();
 	}
 	/**

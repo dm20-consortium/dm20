@@ -309,7 +309,8 @@ namespace IS {
 							// Tableが単一の場合
 							attr.name = R2.column_name(y);
 						}
-						attr.type = getTypeString(R2.column_type(y));
+						string rdb_type = getTypeString(R2.column_type(y));
+						attr.type = transRdbTypeToCPlusType(rdb_type);
 						//cout << R2.column_type(y) << "," << attr.type << endl;
 						if (strcasecmp(attr.type.c_str(), "geometry") == 0 || strcasecmp(attr.type.c_str(), "geography") == 0) {
 							existGeoData = true;
@@ -700,6 +701,78 @@ namespace IS {
 		}
 	}
 
+	/**
+	 * C++に合わせた型名を変換する
+	 *
+	 * @author	Nagoya University
+	 * @date	2026/7/2
+	 *
+	 * @param	rdb_type	RDB型名
+	 *
+	 * @return	C++の型名
+	 */
+
+	inline string RDBAccessOperator::transRdbTypeToCPlusType(const string& rdb_type)
+	{
+		/*
+		　ToDo: 現状、Protobufで対応していない型は、コメントアウトし、対応している型に差し替えている。対応した後は、元に戻す。
+		*/
+		if (rdb_type == "Bool")          return "bool";
+		//if (rdb_type == "ByteA")         return "vector<uint8_t>";
+		if (rdb_type == "ByteA")         return "vector<uint>";
+		if (rdb_type == "Char")          return "char";
+		if (rdb_type == "Name")          return "string";
+		//if (rdb_type == "Int2")          return "short";
+		if (rdb_type == "Int2")          return "int";
+		if (rdb_type == "Int4")          return "int";
+		//if (rdb_type == "Int8")          return "long long";
+		if (rdb_type == "Int8")          return "long";
+		//if (rdb_type == "Float4")        return "float";
+		if (rdb_type == "Float4")        return "double";
+		if (rdb_type == "Float8")        return "double";
+		if (rdb_type == "Numeric")       return "double";
+		if (rdb_type == "Money")         return "double";
+		if (rdb_type == "Text")          return "string";
+		if (rdb_type == "VarChar")       return "string";
+		if (rdb_type == "BpChar")        return "string";
+		if (rdb_type == "UUID")          return "string";
+		if (rdb_type == "Xml")           return "string";
+
+		if (rdb_type == "Date")          return "string";
+		if (rdb_type == "Time")          return "string";
+		if (rdb_type == "TimeTZ")        return "string";
+		if (rdb_type == "Timestamp")     return "string";
+		if (rdb_type == "TimestampTZ")   return "string";
+		if (rdb_type == "Interval")      return "string";
+
+		if (rdb_type == "Inet")          return "string";
+		if (rdb_type == "Cidr")          return "string";
+		if (rdb_type == "MacAddr")       return "string";
+
+		if (rdb_type == "Bit")           return "string";
+		if (rdb_type == "VarBit")        return "string";
+
+		if (rdb_type == "Point")         return "string";
+		if (rdb_type == "LSeg")          return "string";
+		if (rdb_type == "Path")          return "string";
+		if (rdb_type == "Box")           return "string";
+		if (rdb_type == "Polygon")       return "string";
+		if (rdb_type == "Circle")        return "string";
+		if (rdb_type == "Line")          return "string";
+
+		if (rdb_type == "vector(bool)")      return "vector<bool>";
+		//if (rdb_type == "vector(int2)")      return "vector<short>";
+		if (rdb_type == "vector(int2)")      return "vector<int>";
+		if (rdb_type == "vector(int4)")      return "vector<int>";
+		//if (rdb_type == "vector(int8)")      return "vector<long long>";
+		if (rdb_type == "vector(int8)")      return "vector<long>";
+		if (rdb_type == "vector(double)")    return "vector<double>";
+		if (rdb_type == "vector(text)")      return "vector<string>";
+		if (rdb_type == "vector(varchar)")   return "vector<string>";
+
+		// PostgreSQL内部型・ユーザ定義型はそのまま返す
+		return rdb_type;
+	}
 	/**
 	* RDBからのTRIGGERをListenするための処理
 	*

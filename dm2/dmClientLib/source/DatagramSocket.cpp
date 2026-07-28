@@ -110,6 +110,10 @@ bool DatagramSocket::sendStreamData(const string &streamName, const vector<Tuple
 
 bool DatagramSocket::sendStreamData(const string &streamName, const vector<Tuple> &tuples, const bool doCompress)
 {
+	if (tuples.size() <= 0) {
+		cerr << "[sendStreamData] tuples is empty" << endl;
+		return false;
+	}
 #if MEASURE_MODE == 1
 	long startTime = DmUtil::getTimeMicrosec();
 	long procTime = DmUtil::getTimeMicrosec();
@@ -134,7 +138,9 @@ bool DatagramSocket::sendStreamData(const string &streamName, const vector<Tuple
 	sendDataList = pp.createStreamList(streamName, tuples, this->key, IPv4_UDP_MAX_BYTE);
 	if (sendDataList.empty()) {
 		cerr << "[sendStreamData] Serialization failure using protobuf" << endl;
+		return false;
 	}
+	//cout << "[sendDataList] sendDataList_size: " << sendDataList.size() << endl;
 #if MEASURE_MODE == 1
 	now = DmUtil::getTimeMicrosec();
 	msec = (now - procTime) / 1000.0;

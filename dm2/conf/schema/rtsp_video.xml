@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<schema>
+
+  <tablename>rtsp_video</tablename>
+  <access_privileges>public=ar</access_privileges>
+
+  <!-- Capture Time -->
+  <column>
+    <name>timestamp_ms</name>
+    <type>long</type>
+  </column>
+
+  <!-- H264 Packet -->
+  <column>
+    <name>pts</name>
+    <type>long</type>
+  </column>
+
+  <column>
+    <name>dts</name>
+    <type>long</type>
+  </column>
+
+  <column>
+    <name>duration</name>
+    <type>long</type>
+  </column>
+
+  <column>
+    <name>key_frame</name>
+    <type>bool</type>
+  </column>
+
+  <!-- SPS/PPS -->
+  <column>
+    <name>extradata</name>
+    <type>string</type>
+  </column>
+
+  <!-- H264 NAL -->
+  <column>
+    <name>video_data</name>
+    <type>string</type>
+  </column>
+
+  <!-- Detection -->
+  <column>
+    <name>detection_timestamp_ms</name>
+    <type>Vector(long)</type>
+  </column>
+
+  <column>
+    <name>class_id</name>
+    <type>Vector(int)</type>
+  </column>
+
+  <column>
+    <name>score</name>
+    <type>Vector(double)</type>
+  </column>
+
+  <column>
+    <name>x</name>
+    <type>Vector(int)</type>
+  </column>
+
+  <column>
+    <name>y</name>
+    <type>Vector(int)</type>
+  </column>
+
+  <column>
+    <name>width</name>
+    <type>Vector(int)</type>
+  </column>
+
+  <column>
+    <name>height</name>
+    <type>Vector(int)</type>
+  </column>
+
+</schema>

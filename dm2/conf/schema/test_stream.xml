@@ -86,4 +86,8 @@
 		<name>vector2_b</name>
 		<type>vector(vector(bool))</type>
 	</column>
+	<column>
+		<name>bytes</name>
+		<type>bytes</type>
+	</column>
 </schema>

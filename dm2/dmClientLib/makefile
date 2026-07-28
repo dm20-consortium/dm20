@@ -11,21 +11,14 @@ MEASURE_MODE = 0
 COMPRESS_MODE = 0
 
 COMPILER = g++
-#/etc/os-releaseからメジャーバージョンを判定する
-UBUNTU_VERSION := $(shell . /etc/os-release && echo $$VERSION_ID | cut -d. -f1)
 
-CPLUS_VER=c++17
-ifeq ($(shell [ $(UBUNTU_VERSION) -le 22 ] && echo yes),yes)
-  ROS_DISTRO := $(shell echo $$ROS_DISTRO)
-  ifneq ($(ROS_DISTRO),humble)
-    CPLUS_VER=c++14
-  endif
-endif
+# C_PLUSのバージョン設定, PROTOBUF関連の設定
+include ../common.mk
 
 CFLAGS    = -DDEBUG=${DEBUG} -DMEASURE_MODE=${MEASURE_MODE} -DCOMPRESS_MODE=${COMPRESS_MODE} -std=${CPLUS_VER} -shared -fPIC -O3 -pthread
 LDFLAGS   = -L../tupleLib/lib
 LIBS      = -lpthread -ltuple -lgeos_c -lxerces-c -lcrypto -lssl
-INCLUDE   = -I./include -I../tupleLib/include -I../proto/is/include -I../proto/api/include -I/usr/local/include/is/proto
+INCLUDE   = -I./include -I../tupleLib/include -I../proto/is/include -I../proto/api/include -I/usr/local/include/is/proto $(PROTOBUF_CFLAGS)
 TARGET    = ./lib/libdmclient.a
 SRCDIR    = ./source
 ifeq "$(strip $(SRCDIR))" ""

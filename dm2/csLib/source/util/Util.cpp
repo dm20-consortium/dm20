@@ -225,9 +225,7 @@ namespace CS{
 				value = std::to_string(value_map);
 			}
 		}
-		if (doWarnLog) {
-			std::cout << log << std::endl;
-		}
+		std::cout << log << std::endl;
 
 		return true;
 	}

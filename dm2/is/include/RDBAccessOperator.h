@@ -52,6 +52,7 @@ namespace IS {
         bool isCreateResult = false;
 		
 		string getTypeString(int num);
+		string transRdbTypeToCPlusType(const string& rdb_type);
 		void createListenThread();
 		void getST_AsEWKT_forEachLine(work &T, const result &R, IS::TupleSet &ts);
 		void setResponseTupleSet(const string columnName , const string returnValue);

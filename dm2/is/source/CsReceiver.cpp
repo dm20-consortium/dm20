@@ -103,12 +103,15 @@ namespace IS {
 				// 解凍されたバッファから再度ヘッダ情報を読み取る
 				stringUtil.getIsHeader(payload_p, headerInfo);
 			}
-		}
-		logger->debug(string("CsReceiver - Flg After decompress:") + string(1, headerInfo.header.compressFlg));
-		if (headerInfo.header.compressFlg == '0') {
+		} else if (headerInfo.header.compressFlg == '0') {
 			data.payload = string(headerInfo.payload_p, data.payload.length() - headerInfo.headerSize);
 			len = data.payload.length();
-		} else if (headerInfo.header.compressFlg == '3') {
+			char *payload_p = &data.payload[0];
+			// 再度ヘッダ情報を読み取る
+			stringUtil.getIsHeader(payload_p, headerInfo);
+		}
+		logger->debug(string("CsReceiver - Flg After decompress:") + string(1, headerInfo.header.compressFlg));
+		if (headerInfo.header.compressFlg == '3') {
 			data.schema_name = headerInfo.header.schema_name;
 			data.payload = string(headerInfo.payload_p, data.payload.length() - headerInfo.headerSize);
 			len = data.payload.length();

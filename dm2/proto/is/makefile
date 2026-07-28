@@ -10,7 +10,6 @@ OBJDIR := obj
 LIBDIR := lib
 
 TARGET := $(LIBDIR)/libdm2proto_is.so
-PROTO_PATH := --proto_path=. --proto_path=../api
 DEPEND_PROTO := $(wildcard ../api/*.proto)
 DEPEND_INCLUDE := -I../api/include
 
@@ -27,9 +26,15 @@ ifeq ($(shell [ $(UBUNTU_VERSION) -le 22 ] && echo yes),yes)
   endif
 endif
 
+ifdef PROTO_PATH
+PROTOC := $(PROTO_PATH)/protoc/bin/protoc
+PROTOBUF_CFLAGS := -I$(PROTO_PATH)/protoc/include
+PROTOBUF_LIBS := -L$(PROTO_PATH)/protoc/lib
+else
 PROTOC := protoc
 PROTOBUF_CFLAGS := $(shell pkg-config --cflags protobuf)
-PROTOBUF_LIBS   := $(shell pkg-config --libs protobuf)
+PROTOBUF_LIBS := $(shell pkg-config --libs-only-L protobuf)
+endif
 
 CXXFLAGS := -std=$(CPLUS_VER) -fPIC -Wall $(PROTOBUF_CFLAGS)
 
@@ -46,7 +51,7 @@ $(SRCDIR) $(INCDIR) $(OBJDIR) $(LIBDIR):
 	mkdir -p $@
 
 $(PB_CC) $(PB_H): $(PROTO_FILES) | $(SRCDIR) $(INCDIR)
-	$(PROTOC) $(PROTO_PATH) --cpp_out=. $(PROTO_FILES)
+	$(PROTOC) --proto_path=. --proto_path=../api --cpp_out=. $(PROTO_FILES)
 	for f in *.pb.cc ; do mv -f $$f $(SRCDIR)/ ; done
 	for f in *.pb.h  ; do mv -f $$f $(INCDIR)/ ; done
 

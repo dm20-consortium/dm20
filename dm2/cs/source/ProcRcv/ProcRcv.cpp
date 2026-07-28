@@ -318,6 +318,8 @@ bool ProcRcvSettings::load_dm2conf(const std::string &confDirPath)
 		if (!dm2util.chk_dm2conf_int_item("CS_PACKET_SIZE_" + to_string(count), item_int, true)) return false;
 		cs_packet_sizes.push_back(item_int);
 
+		if (!dm2util.chk_dm2conf_int_item("SOCKET_PRIORITY_" + to_string(count), item_int, false)) item_int = -1;
+		socket_priorities.push_back(item_int);
 	}
 	// DTLSの場合は、送信者の数（SEND_LISTの行数分）だけsettingを追加
 	int dtls_add_count = 0;

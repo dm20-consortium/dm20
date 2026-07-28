@@ -4,6 +4,9 @@
 import subprocess
 import time
 
+from step_result import StepResult
+from string import Template
+
 
 class StepRunner:
 
@@ -77,16 +80,48 @@ class StepRunner:
     #
     def step_run(self, value):
 
-        command = value["command"]
+        command = Template(value["command"]).safe_substitute(self.ctx.params)
 
         print("Run Command")
         print(command)
 
         result = subprocess.run(
             command,
-            shell=True
+            shell=True,
+            capture_output=True,
+            text=True
         )
 
+        #
+        # 標準出力をそのまま表示
+        #
+        if result.stdout:
+            print(result.stdout)
+
+        #
+        # 標準エラーも表示
+        #
+        if result.stderr:
+            print(result.stderr)
+
+        #
+        # Step実行結果を保存
+        #
+        step_result = StepResult()
+
+        step_result.command = command
+        step_result.stdout = result.stdout
+        step_result.stderr = result.stderr
+        step_result.returncode = result.returncode
+
+        #
+        # 現在は最後に実行したrunのみ保存
+        #
+        self.ctx.add_step_result("last", step_result)
+
+        #
+        # エラーなら例外
+        #
         if result.returncode != 0:
 
             raise RuntimeError(

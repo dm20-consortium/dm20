@@ -79,6 +79,23 @@ namespace CS{
 	int UdpClient::SendPacket(struct send_message &buf_) {
 		return client_->SendPacket(buf_);
 	}
+	/**
+	* @fn	int SendtoDivision(struct send_message &buf_, char *payload_, const int &fragment_size_)
+	*
+	* @brief	sendto送信(send_message型)
+	*
+	* @author	Shinichi Kusayama
+	* @date		2026/7/23
+	*
+	* @param [in,out]	buf_ 	送信メッセージバッファ
+	* @param payload_	DM2.0ペイロード
+	* @param buf_		分割サイズ
+	*
+	* @return	int sendtoの戻り値
+	*/
+	int UdpClient::SendtoDivision(struct send_message &buf_, char *payload_, const int &fragment_size_) {
+		return client_->SendtoDivision(buf_, payload_, fragment_size_);
+	}
 }
 
 

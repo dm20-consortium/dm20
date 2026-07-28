@@ -19,6 +19,7 @@ class ExpectRunner:
         #
         self.handlers = {
             "receiver_log": self.expect_receiver_log,
+            "stdout": self.expect_stdout,
         }
 
     def verify(self):
@@ -50,29 +51,14 @@ class ExpectRunner:
         return success
 
     #
-    # receiver_log
+    # 共通：containsチェック
     #
-    def expect_receiver_log(self, value):
-
-        logfile = Path("receiver.log")
-
-        if not logfile.exists():
-
-            print("receiver.log does not exist.")
-
-            return False
-
-        text = logfile.read_text(encoding="utf-8", errors="ignore")
-
-        #
-        # contains
-        #
-        contains = value.get("contains", [])
+    def check_contains(self, text, contains):
 
         ok = True
-
         for s in contains:
 
+            s = str(s)
             if s in text:
 
                 print(f"PASS : {s}")
@@ -84,3 +70,45 @@ class ExpectRunner:
                 ok = False
 
         return ok
+
+    #
+    # receiver.log確認
+    #
+    def expect_receiver_log(self, value):
+
+        logfile = Path("receiver.log")
+
+        if not logfile.exists():
+
+            print("receiver.log does not exist.")
+
+            return False
+
+        text = logfile.read_text(
+            encoding="utf-8",
+            errors="ignore"
+        )
+
+        contains = value.get("contains", [])
+
+        return self.check_contains(text, contains)
+
+    #
+    # runコマンドの標準出力確認
+    #
+    def expect_stdout(self, value):
+
+        result = self.ctx.get_step_result("last")
+
+        if result is None:
+
+            print("No step result.")
+
+            return False
+
+        contains = value.get("contains", [])
+
+        return self.check_contains(
+            result.stdout,
+            contains
+        )

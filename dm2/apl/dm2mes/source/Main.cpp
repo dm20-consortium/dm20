@@ -25,6 +25,7 @@ int main(int argc, char *argv[])
 	bool isOneShot = false;
 	bool doCompress = false;
 	bool allowDuplication = false;
+	bool isQuietMode = false;
 	int addTimestamp = 0;
 	string ip = "";
 	string userid = "";
@@ -51,7 +52,7 @@ int main(int argc, char *argv[])
 	bool doDestQuery = false;
 	string minus_str = "-";
 	// 引数処理(Todo: 長形式への対応｛getopt_long関数への移行｝)
-	while ((ch = getopt(argc, argv, "0123456789A::B:c:C:d:D:E:f:F:i:I::m:Mno::O:p:P:r::R:sS:tT:u:w:W:zh")) != -1) {
+	while ((ch = getopt(argc, argv, "0123456789A::B:c:C:d:D:E:f:F:i:I::m:Mno::O:p:P:qr::R:sS:tT:u:w:W:zh")) != -1) {
 		switch (ch) {
 		case '0': minus_str += "0"; break;
 		case '1': minus_str += "1"; break;
@@ -185,6 +186,9 @@ int main(int argc, char *argv[])
 			break;
 		case 'p':
 			password = optarg;
+			break;
+		case 'q':
+			isQuietMode = true;
 			break;
 		case 'P':
 			paritition_keys = optarg;
@@ -322,7 +326,7 @@ int main(int argc, char *argv[])
 		if (doDestQuery) {
 			ret = DMSetDestQuery(ip, userid, password, master_schema, schema_name, isTcpMode, query, window, addTimestamp, isSecureMode, destSID, execSID, columns, paritition_keys, where);
 		} else {
-			ret = DMRecv(ip, userid, password, master_schema, schema_name, isTcpMode, query, window, timeout, addTimestamp, delay, isSecureMode, columns, plus_schema_name, allowDuplication, paritition_keys, where);
+			ret = DMRecv(ip, userid, password, master_schema, schema_name, isTcpMode, query, window, timeout, addTimestamp, delay, isSecureMode, columns, plus_schema_name, allowDuplication, paritition_keys, where, isQuietMode);
 		}
 		return ret;
 	}
@@ -364,6 +368,10 @@ int main(int argc, char *argv[])
 		}
 		if (doGetLine)
 		{
+			// 行末のCRを削除
+			if (!line.empty() && line.back() == '\r') {
+				line.pop_back();
+			}
 			if (isOneShot) {
 				if (DMOneshot(ip, userid, password, schema_name, isTcpMode, line, isSecureMode, 0) == false) break;
 			} else {
@@ -453,7 +461,7 @@ void RegisterSendList(string send_list, string input_file) {
 }
 bool DMRecv(string ip, string userid, string password, string master_schema, string schema_name,
 		bool isTransportMode, string query, string window, long timeout, int addTimestamp, int delay, bool isSecureMode, 
-		string columns, string plus_schema_name, bool allowDuplication, string paritition_keys, string where) {
+		string columns, string plus_schema_name, bool allowDuplication, string paritition_keys, string where, bool isQuietMode) {
 	if (signal(SIGINT, handler) == SIG_ERR) {
 		cerr << "Signal Error" << endl;
 		return -1;
@@ -461,7 +469,7 @@ bool DMRecv(string ip, string userid, string password, string master_schema, str
 	DMReceiver dmr;
 	if (!dmr.DMConnect(ip, userid, password, isTransportMode, isSecureMode)) return -1;
 	
-	if (!dmr.continuousQuery(master_schema, schema_name, query, window, addTimestamp, columns, plus_schema_name, allowDuplication, paritition_keys, where)) {
+	if (!dmr.continuousQuery(master_schema, schema_name, query, window, addTimestamp, columns, plus_schema_name, allowDuplication, paritition_keys, where, isQuietMode)) {
 		dmr.DMDisconnect();
 		return -1;
 	}
@@ -637,6 +645,7 @@ static void usage(const char *cmd)
 		"  -P <partition-keys>       Partition-By. \n"
 		"                            ex.) dm2mes -r -S signal_info -P crp_id,id \n"
 		"                              => dm2mes -r \"master signal_info select * from signal_info [partition by crp_id,id rows 1]\" \n"
+		"  -q                        Quiet Mode (Count Only) \n"
 		"  -r {query}                Receive Mode. default: Send Mode \n"
 		"                            Free to set Full-Query.  \n"
 		"                              default: MASTER message_info SELECT * \n"

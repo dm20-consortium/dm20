@@ -400,7 +400,6 @@ namespace CS{
 	* @param addr_		プロセス間ソケットアドレス構造体
 	* @param [in]	send_size_	送信サイズ
 	* @param [in]	udp_port_number_	UDPポート番号
-	* @param [in]	iv_	初期化ベクトル
 	*
 	* @return	int sendtoの戻り値
 	*/
@@ -526,6 +525,52 @@ namespace CS{
 		return len;
 	}
 
+	/**
+	* @fn	void Socket::SendtoDivision(send_message &buf_, char *payload_)
+	*
+	* @brief	sendto送信処理(バッファ渡し、sockaddr_un用)
+	*
+	* @author	Akihiko Maki
+	* @date		2019/03/26
+	*
+	* @param buf_		送信データ構造体 
+	* @param payload_	DM2.0ペイロード
+	* @param buf_		分割サイズ
+	*/
+	int Socket::SendtoDivision(send_message &buf_, sockaddr_un server_addr_, char *payload_, const int &fragment_size_){
+		int flagment_num = 0;
+		struct timespec ts;
+		memset(buf_.dm2_payload, '\0', fragment_size_);
+		
+		//送信データのflagment_duplication_check_idに現在時刻を設定
+		timespec_get(&ts, TIME_UTC);
+		buf_.flagment_duplication_check_id = ts.tv_sec * 1000000000 + ts.tv_nsec;
+		
+		//フラグメント数を計算
+		flagment_num = buf_.payload_size / fragment_size_;
+		buf_.flagment_sum = flagment_num;
+		
+		//フラグメント時の端数の有無を求める
+		if(buf_.payload_size % MSGSIZE != 0){
+			flagment_num++;
+		}
+		buf_.flagment_sum = flagment_num;
+		
+		int len = 0;
+		//フラグメントごとにデータを送信
+		for(int i= 0; i < flagment_num - 1; i++){
+			buf_.flagment_offset = i;
+			memcpy(buf_.dm2_payload, payload_ + fragment_size_ * i, fragment_size_);
+			len = Sendto(buf_, server_addr_);
+		}
+		if (len >= 0) {
+			buf_.flagment_offset = flagment_num - 1;
+			memset(buf_.dm2_payload, '\0', MSGSIZE);
+			memcpy(buf_.dm2_payload, payload_ + flagment_num - 1, fragment_size_);
+			len = Sendto(buf_, server_addr_);
+		}
+		return len;
+	}
 	/**
 	* @fn	void Socket::Getnameinfo(sockaddr_storage &ss_, char src_ip_[NI_MAXHOST])
 	*

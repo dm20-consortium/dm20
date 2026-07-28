@@ -1,0 +1,60 @@
+id: T010
+
+title: Parse error後のキャンセル処理
+
+purpose: |
+  パースエラー発生後にCtrl-Cを押しても、
+  dm2isがデッドロックせず正常終了することを確認する。
+
+precondition: |
+  dm2isが起動できること。
+  スキーマaaaは存在しないこと。
+
+services:
+  - name: dm2is
+    description: DM2 ISを起動する。
+    command: dm2is -d conf
+
+steps:
+
+  - id: S001
+    title: 存在しないスキーマで受信開始
+
+    description: |
+      存在しないスキーマaaaを指定して
+      dm2mes受信モードを起動する。
+
+    run:
+      command: dm2mes -r -S aaa
+
+  - id: S002
+    title: パースエラー確認
+
+    description: |
+      aaaスキーマが存在しない旨の
+      エラーメッセージが表示されること。
+
+    expect:
+      stderr_contains:
+        - aaa
+
+  - id: S003
+    title: Ctrl-C入力
+
+    description: |
+      dm2mesへCtrl-C(SIGINT)を送信する。
+
+    signal:
+      target: step:S001
+      signal: SIGINT
+
+expect:
+
+  process:
+    target: step:S001
+    exited: true
+    timeout: 5
+
+cleanup:
+  stop:
+    - dm2is

@@ -33,97 +33,125 @@ int main(int argc, char *argv[])
 	string dbUser = "dm2sampleuser";
 	string dbPass = "dm2samplepassword";
 	string stream_name ="test_stream";
-	int tuple_col_size = 21;
+	int tuple_col_size = 22;
     int sleepMillis = 1000;	// 送信間隔(ms)
 	
 	// UDP送信オブジェクトの取得
 	DatagramSocket* sendSock = DmManager::getDatagramSocket(ip, port, dbUser, dbPass);
 	
 	vector<Tuple> tuples;
-	Tuple tuple(tuple_col_size);
-	long now = DmUtil::getTimeMillisec();
-	// 値の設定
-	int int_value = 1;
-	long long_value = 2;
-	double double_value = 3.1;
-	std::string str_value = "abc";
-	unsigned int uint_value = 4;
-	unsigned long long ulong_value = 5;
-	bool bool_value = true;
+	for (int t_idx = 0; t_idx < 1; t_idx++) {
+		Tuple tuple(tuple_col_size);
+		long now = DmUtil::getTimeMillisec();
+		// 値の設定
+		int int_value = 1;
+		long long_value = 2;
+		double double_value = 3.1;
+		std::string str_value = "abc";
+		unsigned int uint_value = 4;
+		unsigned long long ulong_value = 5;
+		bool bool_value = true;
 
-	vector<int> vector_int;
-	vector<long> vector_long;
-	vector<double> vector_double;
-	vector<std::string> vector_string;
-	vector<unsigned int> vector_uint;
-	vector<unsigned long long> vector_ulong;
-	vector<bool> vector_bool;
-	
-	vector<vector<int>> vector2_int;
-	vector<vector<long>> vector2_long;
-	vector<vector<double>> vector2_double;
-	vector<vector<std::string>> vector2_string;
-	vector<vector<unsigned int>> vector2_uint;
-	vector<vector<unsigned long long>> vector2_ulong;
-	vector<vector<bool>> vector2_bool;
+		vector<int> vector_int;
+		vector<long> vector_long;
+		vector<double> vector_double;
+		vector<std::string> vector_string;
+		vector<unsigned int> vector_uint;
+		vector<unsigned long long> vector_ulong;
+		vector<bool> vector_bool;
+		
+		vector<vector<int>> vector2_int;
+		vector<vector<long>> vector2_long;
+		vector<vector<double>> vector2_double;
+		vector<vector<std::string>> vector2_string;
+		vector<vector<unsigned int>> vector2_uint;
+		vector<vector<unsigned long long>> vector2_ulong;
+		vector<vector<bool>> vector2_bool;
+		/*
+		uint8_t data[] = {
+			0x00, 0x01, 0x02, 0x03,
+			0x10, 0x20, 0x30, 0x40,
+			0xFF, 0xFE, 0xFD, 0xFC,
+			0xAA, 0xBB, 0xCC, 0xDD,
+			0x11, 0x22, 0x33, 0x44,
+			0x55, 0x66, 0x77, 0x88,
+			0x99, 0x00, 0x12, 0x34,
+			0x56, 0x78, 0x9A, 0xBC
+		};
 
+		size_t size = sizeof(data);
 
-	if (set_vector) {
-		vector_int.push_back(int_value);
-		vector_long.push_back(long_value);
-		vector_double.push_back(double_value);
-		vector_string.push_back(str_value);
-		vector_uint.push_back(uint_value);
-		vector_ulong.push_back(ulong_value);
-		vector_bool.push_back(bool_value);
-		if (add_vector) {
-			vector_int.push_back(int_value + 1);
-			vector_long.push_back(long_value + 1);
-			vector_double.push_back(double_value + 1);
-			vector_string.push_back(str_value + "efg");
-			vector_uint.push_back(uint_value + 1);
-			vector_ulong.push_back(ulong_value + 1);
-			vector_bool.push_back(false);
+		std::string test_bytes;
+		test_bytes.assign(
+			reinterpret_cast<const char*>(data),
+			size);
+		*/
+		constexpr size_t size = 33000;
+
+		std::string test_bytes;
+		test_bytes.resize(size);
+
+		for (size_t i = 0; i < size; ++i)
+		{
+			test_bytes[i] = static_cast<char>(i & 0xFF);
 		}
-		int push_count = 1;
-		if (add_vector) push_count = 2;
-		for (int i = 0; i < push_count; i++) {
-			vector2_int.push_back(vector_int);
-			vector2_long.push_back(vector_long);
-			vector2_double.push_back(vector_double);
-			vector2_string.push_back(vector_string);
-			vector2_uint.push_back(vector_uint);
-			vector2_ulong.push_back(vector_ulong);
-			vector2_bool.push_back(vector_bool);
+		if (set_vector) {
+			vector_int.push_back(int_value);
+			vector_long.push_back(long_value);
+			vector_double.push_back(double_value);
+			vector_string.push_back(str_value);
+			vector_uint.push_back(uint_value);
+			vector_ulong.push_back(ulong_value);
+			vector_bool.push_back(bool_value);
+			if (add_vector) {
+				vector_int.push_back(int_value + 1);
+				vector_long.push_back(long_value + 1);
+				vector_double.push_back(double_value + 1);
+				vector_string.push_back(str_value + "efg");
+				vector_uint.push_back(uint_value + 1);
+				vector_ulong.push_back(ulong_value + 1);
+				vector_bool.push_back(false);
+			}
+			int push_count = 1;
+			if (add_vector) push_count = 2;
+			for (int i = 0; i < push_count; i++) {
+				vector2_int.push_back(vector_int);
+				vector2_long.push_back(vector_long);
+				vector2_double.push_back(vector_double);
+				vector2_string.push_back(vector_string);
+				vector2_uint.push_back(vector_uint);
+				vector2_ulong.push_back(vector_ulong);
+				vector2_bool.push_back(vector_bool);
+			}
 		}
+		// タプルへの登録
+		tuple.setValue(0, int_value, now);
+		tuple.setValue(1, long_value, now);
+		tuple.setValue(2, double_value, now);
+		tuple.setValue(3, str_value, now);
+		tuple.setValue(4, uint_value, now);
+		tuple.setValue(5, ulong_value, now);
+		tuple.setValue(6, bool_value, now);
+		if (set_tuple) {
+			tuple.setValue(7, vector_int, now);
+			tuple.setValue(8, vector_long, now);
+			tuple.setValue(9, vector_double, now);
+			tuple.setValue(10, vector_string, now);
+			tuple.setValue(11, vector_uint, now);
+			tuple.setValue(12, vector_ulong, now);
+			tuple.setValue(13, vector_bool, now);
+			tuple.setValue(14, vector2_int, now);
+			tuple.setValue(15, vector2_long, now);
+			tuple.setValue(16, vector2_double, now);
+			tuple.setValue(17, vector2_string, now);
+			tuple.setValue(18, vector2_uint, now);
+			tuple.setValue(19, vector2_ulong, now);
+			tuple.setValue(20, vector2_bool, now);
+		}
+		tuple.setValue(21, Bytes(test_bytes), now);
+		tuples.push_back(tuple);
+		// DBシステムにストリームデータを送信する
 	}
-	// タプルへの登録
-	tuple.setValue(0, int_value, now);
-	tuple.setValue(1, long_value, now);
-	tuple.setValue(2, double_value, now);
-	tuple.setValue(3, str_value, now);
-	tuple.setValue(4, uint_value, now);
-	tuple.setValue(5, ulong_value, now);
-	tuple.setValue(6, bool_value, now);
-	if (set_tuple) {
-		tuple.setValue(7, vector_int, now);
-		tuple.setValue(8, vector_long, now);
-		tuple.setValue(9, vector_double, now);
-		tuple.setValue(10, vector_string, now);
-		tuple.setValue(11, vector_uint, now);
-		tuple.setValue(12, vector_ulong, now);
-		tuple.setValue(13, vector_bool, now);
-		tuple.setValue(14, vector2_int, now);
-		tuple.setValue(15, vector2_long, now);
-		tuple.setValue(16, vector2_double, now);
-		tuple.setValue(17, vector2_string, now);
-		tuple.setValue(18, vector2_uint, now);
-		tuple.setValue(19, vector2_ulong, now);
-		tuple.setValue(20, vector2_bool, now);
-	}
-
-	tuples.push_back(tuple);
-	// DBシステムにストリームデータを送信する
 	sendSock->sendStreamData(stream_name, tuples);
 	
 	delete sendSock;

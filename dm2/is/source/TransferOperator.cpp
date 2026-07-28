@@ -292,33 +292,21 @@ namespace IS {
 			if (retXML != "") {
 				setProto = true;
 			} else {
-				// START CSが分割送信を対応するまでの暫定対応 (CSを使わない場合は自身で分割する必要があるためコメントで残す)//
-				//vector<string> retXMLList;
-				//int realLength = 0;	// 分割ヘッダなしの電文長
+				/* 過去の取り組みにつき、コメントアウト
 				IS::InformationSourceParser &isp = IS::InformationSourceParser::get_instance();
 				isp.init();
-				// ストリームXMLを生成する
-				// データ転送の電文生成
 				if (requestedMngId == 0) {
 					int attrSize = tupleset.getSchemaRef().getAttributeSize();
 					if (tblName == tupleset.info.orgTableName && attrSize > tupleset.info.orgAttributeSize) {
-						// ユーザ定義関数を使用した場合、元のSchemaにない新たなAttributeとしてTupleSet内のSchemaに追加されている。
-						// そのまま転送すると、転送先で属性数チェックでエラーとなるため、除去する。
 						tupleset.removeColumnOverOrgSize();
 					}
-					//realLength = isp.createStreamXMLList(mySid, std::to_string(dstSID), tupleset, IPv4_UDP_MAX_BYTE, retXMLList);
-					// タプルが大量にある場合においてDOMAPIはコストがかかるので文字列結合にてXMLを生成する
-					//isp.createStreamXML(mySid, std::to_string(dstSID), tupleset, retXML);
 					isp.createStreamXMLStr(mySid, std::to_string(dstSID), tupleset, retXML);
-					//cout << "[process]retXML [" << retXML.substr(0,50) << "]"<< endl;
-					// END CSが分割送信を対応するまでの暫定対応 //
 				}
-				// クエリ管理番号の返却
 				else {
-					//realLength = isp.createQueryResultList(std::to_string(this->reqDstSID), std::to_string(dstSID), mngId, requestedMngId, tupleset, IPv4_UDP_MAX_BYTE, retXMLList);
 					isp.createQueryResult(mySid, std::to_string(dstSID), mngId, requestedMngId, std::to_string(this->reqDstSID), tupleset, retXML);
 				}
 				isp.finalize();
+				*/
 			}
 		}
 		if (retXML == "") return true;

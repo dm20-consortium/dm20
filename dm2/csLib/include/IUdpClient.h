@@ -12,6 +12,7 @@ namespace CS{
 			
 		virtual int SendClientData(struct clientdata &buf_) = 0;
 		virtual int SendPacket(struct send_message &buf_) = 0;
+		virtual int SendtoDivision(struct send_message &buf_, char *payload_, const int &fragment_size_) = 0;
 
 		virtual void CloseSocketFd() = 0;
 	};

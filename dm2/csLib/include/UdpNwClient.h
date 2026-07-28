@@ -65,15 +65,19 @@ namespace CS{
 
 		addrinfo Init(std::string port_no, std::string dst_ip);
 
+		addrinfo Init(std::string port_no, std::string dst_ip, const int priority);
+
 		addrinfo Init_path(std::string port_no, std::string dst_ip, std::string conf_dir_path);
 
 		void Init(const std::string& fd_name, const std::string& port, const std::string& ip) override;
+		
 		int SendClientData(struct clientdata &buf_) override;
 		int SendPacket(struct send_message &buf_) override;
-		
+		int SendtoDivision(struct send_message &buf_, char *payload_, const int &fragment_size_);
+
 		addrinfo Init_v6(std::string port_no, std::string dst_ip, std::string if_name);
 
-		addrinfo InitClient(std::string port_no, std::string dst_ip);
+		addrinfo InitClient(std::string port_no, std::string dst_ip, const int priority);
 
 		addrinfo InitClient_v6(std::string port_no, std::string dst_ip, std::string if_name);
 

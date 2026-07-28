@@ -60,6 +60,7 @@ static const unordered_map<string, Getter> getters = {
     {"uint32", [](ResultSet& rs, int i){ return to_string(rs.getUnsignedInt(i)); }},
     {"uint64", [](ResultSet& rs, int i){ return to_string(rs.getUnsignedLongLong(i)); }},
     {"bool",   [](ResultSet& rs, int i){ return to_string(rs.getBool(i)); }},
+    {"bytes",   [](ResultSet& rs, int i){ return rs.getBytesHex(i); }},
     {"vector(int32)", [](ResultSet& rs, int i){
         return vectorToString(rs.getVectorInt(i));
     }},
