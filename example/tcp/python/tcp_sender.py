@@ -5,9 +5,10 @@ import socket
 import struct
 import time
 import yaml
+import string
 
+import dpkt
 from scapy.layers.inet import IP, UDP
-
 
 # --------------------------
 # 型定義
@@ -45,10 +46,43 @@ def load_format_yaml(path):
 # --------------------------
 # 値CSV読み込み
 # --------------------------
-def load_value_csv(path):
+def load_value_file(path):
     with open(path) as f:
         return list(csv.DictReader(f))
 
+
+def dump_packet(data, width=16):
+    print(f"Packet Size: {len(data)} bytes")
+
+    for offset in range(0, len(data), width):
+        chunk = data[offset:offset + width]
+
+        hex_str = " ".join(f"{b:02X}" for b in chunk)
+        ascii_str = "".join(chr(b) if chr(b) in string.printable and b >= 0x20 else "." for b in chunk)
+
+        print(f"{offset:04X}  {hex_str:<{width*3}} {ascii_str}")
+
+# --------------------------
+# 値PCAP読み込み
+# --------------------------
+def load_pcap(filename):
+    packets = []
+
+    with open(filename, "rb") as f:
+        pcap = dpkt.pcap.Reader(f)
+        for ts, buf in pcap:
+            eth = dpkt.ethernet.Ethernet(buf)
+            if not isinstance(eth.data, dpkt.ip.IP):
+                continue
+            ip = eth.data
+            if not isinstance(ip.data, dpkt.tcp.TCP):
+                continue
+            tcp = ip.data
+            if len(tcp.data) == 0:
+                continue
+            packets.append({"timestamp": ts, "payload": tcp.data})
+
+    return packets
 
 # --------------------------
 # 値生成
@@ -135,8 +169,8 @@ def main():
     parser.add_argument("--port", type=int, required=True)
     parser.add_argument("--format", required=True)
 
-    parser.add_argument("--mode", choices=["sample", "csv"], required=True)
-    parser.add_argument("--value_csv")
+    parser.add_argument("--mode", choices=["sample", "csv", "pcap"], required=True)
+    parser.add_argument("--value")
 
     parser.add_argument("--interval", type=float, default=1.0)
 
@@ -144,6 +178,9 @@ def main():
 
     header_fields, data_fields = load_format_yaml(args.format)
 
+    prev_ts = None
+    if args.mode == "pcap":
+        packets = load_pcap(args.value)
     # TCPソケット
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
@@ -152,8 +189,27 @@ def main():
     try:
         sock.connect((args.ip, args.port))
         while True:
+            if args.mode == "pcap":
+                for packet in packets:
+                    ts = packet["timestamp"]
+                    payload = packet["payload"]
+                    if args.interval == 0:
+                        if prev_ts is not None:
+                            sleep_time = ts - prev_ts
+                            if sleep_time > 0:
+                                print(f"sleep_time: {int(sleep_time)}")
+                                time.sleep(sleep_time)
+                        prev_ts = ts
+                    else:
+                        time.sleep(args.interval)
+                    #dump_packet(payload )
+                    sock.sendall(payload)
+                    count += 1
+                    print(f"sent={count} " f"size={len(payload)} ")
+                break
+                
             if args.mode == "csv":
-                rows = load_value_csv(args.value_csv)
+                rows = load_value_file(args.value)
             else:
                 rows = [create_sample_row(header_fields, data_fields, count)]
 
@@ -174,8 +230,9 @@ def main():
     except ConnectionRefusedError:
         print(f'Connection Refused: {args.ip}, {args.port}')
 
-    except:
+    except Exception as e:
         print(f'Connection Error: {args.ip}, {args.port}')
+        print(e)
 
     finally:
         if sock:

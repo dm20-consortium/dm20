@@ -55,7 +55,7 @@ dm2mes -r -S signal_info
 事前に下記ツールをインストールします。
 
 ```bash
-pip install scapy
+pip install scapy dpkt
 ```
 
 TCPデータを生成・送信する[サンプルスクリプト](python)をTCP端末（送信側）にコピーして、起動します。
@@ -67,7 +67,7 @@ python3 tcp_sender.py  --port 54347 --format ../../../docs/yamls/signal_info.yam
 `--mode`に`csv`を指定し、CSVファイルを入力値とする事も可能です。
 
 ```bash
-python3 tcp_sender.py  --port 54347 --format ../../../docs/yamls/signal_info.yaml --mode csv --value_csv ../../udp/python/signal_info_value.csv --ip <DM端末のIPアドレス>
+python3 tcp_sender.py  --port 54347 --format ../../../docs/yamls/signal_info.yaml --mode csv --value ../../udp/python/signal_info_value.csv --ip <DM端末のIPアドレス>
 ```
 
 ### 3.5 TCPデータ受信確認（DM端末側）
@@ -84,6 +84,22 @@ python3 tcp_sender.py  --port 54347 --format ../../../docs/yamls/signal_info.yam
 ```test
 1001,[1,2,3,4,5,6,7,8],1717000000000,3,0,10,0,1,0,50,60,1,0,50,60,1,0,50,60,1,0,50,60,1,0,50,60,1,0,50,60,1,0,50,60,1,0,50,60,1,0,50,60,1,0,50,60,1,0,50,60,1,0,50,60
 ```
+
+### 3.6 PCAPファイルを用いる場合
+
+受信端末側で、tcpdumpコマンドを使ってパケットをキャプチャします。
+
+- ローカルホストへ送っている場合（127.0.0.1:54347）のコマンド例
+```bash
+sudo tcpdump -i lo -w sample.pcap tcp port 54347
+```
+
+`--mode`に`pcap`を指定し、PCAPファイルを入力値とすれば、キャプチャしたPCAPファイルを再生できます。`--interval`を0にすると、再生した間隔で出力できます。
+
+```bash
+python3 tcp_sender.py  --port 54347 --format ../../../docs/yamls/signal_info.yaml --mode pcap --value sample.pcap --ip <DM端末のIPアドレス> --interval 0 
+```
+
 
 ### 4 複数台のDMを利用した構成
 
