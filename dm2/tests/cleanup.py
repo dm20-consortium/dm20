@@ -7,7 +7,7 @@ from service import ServiceRunner
 class CleanupRunner:
 
     def __init__(self, context):
-
+        print(context)
         self.service = ServiceRunner(context)
 
     def run(self):

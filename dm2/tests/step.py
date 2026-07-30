@@ -89,7 +89,8 @@ class StepRunner:
             command,
             shell=True,
             capture_output=True,
-            text=True
+            text=True,
+            env=self.ctx.env
         )
 
         #

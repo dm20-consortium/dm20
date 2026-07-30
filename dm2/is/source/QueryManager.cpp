@@ -199,7 +199,7 @@ namespace IS {
 	void QueryManager::addQuery(const string &user, const RecvData &data, const query_header &query_header_)
 	{
 		int mngId = getMngId();
-		addQuery(mngId, user, data, false, query_header_);
+		addQuery(mngId, user, data, true, query_header_);
 		presetQueryList.insert(std::pair<unsigned int, string>(mngId, user));
 	}
 	/**

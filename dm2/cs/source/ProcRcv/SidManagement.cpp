@@ -94,7 +94,6 @@ vector<unsigned long long> SidManagement::getKeys()
 int SidManagement::updateSidIp(unsigned long long sid, const std::string& ip, const bool delete_flg)
 {
 	int changed = 0;
-
 	// 既存のipを取得し、変更が必要か確認
 	std::string current_ip;
 	try
@@ -127,7 +126,8 @@ int SidManagement::updateSidIp(unsigned long long sid, const std::string& ip, co
 	
 	// ファイルを開いて更新処理を行う
 	std::ifstream infile(filename);
-	std::ofstream outfile("temp.csv");
+	std::string tempFile = filename + ".tmp";
+	std::ofstream outfile(tempFile);
 	std::string line;
 	bool updated = false;
 
@@ -184,15 +184,9 @@ int SidManagement::updateSidIp(unsigned long long sid, const std::string& ip, co
 	outfile.close();
 
 	// ファイル操作のエラーチェック
-	if (remove(filename.c_str()) != 0)
+	if (std::rename(tempFile.c_str(), filename.c_str()) != 0)
 	{
-		// エラー処理（必要に応じて例外をスローするなど）
-		return -1;
-	}
-
-	if (rename("temp.csv", filename.c_str()) != 0)
-	{
-		// エラー処理
+		std::cerr << strerror(errno) << std::endl;
 		return -1;
 	}
 

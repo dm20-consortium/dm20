@@ -319,6 +319,7 @@ namespace IS {
 	bool ResponseOperator::createResponse(TupleSet& tupleset, string& retProto, vector<string>& retProtoList)
 	{
 		IS::ProtobufParser &pp = IS::ProtobufParser::get_instance();
+		//cout << "code:" << code << ", type:" << currentResponseType << endl;
 		pp.init();
 		if (code == ErrorCode::NO_ERR) {
 			if (isTCP) {

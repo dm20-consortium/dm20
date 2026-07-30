@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import yaml
+import os
 
 from prepare import PrepareRunner
 from service import ServiceRunner
@@ -30,6 +31,11 @@ class TestCase:
             self.ctx.config = yaml.safe_load(f)
 
         self.cases = self.ctx.config.get("cases", [])
+
+        env = self.ctx.config.get("environment", {})
+        variables = env.get("variables", {})
+        self.ctx.env.update(variables)
+        self.ctx.shell = env.get("shell", "bash")
 
     def print_header(self):
 

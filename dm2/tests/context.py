@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import os
 from pathlib import Path
 
 
@@ -29,6 +30,8 @@ class Context:
         self.logfiles = {}
 
         self.step_results = {}
+        
+        self.env = os.environ.copy()
         
     def add_process(self, name, process):
         self.processes[name] = process

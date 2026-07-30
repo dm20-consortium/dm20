@@ -43,18 +43,20 @@ class ServiceRunner:
         print(f"Command : {command}")
 
         process = None
-        if name == "dm2is":
+        if name == "dm2is" or name == "dm2cs_send" or name == "dm2cs_recv":
             process = subprocess.Popen(
                 shlex.split(command),
                 stdout=logfile,
-                stderr=subprocess.STDOUT
+                stderr=subprocess.STDOUT,
+                env=self.ctx.env
             )
         else:
             process = subprocess.Popen(
                 command,
                 shell=True,
                 stdout=logfile,
-                stderr=subprocess.STDOUT
+                stderr=subprocess.STDOUT,
+                env=self.ctx.env
             )
 
         self.ctx.add_process(name, process)
@@ -78,7 +80,6 @@ class ServiceRunner:
         # YAML cleanup.stop があればそれを優先
         #
         cleanup = self.ctx.config.get("cleanup", {})
-
         targets = cleanup.get(
             "stop",
             list(self.ctx.processes.keys())
