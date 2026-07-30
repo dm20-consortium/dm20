@@ -50,8 +50,14 @@ $(OBJDIR)/%.o: $(SRCDIR)/%.cpp
 
 TUPLE_LIB = ../tupleLib/lib/libtuple.a
 
-.PHONY: all clean install uninstall bin
-all: clean $(TARGET)
+.PHONY: all clean install uninstall bin legacy_proto_clean
+
+legacy_proto_clean:
+	rm -f include/*.pb.h
+	rm -f source/*.pb.cc
+	rm -f obj/*.pb.d obj/*.pb.o
+
+all: clean legacy_proto_clean $(TARGET)
 
 bin:
 	install -d bin obj

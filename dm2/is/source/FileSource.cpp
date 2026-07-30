@@ -10,12 +10,12 @@ using namespace std;
 namespace IS {
 
 	/**
-	* ƒRƒ“ƒXƒgƒ‰ƒNƒ^
+	* ã‚³ãƒ³ã‚¹ãƒˆãƒ©ã‚¯ã‚¿
 	*
 	* @author	Nagoya University
 	* @date	2018/04/26
 	*
-	* @param	name	ƒlƒbƒgƒ[ƒN–¼Ì
+	* @param	name	ãƒãƒƒãƒˆãƒ¯ãƒ¼ã‚¯åç§°
 	*/
 	FileSource::FileSource(string name)
 		:InformationSource(name) {
@@ -23,7 +23,7 @@ namespace IS {
 	}
 
 	/**
-	* ƒfƒXƒgƒ‰ƒNƒ^
+	* ãƒ‡ã‚¹ãƒˆãƒ©ã‚¯ã‚¿
 	*
 	* @author	Nagoya University
 	* @date	2018/04/26
@@ -33,13 +33,13 @@ namespace IS {
 	}
 
 	/**
-	* ƒtƒ@ƒCƒ‹‚ð“Ç‚Ýž‚ÝŽóMˆ—‚Éƒf[ƒ^‚ð—¬‚·
+	* ãƒ•ã‚¡ã‚¤ãƒ«ã‚’èª­ã¿è¾¼ã¿å—ä¿¡å‡¦ç†ã«ãƒ‡ãƒ¼ã‚¿ã‚’æµã™
 	*
 	* @author	Nagoya University
 	* @date	2018/04/26
 	*
-	* @param	fileName		ƒtƒ@ƒCƒ‹–¼
-	* @param	num	“Ç‚Ýž‚ÞŽÔ—¼‘ä”
+	* @param	fileName		ãƒ•ã‚¡ã‚¤ãƒ«å
+	* @param	num	èª­ã¿è¾¼ã‚€è»Šä¸¡å°æ•°
 	*/
 	void FileSource::fileReadInput(const string &fileName, int num) {
 		logger->info("Start ReadInputFile(" + fileName + ")");
@@ -50,7 +50,7 @@ namespace IS {
 		int row = 0;
 		if (ifs.fail())
 		{
-			std::cerr << "Ž¸”s" << std::endl;
+			std::cerr << "å¤±æ•—" << std::endl;
 			return;
 		}
 		RecvData data;

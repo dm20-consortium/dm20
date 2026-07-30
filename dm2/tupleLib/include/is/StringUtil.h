@@ -150,11 +150,14 @@ namespace IS {
 		bool isString(const string &input);
 		string getClassName(const type_info& id);
 		bool compress(string inStr, Bytef *outBuf);
+		vector<char> compress(string inStr);
 		int decompress(char *inBuf, char *outBuf);
 		bool compressUsingZstd(string inStr, int inSize, void *outBuf, int *outSize);
+		vector<char> compressUsingZstd(string inStr, int inSize);
 		bool decompressUsingZstd(char *inBuf, char *outBuf, int inSize, int *outSize);
 		void getIsHeader(char *buf, IsHeaderInfo &info);
 		int setCompressedBufWithHeader(string inStr, char *outBuf, char compressFlg, long key);
+		vector<char> setCompressedBufWithHeader(string inStr, char compressFlg, long key);
 		string getValueByXMLTag(string target, string key);
 	};
 

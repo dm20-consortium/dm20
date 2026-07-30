@@ -130,7 +130,7 @@ namespace IS {
 		}
 		// レスポンスの返却
 		IS::ResponseOperator		*opX = new IS::ResponseOperator(data);
-		opX->TCPSend(res);
+		opX->sendSystemResponse(res);
 		opX->exit();
 		delete opX;
 		pp.finalize();
@@ -218,7 +218,7 @@ namespace IS {
 		isp.finalize();
 		// レスポンスの返却
 		IS::ResponseOperator		*opX = new IS::ResponseOperator(data);
-		opX->TCPSend(res);
+		opX->sendSystemResponse(res);
 		opX->exit();
 		delete opX;
 

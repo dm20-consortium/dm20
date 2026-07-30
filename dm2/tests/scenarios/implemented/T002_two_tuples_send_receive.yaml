@@ -1,9 +1,9 @@
-id: T001
+id: T002
 
-name: Basic send/receive
+name: Two tuples send/receive
 
 description: |
-  dm2isを経由してメッセージを送受信できることを確認する。
+  dm2isを経由して、2タプルのメッセージを送受信できることを確認する。
 
 services:
   - name: dm2is

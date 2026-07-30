@@ -232,7 +232,20 @@ namespace IS {
 			return "";
 		}
 	}
-
+	/**
+	* 値を設定（上書き）する
+	*
+	* @author	Nagoya University
+	* @date	2026/07/30
+	*
+	* @param	key			キー文字列
+	* @param	value			キー文字列
+	*
+	*/
+	void Settings::setParameter(const string &key, const string &value)
+	{
+		this->settingMap[key] = value;
+	}
 	/**
 	* SIDの種別を取得する
 	*

@@ -42,6 +42,7 @@ namespace IS {
 		string protocol = "";
 		bool isTCP = false;
 		bool exit_flag = false;
+		char compressFlg;
 		ErrorCode code = IS::ErrorCode::NO_ERR;
 		string msg;
 		bool isDynamicColumn = false;
@@ -65,6 +66,11 @@ namespace IS {
 		void hideColumn(TupleSet &tupleset);
 		void terminate(unsigned int mngId);
 		bool isSslShutdown(SSL *ssl);
+		bool checkPreCondition(const TupleSet& tupleset);
+		void addTimestamp(TupleSet& tupleset);
+		bool createResponse(TupleSet& tupleset, string& retXML, vector<string>& retXMLList);
+		void sendStreamResponse(const vector<string>& retXMLList);
+		bool checkSSLReturn(const int ret_arg);
 	public:
 		// 返信種別
 		enum responseType {
@@ -92,7 +98,7 @@ namespace IS {
 		virtual bool process(vector<IS::TupleSet>& ts);
 		virtual void process_close();
 
-		int TCPSend(const string &body);
+		int sendSystemResponse(const string &body);
 		void checkTerminate();
 	};
 }

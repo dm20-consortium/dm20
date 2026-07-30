@@ -556,14 +556,17 @@ namespace IS {
 	vector<string> ProtobufParser::createQueryResult(const unsigned int mngId, const string &tableName, TupleSet& ts, const bool isDynamicColumn, const int sepSize)
 	{
 		vector<string> retStrList;
+		string _tableName = tableName;
 
-		string retStr = queryResultSerializeToString(tableName, ts, isDynamicColumn);
+		string retStr = queryResultSerializeToString(_tableName, ts, isDynamicColumn);
+		// カラム名が設定されている場合、Protobufヘッダのテーブル名は空にする
+		if (isDynamicColumn) _tableName = "";
 
 		StringUtil stringUtil;
 		stringUtil.splitBySize(retStr, sepSize - PROTOBUF_HEADER_FIXED_SIZE, retStrList);
 		for(int i = 0; i < retStrList.size() ; i++)
 		{
-			retStrList[i] = createHeader(mngId, tableName, retStrList[i], retStr.size(), i, retStrList.size()) + retStrList[i];
+			retStrList[i] = createHeader(mngId, _tableName, retStrList[i], retStr.size(), i, retStrList.size()) + retStrList[i];
 		}
 		return retStrList;
 	}

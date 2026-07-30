@@ -35,6 +35,7 @@ namespace IS {
 		isTCP = true;
 		expect_data_size = 1;
 		this->argument.append("PROTOCOL:TCP ");
+		this->compressFlg = settings.getParameter("COMPRESS_FLG")[0];
 	}
 
 	/**
@@ -68,6 +69,7 @@ namespace IS {
 		this->argument.append("PROTOCOL:" + protocol);
 		this->argument.append(" ERROR_CODE:" + std::to_string((int)code));
 		this->tcpPort = tcpPort;
+		this->compressFlg = settings.getParameter("COMPRESS_FLG")[0];
 	}
 
 	/**
@@ -102,6 +104,7 @@ namespace IS {
 		expect_data_size = 1;
 		this->argument.append("PROTOCOL:" + protocol);
 		this->argument.append(" ERROR_CODE:" + std::to_string((int)code));
+		this->compressFlg = settings.getParameter("COMPRESS_FLG")[0];
 	}
 
 	/**
@@ -149,6 +152,7 @@ namespace IS {
 		}
 
 		this->argument.append("PROTOCOL:" + protocol);
+		this->compressFlg = settings.getParameter("COMPRESS_FLG")[0];
 		
 	}
 
@@ -178,6 +182,7 @@ namespace IS {
 		expect_data_size = 1;
 		exitReady = true;	// executeを通らないため常に終了可能とする
 		this->argument.append("PROTOCOL:" + protocol);
+		this->compressFlg = settings.getParameter("COMPRESS_FLG")[0];
 	}
 
 	/**
@@ -196,33 +201,33 @@ namespace IS {
 	}
 	bool ResponseOperator::setDTLSsocket()
 	{
-				struct sockaddr_in udpAddr;
-				BIO *bio;
-				struct timeval timeout;
-				protocol = "DTLS";
+		struct sockaddr_in udpAddr;
+		BIO *bio;
+		struct timeval timeout;
+		protocol = "DTLS";
 
-				this->ctx = SSL_CTX_new(DTLSv1_2_client_method());
-				this->ssl = SSL_new(ctx);
+		this->ctx = SSL_CTX_new(DTLSv1_2_client_method());
+		this->ssl = SSL_new(ctx);
 
-				sock = socket(AF_INET, SOCK_DGRAM, 0);
-				udpAddr.sin_family = AF_INET;
-				udpAddr.sin_port = htons(this->udpPort);
-				udpAddr.sin_addr.s_addr = inet_addr(inet_ntoa(addr.sin_addr));
+		sock = socket(AF_INET, SOCK_DGRAM, 0);
+		udpAddr.sin_family = AF_INET;
+		udpAddr.sin_port = htons(this->udpPort);
+		udpAddr.sin_addr.s_addr = inet_addr(inet_ntoa(addr.sin_addr));
 
-				bio = BIO_new_dgram(sock, BIO_CLOSE);
-				connect(sock, (struct sockaddr *) &udpAddr, sizeof(udpAddr));
-				BIO_ctrl(bio, BIO_CTRL_DGRAM_SET_CONNECTED, 0, &udpAddr);
-				SSL_set_bio(ssl, bio, bio);
+		bio = BIO_new_dgram(sock, BIO_CLOSE);
+		connect(sock, (struct sockaddr *) &udpAddr, sizeof(udpAddr));
+		BIO_ctrl(bio, BIO_CTRL_DGRAM_SET_CONNECTED, 0, &udpAddr);
+		SSL_set_bio(ssl, bio, bio);
 
-				if (SSL_connect(ssl) < 0) {
-					return false;
-				}
+		if (SSL_connect(ssl) < 0) {
+			return false;
+		}
 
-				// Set and activate timeouts
-				timeout.tv_sec = stoi(settings.getParameter("DTLS_SOCK_TIMEOUT_SEC")) * stoi(settings.getParameter("DTLS_SOCK_TIMEOUT_CNT"));
-				timeout.tv_usec = 0;
-				BIO_ctrl(bio, BIO_CTRL_DGRAM_SET_RECV_TIMEOUT, 0, &timeout);
-				return true;
+		// Set and activate timeouts
+		timeout.tv_sec = stoi(settings.getParameter("DTLS_SOCK_TIMEOUT_SEC")) * stoi(settings.getParameter("DTLS_SOCK_TIMEOUT_CNT"));
+		timeout.tv_usec = 0;
+		BIO_ctrl(bio, BIO_CTRL_DGRAM_SET_RECV_TIMEOUT, 0, &timeout);
+		return true;
 	}
 	void ResponseOperator::process_close()
 	{
@@ -235,37 +240,54 @@ namespace IS {
 		}
 	}
 	/**
-	* オペレータ処理
+	* 処理前検査
+	*
+	* @author	Nagoya University
+	* @date	2018/03/13
+	*
+	* @param [in]	tupleset	タプルセット
+	*
+	* @return	検査結果
+	*/
+	bool ResponseOperator::checkPreCondition(const TupleSet& tupleset)
+	{
+		// presetTimerのケース
+		if (string(inet_ntoa(addr.sin_addr)) == "0.0.0.0") {
+			logger->info("[" + this->type + "] ========== Response END ========== [Reason] send-IP: 0.0.0.0");
+			return false;
+		}
+		if (send_err_flag) {
+			logger->debug("[" + this->type + "] ========== Response END ========== [Reason] send_err_flag on");
+			return false;
+		}
+		if (code == ErrorCode::NO_ERR) {
+
+			// 返却するTupleが存在しないかつ、待機状態からnotify_one()により起動された場合、かつUDP使用時(継続クエリ)は返却しない
+			if (tupleset.size() == 0 && isTCP == false) {
+				logger->debug("[" + this->type + "] ========== Response END ========== [Reason] No tuple");
+				return false;
+			}
+		}
+		if (isTCP) {
+			if (ssl != NULL) {
+				if (isSslShutdown(ssl)) {
+					logger->debug("[" + this->type + "] ========== Response END ========== [Reason] SSL is shutdown");
+					return false;
+				}
+			}
+		}
+		return true;
+	}
+	/**
+	* 時刻情報を追加付与
 	*
 	* @author	Nagoya University
 	* @date	2018/03/13
 	*
 	* @param [in,out]	ts	タプルセット
 	*
-	* @return	正常にデータ処理を実施でき、次のオペレータに渡す際にtrue
 	*/
-	bool ResponseOperator::process(vector<IS::TupleSet>& ts)
-	{
-		logger->debug("[" + this->type + "] ========== Response START ========== sock:" + to_string(this->sock) + ",isTCP:" + to_string(isTCP) + ",tsize:" + to_string(ts.at(0).size()));
-		// presetTimerのケース
-		if (string(inet_ntoa(addr.sin_addr)) == "0.0.0.0") {
-			logger->info("[" + this->type + "] ========== Response END ========== send-IP: 0.0.0.0");
-			return true;
-		}
-		if (send_err_flag) {
-			return true;
-		}
-#if MEASURE_MODE == 1
-		long startTime = DmUtil::getTimeMicrosec();
-		long procTime = startTime;
-		int step = 1;
-#endif
-		IS::ProtobufParser &pp = IS::ProtobufParser::get_instance();
-		
-		// Selectionは1つのtuplesetを使用
-		TupleSet& tupleset = ts.at(0);
-
-		// 時刻情報を追加付与
+	void ResponseOperator::addTimestamp(TupleSet& tupleset) {
 		if (!isTCP) {
 			long recvTime = DmUtil::getTimeMicrosec();
 			Schema schema = tupleset.getSchemaRef();
@@ -280,36 +302,25 @@ namespace IS {
 				}
 			}
 		}
-		// DEBUG 与えられたタプル情報の出力
-		printInputInfo(tupleset, this->argument);
-
-		// QueryResultXMLを生成する
-		string retXML = "";
-		vector<string> retXMLList;
-
-#if MEASURE_MODE == 1
-		long now = DmUtil::getTimeMicrosec();
-		double msec = (now - procTime) / 1000.0;
-		logger->info("[" + this->type + "] STAT_STEP" + to_string(step++) + " parameter analytics processing time: " + to_string(msec) + "[ms]");
-		procTime = now;
-#endif
+		return;
+	}
+	/**
+	* 電文生成
+	*
+	* @author	Nagoya University
+	* @date	2018/03/13
+	*
+	* @param [in]	tupleset	タプルセット
+	* @param [out]	retProto		電文（TCP応答、エラー時）
+	* @param [out]	retProtoList	電文（UDP応答）
+	*
+	* @return	正常に生成できた場合、true
+	*/
+	bool ResponseOperator::createResponse(TupleSet& tupleset, string& retProto, vector<string>& retProtoList)
+	{
+		IS::ProtobufParser &pp = IS::ProtobufParser::get_instance();
 		pp.init();
 		if (code == ErrorCode::NO_ERR) {
-
-			// 返却するTupleが存在しないかつ、待機状態からnotify_one()により起動された場合、かつUDP使用時(継続クエリ)は返却しない
-			if (tupleset.size() == 0 && isTCP == false) {
-				long completeTime = DmUtil::getTimeMicrosec();
-				if (tupleset.info.recvTime != 0) {
-					double totalProcTime = ((completeTime - tupleset.info.recvTime) / 1000.0);
-					if (totalProcessNoResTimeSlowest < totalProcTime) totalProcessNoResTimeSlowest = totalProcTime;
-					if (totalProcessNoResTimeEarliest == 0 || totalProcessNoResTimeEarliest > totalProcTime) totalProcessNoResTimeEarliest = totalProcTime;
-					totalProcessNoResTimeAVG = (double)((totalProcessNoResTimeAVG * (processNum - notifiedNum)) + totalProcTime) / (double)(processNum + 1 - notifiedNum);
-					logger->debug("[PERFORMANCE][" + getType() + "] totalProcTime(NoRes):" + to_string(totalProcTime) + "[ms] AVGTime(NoRes):" + to_string(totalProcessNoResTimeAVG) + "[ms] procNum:" + to_string(processNum + 1 - notifiedNum));
-				}
-				logger->debug("[" + this->type + "] ========== Response  END  (No Tuple) ========== ");
-				return false;
-			}
-
 			if (isTCP) {
 				// 返信種別を判定
 				switch (currentResponseType)
@@ -317,17 +328,17 @@ namespace IS {
 					// クエリ登録応答
 					case responseType::RESPONSE_QUERY:
 						// クエリ管理番号の返送
-						retXML = pp.createQueryResponse(mngId, tcpPort);
+						retProto = pp.createQueryResponse(mngId, tcpPort);
 						break;
 					// クエリキャンセル応答
 					case responseType::RESPONSE_CANCEL:
 						// クエリキャンセルの応答
-						retXML = pp.createCancelResponse(mngId);
+						retProto = pp.createCancelResponse(mngId);
 						break;
 					// 継続クエリ結果送信
 					case responseType::QUERY_RESULT:
 						// クエリ結果をprotobufに変換
-						retXML = pp.createQueryResult(mngId, this->protobufMessageName, tupleset, this->isDynamicColumn);
+						retProto = pp.createQueryResult(mngId, this->protobufMessageName, tupleset, this->isDynamicColumn);
 						break;
 				}
 			} else {
@@ -335,247 +346,231 @@ namespace IS {
 				hideColumn(tupleset);
 				// for (int idx = 0; idx < tupleset.size(); idx++) tupleset.getTuple(idx).dump();
 				// クエリ結果をprotobufに変換 + 指定バイト長で分割
-				retXMLList = pp.createQueryResult(mngId, this->protobufMessageName, tupleset, this->isDynamicColumn, IPv4_UDP_MAX_BYTE);
+				retProtoList = pp.createQueryResult(mngId, this->protobufMessageName, tupleset, this->isDynamicColumn, IPv4_UDP_MAX_BYTE);
 			}
-		}
-		else {
+		} else {
 			// 返信種別を判定
 			switch (currentResponseType)
 			{
 				// クエリキャンセル応答
 				case responseType::RESPONSE_CANCEL:
 					// エラー時のクエリキャンセルレスポンスを生成
-					retXML = pp.createCancelErrorResponse(to_string(static_cast<int>(code)), msg);
+					retProto = pp.createCancelErrorResponse(to_string(static_cast<int>(code)), msg);
 					break;
 				// 継続クエリ結果送信
 				case responseType::QUERY_RESULT:
 					// エラー時のクエリレスポンスを生成
-					retXML = pp.createQueryErrorResponse(to_string(static_cast<int>(code)), msg);
+					retProto = pp.createQueryErrorResponse(to_string(static_cast<int>(code)), msg);
+					break;
+				case responseType::RESPONSE_QUERY:
 					break;
 			}
 		}
 		pp.finalize();
-
-#if MEASURE_MODE == 1
-		now = DmUtil::getTimeMicrosec();
-		msec = (now - procTime) / 1000.0;
-		logger->info("[" + this->type + "] STAT_STEP" + to_string(step++) + " create xml processing time: " + to_string(msec) + "[ms]");
-		procTime = now;
-#endif
-		if (isTCP) {
-			bool doSend = true;
-			if (ssl != NULL) {
-				if (isSslShutdown(ssl)) {
-					doSend = false;
+		return true;
+	}
+	/**
+	* SSL_writeの結果チェック
+	*
+	* @author	Nagoya University
+	* @date	2018/03/13
+	*
+	* @param [in]	ret_arg	SSL_writeの結果
+	*
+	* @return	正常に送信・あるいはリセット成功時、true
+	*/
+	bool ResponseOperator::checkSSLReturn(const int ret_arg)
+	{
+		bool rtn = false;
+		string errMsg = "";
+		switch (SSL_get_error(ssl, ret_arg)) {
+		case SSL_ERROR_NONE:
+			rtn = true;
+			break;
+		case SSL_ERROR_WANT_WRITE:
+			errMsg = "ERROR_WANT_WRITE";
+			break;
+		case SSL_ERROR_SSL:
+			errMsg = "ERROR_SSL";
+			break;
+		case SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER:
+			errMsg = "SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER";
+			break;
+		case SSL_ERROR_SYSCALL:
+			process_close();
+			if(setDTLSsocket()) {
+				errMsg = "Reset DTLS Socket and Continue";
+				rtn = true;
+			} else {
+				errMsg = "ERROR_SYSCALL";
+				process_close();
+			}
+			break;
+		default:
+			errMsg = "ERROR_OTHER";
+			break;
+		}
+		if (isSslShutdown(ssl)) {
+			errMsg = "SSL IS SHUTDOWN";
+		}
+		logger->warn("[ResponseOperator]" + errMsg);
+		return rtn;
+	}
+	/**
+	* ストリーム応答処理
+	*
+	* @author	Nagoya University
+	* @date	2018/03/13
+	*
+	* @param [in]	tupleset	タプルセット
+	* @param [out]	retProto		電文（TCP応答、エラー時）
+	* @param [out]	retProtoList	電文（UDP応答）
+	*
+	* @return	正常に生成できた場合、true
+	*/
+	void ResponseOperator::sendStreamResponse(const vector<string>& retProtoList)
+	{
+		struct sockaddr_in udpAddr;
+		int udpSock = -1;
+		int ret = 0;
+		unsigned int sendSumLen = 0;
+		
+		if (replyForConQueryByTcp) {
+			// ストリームデータをTCPで返すケース
+			for (unsigned int i = 0; i < retProtoList.size(); i++) {
+				Bytef outbuf[this->TcpSendSize];
+				logger->debug("[ResponseOperator]send_sock:" + to_string(this->sock));
+				bool doCompress = stringUtil.compress(retProtoList.at(i), outbuf);
+				if (doCompress) {
+					if (ssl == NULL) {
+						ret = send(this->sock, outbuf, this->TcpSendSize, 0);
+					} else {
+						if (isSslShutdown(ssl)) break;
+						ret = SSL_write(ssl, outbuf, this->TcpSendSize);
+					}
+				} else {
+					ret = -1;
+				}
+				if (ret > 0) {
+					sendSumLen = sendSumLen + ret;
+				} else {
+					string errMsg = string(std::strerror(errno));
+					string errIp = inet_ntoa(addr.sin_addr);
+					logger->error("[" + this->type + "] Failed to send TCP errmsg: " + errMsg + ",ip:" + errIp);
+					//コネクションが切れた後に、再送しようとすると、プロセスが終了するため、キャンセルされるまでprocess関数内では何もしない。
+					send_err_flag = true;
+					break;
 				}
 			}
-			if (doSend) {
-				// TCPにてレスポンス返却
-				TCPSend(retXML);
-				if (tupleset.size() == 0 && (Operator::isDataReady() == false)) {
-					// 継続クエリの管理番号返却時、キャンセル要求時はexecuteを通らないため終了可能
-					exitReady = true;
+		} else {
+			// ストリームデータをUDPで返すケース
+			if (ssl == NULL) {
+				udpSock = socket(AF_INET, SOCK_DGRAM, 0);
+				udpAddr.sin_family = AF_INET;
+				udpAddr.sin_port = htons(this->udpPort);
+				udpAddr.sin_addr.s_addr = inet_addr(inet_ntoa(addr.sin_addr));
+			}
+			for (unsigned int i = 0; i < retProtoList.size(); i++) {
+				//cout << retProtoList.at(i) << endl;
+				vector<char> sendBuf;
+				const char* sendPtr;
+				size_t sendSize;
+				if (compressFlg == '1' || compressFlg == '2') {
+					long key = DmUtil::getTimeMicrosec();
+					sendBuf = stringUtil.setCompressedBufWithHeader(retProtoList.at(i), compressFlg, key);
+					sendPtr = sendBuf.data();
+					sendSize = sendBuf.size();
 				}
+				if (sendBuf.empty()) {
+					if (compressFlg == '1' || compressFlg == '2') logger->warn("[" + this->type + "] Compress-Proc is Failed. Send to No-Compress-Data");
+					const string& s = retProtoList.at(i);
+					sendPtr = s.data();
+					sendSize = s.size();
+				}
+				if (ssl == NULL) {
+					ret = sendto(udpSock, sendPtr, sendSize, 0, (struct sockaddr *)&udpAddr, sizeof(udpAddr));
+				} else {
+					if (isSslShutdown(ssl)) break;
+					ret = SSL_write(ssl, sendPtr, sendSize);
+				}
+				logger->info("[ResponseOperator] sendSize:" + to_string(sendSize) + " ,compressFlg:" + compressFlg);
+				if (ret > 0) {
+					sendSumLen = sendSumLen + ret;
+				} else {
+					string errMsg = string(std::strerror(errno));
+					string errIp = inet_ntoa(udpAddr.sin_addr);
+					logger->error("[" + this->type + "] Failed to sendto. retry.... split.length:" + std::to_string(retProtoList.at(i).length()));
+					logger->error("[" + this->type + "] Failed to send UDP errmsg: " + errMsg + ",ip:" + errIp);
+					//コネクションが切れた後に、再送しようとすると、プロセスが終了するため、キャンセルされるまでprocess関数内では何もしない。
+					send_err_flag = true;
+					bool checkSSL = checkSSLReturn(ret);
+					if (!checkSSL)  break;
+				}
+			}
+		}
+		ret = sendSumLen;
+
+		if (ret > 0) {
+			logger->debug("[" + this->type + "] Response by " + protocol + ". MNGID:" + std::to_string(mngId) + " sendto : " + string(inet_ntoa(addr.sin_addr)) + ":" + std::to_string(this->udpPort) + " Size:" + std::to_string(ret) + " byte");
+		}
+		else {
+			//logger->debug("[" + this->type + "] MNGID:" + std::to_string(mngId) + " sendto error: " + string(inet_ntoa(addr.sin_addr)) + ":" + std::to_string(this->udpPort) + " XMLListSize : " + std::to_string(retProtoList.length()) + " byte");
+			//logger->debug("[" + this->type + "] Failed to send. errmsg: " + string(std::strerror(errno)));
+		}
+		if (!replyForConQueryByTcp) {
+			close(udpSock);
+		}
+
+	}
+	/**
+	* オペレータ処理
+	*
+	* @author	Nagoya University
+	* @date	2018/03/13
+	*
+	* @param [in,out]	ts	タプルセット
+	*
+	* @return	正常にデータ処理を実施でき、次のオペレータに渡す際にtrue
+	*/
+	bool ResponseOperator::process(vector<IS::TupleSet>& ts)
+	{
+		logger->debug("[" + this->type + "] ========== Response START ========== sock:" + to_string(this->sock) + ",isTCP:" + to_string(isTCP) + ",tsize:" + to_string(ts.at(0).size()));
+
+		// Selectionは1つのtuplesetを使用
+		TupleSet& tupleset = ts.at(0);
+		// 処理前検査
+		if (!checkPreCondition(tupleset)) return true;
+		// 時刻付与
+		addTimestamp(tupleset);
+
+		// DEBUG 与えられたタプル情報の出力
+		printInputInfo(tupleset, this->argument);
+		
+		string retProto = "";
+		vector<string> retProtoList;
+		// 電文生成
+		if (!createResponse(tupleset, retProto, retProtoList)) {
+			return false;
+		}
+		if (isTCP) {
+			// システム応答電文を送信
+			sendSystemResponse(retProto);
+			if (tupleset.size() == 0 && (Operator::isDataReady() == false)) {
+				// 継続クエリの管理番号返却時、キャンセル要求時はexecuteを通らないため終了可能
+				exitReady = true;
 			}
 		}
 		else {
-			struct sockaddr_in udpAddr;
-			int udpSock;
-			if (!replyForConQueryByTcp) {
-				// UDPにてレスポンス返却
-				if (ssl == NULL) {
-					udpSock = socket(AF_INET, SOCK_DGRAM, 0);
-					udpAddr.sin_family = AF_INET;
-					udpAddr.sin_port = htons(this->udpPort);
-					udpAddr.sin_addr.s_addr = inet_addr(inet_ntoa(addr.sin_addr));
-				}
-			}
-			int ret = 0;
-			unsigned int sendSumLen = 0;
-			for (unsigned int i = 0; i < retXMLList.size(); i++) {
-				//cout << retXMLList.at(i) << endl;
-				if (ssl == NULL) {
-					if (replyForConQueryByTcp) {
-						Bytef outbuf[this->TcpSendSize];
-						logger->debug("[ResponseOperator]send_sock:" + to_string(this->sock));
-						if (stringUtil.compress(retXMLList.at(i), outbuf)) {
-							try {
-								ret = send(this->sock, outbuf, this->TcpSendSize, 0);
-							} catch (...) {
-								logger->warn(" ========== Send Exception Eroor  ========== sock: " + to_string(this->sock));
-							}
-						} else {
-							ret = 0;
-						}
-					} else {
-						char compressFlg = settings.getParameter("COMPRESS_FLG")[0];
-						cout << "compressFlg:" << compressFlg << endl;
-						if (compressFlg == '1' || compressFlg == '2' ) {
-							char outbuf[UNCOMPRESSED_BUF_SIZE];
-							long key = DmUtil::getTimeMicrosec();
-							int sendSize = stringUtil.setCompressedBufWithHeader(retXMLList.at(i), outbuf, compressFlg, key);
-							cout << "sendSize: " << sendSize << endl;
-							if (sendSize > 0) {
-								try {
-									ret = sendto(udpSock, outbuf, sendSize, 0, (struct sockaddr *)&udpAddr, sizeof(udpAddr));
-									//cout << "[" + this->type + "]ret:" << ret << ", sendSize:" << sendSize << endl;
-								} catch (...) {
-									logger->warn(" ========== Send Exception Eroor  ========== sock: " + to_string(this->sock));
-								}
-							} else {
-								ret = 0;
-								logger->warn("[" + this->type + "] CompressProc is Failed.");
-								// 互換性のため、圧縮フラグは付与しない。
-								//string s = "0" + retXMLList.at(i);
-								string s = retXMLList.at(i);
-								ret = sendto(udpSock, s.c_str(), s.length(), 0, (struct sockaddr *)&udpAddr, sizeof(udpAddr));
-							}
-						} else {
-							// 互換性のため、圧縮フラグは付与しない。
-							//string s = compressFlg + retXMLList.at(i);
-							string s = retXMLList.at(i);
-							cout << "sendSize: " << s.length() << endl;
-							ret = sendto(udpSock, s.c_str(), s.length(), 0, (struct sockaddr *)&udpAddr, sizeof(udpAddr));
-						}
-					}
-				} else {
-					if (isSslShutdown(ssl)) {
-						break;
-					}
-					if (replyForConQueryByTcp) {
-						Bytef outbuf[this->TcpSendSize];
-						if (stringUtil.compress(retXMLList.at(i), outbuf)) {
-							try {
-								ret = SSL_write(ssl, outbuf, this->TcpSendSize);
-							} catch (...) {
-								logger->warn(" ========== Send Exception Eroor  ========== sock: " + to_string(this->sock));
-							}
-						} else {
-							ret = 0;
-						}
-					} else {
-						bool iscontinue = false;
-						char compressFlg = settings.getParameter("COMPRESS_FLG")[0];
-						if (compressFlg == '1' || compressFlg == '2' ) {
-							char outbuf[UNCOMPRESSED_BUF_SIZE];
-							long key = DmUtil::getTimeMicrosec();
-							int sendSize = stringUtil.setCompressedBufWithHeader(retXMLList.at(i), outbuf, compressFlg, key);
-							if (sendSize > 0) {
-								try {
-									ret = SSL_write(ssl, outbuf, sendSize);
-									//cout << "[" + this->type + "]ret:" << ret << ", sendSize:" << sendSize << endl;
-								} catch (...) {
-									logger->warn(" ========== Send Exception Eroor  ========== sock: " + to_string(this->sock));
-								}
-							} else {
-								ret = 0;
-								logger->warn("[" + this->type + "] CompressProc is Failed.");
-								// 互換性のため、圧縮フラグは付与しない。
-								//string s = "0" + retXMLList.at(i);
-								string s = retXMLList.at(i);
-								ret = SSL_write(ssl, retXMLList.at(i).c_str(), retXMLList.at(i).length());
-							}
-						} else {
-							ret = SSL_write(ssl, retXMLList.at(i).c_str(), retXMLList.at(i).length());
-						}
-						if (ret < 0) {
-							switch (SSL_get_error(ssl, ret)) {
-							case SSL_ERROR_NONE:
-								cout << "ERROR_NONE" << endl;
-								break;
-							case SSL_ERROR_WANT_WRITE:
-								cout << "ERROR_WANT_WRITE" << endl;
-								break;
-							case SSL_ERROR_SSL:
-								cout << "ERROR_SSL" << endl;
-								break;
-							case SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER:
-								cout << "SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER" << endl;
-								break;
-							case SSL_ERROR_SYSCALL:
-								logger->warn("[ResponseOperator] ERROR_SYSCALL is catched");
-								process_close();
-								if(setDTLSsocket()) {
-									logger->warn("[ResponseOperator] Reset DTLS Socket and Continue");
-									iscontinue = true;
-								} else {
-									process_close();
-								}
-								break;
-							default:
-								logger->warn("[ResponseOperator] ERROR_ERROR_OTHER is catched");
-								break;
-							}
-							if (iscontinue) continue;
-						}
-					}
-					if (ret < 0) {
-						//コネクションが切れた後に、再送しようとすると、プロセスが終了するため、キャンセルされるまでprocess関数内では何もしない。
-						send_err_flag = true;
-					}
-				}
-
-				if (ret > 0) {
-					sendSumLen = sendSumLen + ret;
-				}
-				else {
-					string errMsg = string(std::strerror(errno));
-					if (replyForConQueryByTcp) {
-						string errIp = inet_ntoa(addr.sin_addr);
-						logger->error("[" + this->type + "] Failed to send TCP errmsg: " + errMsg + ",ip:" + errIp);
-					} else {
-						string errIp = inet_ntoa(udpAddr.sin_addr);
-						logger->error("[" + this->type + "] Failed to sendto. retry.... split.length:" + std::to_string(retXMLList.at(i).length()));
-						logger->error("[" + this->type + "] Failed to send UDP errmsg: " + errMsg + ",ip:" + errIp);
-						if (ssl != NULL) {
-							if (isSslShutdown(ssl)) {
-								logger->error("[" + this->type + "] ssl shutdown");
-							}
-						}
-					}
-				}
-			}
-			ret = sendSumLen;
-
-			if (ret > 0) {
-				logger->debug("[" + this->type + "] Response by " + protocol + ". MNGID:" + std::to_string(mngId) + " sendto : " + string(inet_ntoa(addr.sin_addr)) + ":" + std::to_string(this->udpPort) + " Size:" + std::to_string(ret) + " byte");
-			}
-			else {
-				//logger->debug("[" + this->type + "] MNGID:" + std::to_string(mngId) + " sendto error: " + string(inet_ntoa(addr.sin_addr)) + ":" + std::to_string(this->udpPort) + " XMLSize : " + std::to_string(retXML.length()) + " byte");
-				//logger->debug("[" + this->type + "] Failed to send. errmsg: " + string(std::strerror(errno)));
-			}
-			if (!replyForConQueryByTcp) {
-				close(udpSock);
-			}
+			// ストリーム応答電文を送信
+			sendStreamResponse(retProtoList);
 		}
 
-#if MEASURE_MODE == 1
-		now = DmUtil::getTimeMicrosec();
-		msec = (now - procTime) / 1000.0;
-		logger->info("[" + this->type + "] STAT_STEP" + to_string(step++) + " sendto processing time: " + to_string(msec) + "[ms]");
-		procTime = now;
-#endif
-
-		long completeTime = DmUtil::getTimeMicrosec();
-		if (tupleset.info.recvTime != 0) {
-			double totalProcTime = ((completeTime - tupleset.info.recvTime) / 1000.0);
-			if (totalProcessTimeSlowest < totalProcTime) totalProcessTimeSlowest = totalProcTime;
-			if (totalProcessTimeEarliest == 0 || totalProcessTimeEarliest > totalProcTime) totalProcessTimeEarliest = totalProcTime;
-			totalProcessTimeAVG = (double)((totalProcessTimeAVG * (notifiedNum)) + totalProcTime) / (double)(notifiedNum + 1);
-			logger->debug("[PERFORMANCE][" + getType() + "] totalProcTime:" + to_string(totalProcTime) + "[ms] AVGTime:" + to_string(totalProcessTimeAVG) + "[ms] procNum:" + to_string(processNum + 1) + " notifiedNum:" + to_string(++notifiedNum));
-		}
-
-#if MEASURE_MODE == 1
-		now = DmUtil::getTimeMicrosec();
-		msec = (now - startTime) / 1000.0;
-		logger->info("[" + this->type + "] STAT_STEP" + to_string(step++) + " total processing time: " + to_string(msec) + "[ms]");
-#endif
 		logger->debug(" ========== Response  END  ========== ");
 		return true;
 	}
 
 	/**
-	* TCPで指定した文字列を送信する
+	* システム応答電文をTCPで指定した文字列を送信する
 	*
 	* @author	Nagoya University
 	* @date	2018/10/29
@@ -584,7 +579,7 @@ namespace IS {
 	*
 	* @return	送信byte
 	*/
-	int ResponseOperator::TCPSend(const string &body)
+	int ResponseOperator::sendSystemResponse(const string &body)
 	{
 		logger->debug(body);
 		// TCPにてレスポンス返却

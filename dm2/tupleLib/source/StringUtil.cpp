@@ -1536,6 +1536,48 @@ namespace IS {
 		return sendSize;
 	}
 	/**
+	* ヘッダー付き圧縮バッファー生成処理
+	*
+	* @author	Shinichi Kusayama
+	* @date	2022/03/01
+	*
+	* @param	inStr	圧縮前データ
+	* @param	compressFlg	ヘッダの圧縮フラグ
+	* @param	key	ヘッダのキー情報
+	*
+	* @return	圧縮後ヘッダ付きデータ
+	*/
+	vector<char> StringUtil::setCompressedBufWithHeader(string inStr, char compressFlg, long key)
+	{
+		vector<char> compBuf;
+		if (compressFlg == '1') {
+			compBuf = compress(inStr.c_str());
+		} else if (compressFlg == '2') {
+			compBuf = compressUsingZstd(inStr, inStr.length());
+			}
+		if (compBuf.empty()) return {};
+	
+		vector<char> sendBuf;
+		int length = compBuf.size();
+		int seq = 0;
+		// ヘッダ：圧縮フラグ<char>、長さ<int>、キー情報<long>、シーケンス番号<int>
+		int headerSize = sizeof(compressFlg) + sizeof(length) + sizeof(key) + sizeof(seq);
+		sendBuf.resize(headerSize + length);
+		
+		char* buf = sendBuf.data();
+		memcpy(buf, &compressFlg, sizeof(compressFlg));
+		buf += sizeof(compressFlg);
+		memcpy(buf, &length, sizeof(length));
+		buf += sizeof(length);
+		memcpy(buf, &key, sizeof(key));
+		buf += sizeof(key);
+		memcpy(buf, &seq, sizeof(seq));
+		buf += sizeof(seq);
+		memcpy(buf, compBuf.data(), length);
+		
+		return sendBuf;
+	}
+	/**
 	* ヘッダー設定処理
 	*
 	* @author	Shinichi Kusayama
@@ -1615,6 +1657,46 @@ namespace IS {
 		return rtn;
 	}
 	/**
+	* 圧縮処理
+	*
+	* @author	Shinichi Kusayama
+	* @date	2022/03/01
+	*
+	* @param	inStr	圧縮前データ
+	*
+	* @return	圧縮後データ
+	*/
+	vector<char> StringUtil::compress(string inStr)
+	{
+		vector<char> outBuf;
+		outBuf.resize(compressBound(inStr.size()));
+		
+		z_stream z{};
+		z.zalloc = Z_NULL;
+		z.zfree = Z_NULL;
+		z.opaque = Z_NULL;
+		if (deflateInit(&z, Z_BEST_COMPRESSION) != Z_OK) {
+			cerr << "[compress] deflateInit Error." << endl;
+			return {};
+		}
+		z.next_in = (Bytef*)inStr.data();
+		z.avail_in = inStr.size();
+		z.next_out = (Bytef*)outBuf.data();
+		z.avail_out = outBuf.size();
+
+		int status = deflate(&z, Z_FINISH);
+		if (status != Z_STREAM_END) {
+			deflateEnd(&z);
+			return {};
+		}
+		outBuf.resize(z.total_out);
+		if (deflateEnd(&z) != Z_OK) {
+			cerr << "[compress] deflateEnd Error." << endl;
+			return {};
+		}
+		return outBuf;
+	}
+	/**
 	* 展開処理
 	*
 	* @author	Shinichi Kusayama
@@ -1685,6 +1767,33 @@ namespace IS {
 		}
 		*outSize = cSize;
 		return rtn;
+	}
+	/**
+	* 圧縮処理 (Zstandard)
+	*
+	* @author	Shinichi Kusayama
+	* @date	2023/10/12
+	*
+	* @param	inStr	圧縮前データ
+	* @param	inSize	圧縮前データサイズ
+	* @param	outBuf	圧縮後データ
+	* @param	outSize	圧縮後データサイズ
+	*
+	* @return	圧縮後データ
+	*/
+	vector<char> StringUtil::compressUsingZstd(string inStr, int inSize)
+	{
+		vector<char> outBuf;
+		size_t maxSize = ZSTD_compressBound(inStr.size());
+		outBuf.resize(maxSize);
+		const int compressionLevel = 3;		// Level: 1 - 22
+		size_t const cSize = ZSTD_compress(outBuf.data(), maxSize, inStr.data(), inStr.size(), compressionLevel);
+		if (ZSTD_isError(cSize)) {
+			cerr << "[compressUsingZstd] Compress Error." << ZSTD_getErrorName(cSize) << endl;
+			outBuf.clear();
+		}
+		outBuf.resize(cSize);
+		return outBuf;
 	}
 	/**
 	* 展開処理 (Zstandard)

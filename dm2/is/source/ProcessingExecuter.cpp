@@ -117,7 +117,7 @@ namespace IS {
 		// レスポンスの返却
 		IS::ResponseOperator		*opX = new IS::ResponseOperator(replyInfo);
 		logger->trace("[run] response send payload:" + ret);
-		opX->TCPSend(ret);
+		opX->sendSystemResponse(ret);
 		opX->exit();
 		delete opX;
 

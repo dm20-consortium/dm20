@@ -1,0 +1,34 @@
+id: T003
+
+name: Select one column receive
+
+description: |
+  dm2isを経由して、SELECTされた列が入ったメッセージを送受信できることを確認する。
+
+services:
+  - name: dm2is
+    description: IS (DBシステム) を起動する
+    command: dm2is -d conf
+
+  - name: receiver
+    description: ISからのメッセージ受信を待つ
+    command: dm2mes -r -S object_info_0_8_1 -c object_id
+
+steps:
+  - wait: 2
+
+  - run:
+      description: ISへメッセージを送信する
+      command: cat ../example/command/test_data/object_info_0_8_1/unique.csv | dm2mes -S object_info_0_8_1
+  - wait: 2
+
+expect:
+  receiver_log:
+    description: ログに下記が出力されること
+    contains:
+      - 1
+
+cleanup:
+  stop:
+    - dm2is
+    - receiver

@@ -106,6 +106,7 @@ int isProc(int argc, char* argv[])
 	string confDirPath = "";
 	string confDirPathFromDB = "";
 	string my_sid = "";
+	string compress_flg = "";
 	string schemaForPresetQuery = "";
 	string windowForPresetQuery = "";
 	int vehicleNum = 0;
@@ -115,8 +116,12 @@ int isProc(int argc, char* argv[])
 	GOOGLE_PROTOBUF_VERIFY_VERSION;
 
 	int ch;
-	while ((ch = getopt(argc, argv, "d:f:n:s:S:w:h")) != -1) {
+	while ((ch = getopt(argc, argv, "c:d:f:n:s:S:w:h")) != -1) {
 		switch (ch) {
+		case 'c':
+			opt = optarg;
+			if (opt.substr(0,1) != "-") compress_flg = opt;
+			break;
 		case 'd':
 			opt = optarg;
 			if (opt.substr(0,1) != "-") confDirPath = opt;
@@ -195,6 +200,9 @@ int isProc(int argc, char* argv[])
 		if (my_sid != "") settings.setMyStationID(my_sid);
 		// Xercesの初期化
 		//isp.init();
+		if (compress_flg != "") {
+			settings.setParameter("COMPRESS_FLG", compress_flg);
+		}
 
 		// リレーショナルスキーマの取得
 		bool first_ism_error = true;
@@ -411,6 +419,7 @@ void usage(const char *cmd)
 	printf("Usage: %s [options] \n"
 		"\n"
 		"Options: [] => Required arg. {} => Any arg. \n"
+		"  -c <compress flg>         Overwrite COMPRESS FLG. \n"
 		"  -d <directory path>       Set Config Directory Path. \n"
 		"                            [Another Way] export DM2_CONF_DIR_PATH=/home/dm2/dm2/conf\n"
 		"  -f <input file>           Set Dummy Input File. \n"
