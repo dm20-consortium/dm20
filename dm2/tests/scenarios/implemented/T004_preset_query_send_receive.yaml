@@ -7,7 +7,7 @@ description: |
 
 environment:
   variables:
-    DM2_CONF_DIR_PATH: /home/dm2/conf
+    DM2_CONF_DIR_PATH: ./conf
   shell: bash
 
 services:

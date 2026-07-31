@@ -34,17 +34,22 @@
   <!-- SPS/PPS -->
   <column>
     <name>extradata</name>
-    <type>string</type>
+    <type>bytes</type>
   </column>
 
   <!-- H264 NAL -->
   <column>
     <name>video_data</name>
-    <type>string</type>
+    <type>bytes</type>
   </column>
 
   <!-- Detection -->
   <column>
+    <name>detection_size</name>
+    <type>int</type>
+    </column>
+
+    <column>
     <name>detection_timestamp_ms</name>
     <type>Vector(long)</type>
   </column>

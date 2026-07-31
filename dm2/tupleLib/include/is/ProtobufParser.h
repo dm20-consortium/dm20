@@ -120,7 +120,7 @@ namespace IS {
 		void debugSensorInfo(const cool4_api_0_8_0::Sensor_info_0_8_1* sig, dm2_proto::Is_tuple_info *is_info);
 
 		string FieldTypeToString(const FieldDescriptor *field);
-		FieldDescriptorProto_Type AttributeNameToFieldType(const string& attrName, int &repeated);
+		FieldDescriptorProto_Type AttributeTypeToProtoFieldType(const string& attrName, int &repeated);
 		void setAttrValue(const Reflection* reflection, Message *mes, const Descriptor* tuple_set_des, any val, const string &attrType, const string &attrName, const FileDescriptor* dynamic_fd);
 		void setAttrValue(const Reflection* reflection, Message *mes, const Descriptor* tuple_set_des, any val, const string &attrName, const FileDescriptor* dynamic_fd);
 		void setTupleAttrValue(const Reflection* reflection, const Message& mes, const FieldDescriptor* field_descriptor, Tuple &tuple, int j, long ts, const string &field_name);
@@ -136,7 +136,9 @@ namespace IS {
 		string queryResultSerializeToString(const string &tableName, TupleSet& ts, const bool isDynamicColumn);
 		string createCancelSerializeToString(const unsigned int mngId, const string &key);
 		string streamSerializeToString(const string &tableName, const vector<Tuple> &tuples);
-
+		string sanitizeProtoFieldName(const string& name, int index);
+		string makeUniqueProtoFieldName(const string& original, int index, set<string>& used);
+		
 		using TypeMap = std::map<std::string, std::type_index>;
 
 		TypeMap typeMap = {

@@ -4658,7 +4658,67 @@ namespace IS {
 		Schema schema = tupleset.getSchemaRef();
 		return SerializeToStringDynamically(tupleset.getTuples(), &schema);
 	}
+	/**
+	* Protobufのフィールド名に使用できない文字を置換する（サニタイズ）
+	*
+	* @author	Shinichi Kusayama
+	* @date		2026/07/30
+	*
+	* @param [in]	name	フィールド名
+	* @param [in]	index	インデックス値
+	*
+	* @return	サニタイズされたフィールド名
+	*/
+	string ProtobufParser::sanitizeProtoFieldName(const string& name, int index)
+	{
+		string result;
 
+		for (char c : name) {
+			if ((c >= 'a' && c <= 'z') ||
+				(c >= 'A' && c <= 'Z') ||
+				(c >= '0' && c <= '9') ||
+				c == '_') {
+				result += c;
+			} else {
+				result += '_';
+			}
+		}
+
+		// 空になった場合
+		if (result.empty()) {
+			result = "col_" + to_string(index + 1);
+		}
+
+		// 先頭が数字の場合
+		if (result[0] >= '0' && result[0] <= '9') {
+			result = "col_" + result;
+		}
+
+		return result;
+	}
+	/**
+	* Protobufのフィールド名をユニーク化する
+	*
+	* @author	Shinichi Kusayama
+	* @date		2026/07/30
+	*
+	* @param [in]	original	フィールド名
+	* @param [in]	index	インデックス値
+	* @param [in]	used	使用フィールド名リスト
+	*
+	* @return	ユニーク化されたフィールド名
+	*/
+	string ProtobufParser::makeUniqueProtoFieldName(const string& original, int index, set<string>& used)
+	{
+		string name = sanitizeProtoFieldName(original, index);
+		string base = name;
+		int count = 1;
+		while (used.find(name) != used.end()) {
+			name = base + "_" + to_string(count++);
+		}
+		used.insert(name);
+		return name;
+	}
 	/**
 	* 動的にシリアライズ (不定形メッセージ対応)
 	*
@@ -4710,6 +4770,7 @@ namespace IS {
 		if (attr_size <= 0) return "";
 		string attrTypeList[attr_size];
 		string attrNameList[attr_size];
+		set<string> usedFieldNames;
 		// *** フィールド（列情報）の構築
 		for (int i = 0; i < attr_size; i++) {
 			int repeated = 0;
@@ -4728,7 +4789,9 @@ namespace IS {
 					}
 					attrTypeList[i] = typeStringMap[ti];
 				} else {
-					attrNameList[i] = schema->getAttributeName(i);
+					string originalName = schema->getAttributeName(i);
+					string sanitizeName = sanitizeProtoFieldName(originalName, i);
+					attrNameList[i] = makeUniqueProtoFieldName(sanitizeName, i, usedFieldNames);
 					//TODO:もしかしたらいらないかも　typeが存在しない場合はnameを入れる
 					attrTypeList[i] = schema->getAttributeType(i) != "" ?  schema->getAttributeType(i) : schema->getAttributeName(i);
 					if (attrNameList[i].find(".") != string::npos) {
@@ -4736,7 +4799,7 @@ namespace IS {
 					}
 				}
 				//cout << "[SerializeToStringDynamically] attr_size:" << attr_size << ", Name:" << attrNameList[i] << ", List: " << attrTypeList[i] << endl;
-				type = AttributeNameToFieldType(attrTypeList[i], repeated);
+				type = AttributeTypeToProtoFieldType(attrTypeList[i], repeated);
 				//cout << "[SerializeToStringDynamically] type:" << type << endl;
 				FieldDescriptorProto* field = tuplesetDescriptor->add_field();
 				field->set_name(attrNameList[i]);
@@ -5166,7 +5229,7 @@ namespace IS {
 		return;
 	}
 	/**
-	* 属性名からProtobufの型に変換
+	* 属性TypeからProtobufの型に変換
 	*
 	* @author	Shinichi Kusayama
 	* @date		2024/07/03
@@ -5176,7 +5239,7 @@ namespace IS {
 	*
 	* @return	文字列
 	 */
-	FieldDescriptorProto_Type ProtobufParser::AttributeNameToFieldType(const string& attrType, int &repeated)
+	FieldDescriptorProto_Type ProtobufParser::AttributeTypeToProtoFieldType(const string& attrType, int &repeated)
 	{
 		if (attrType == "int" || attrType == "int4") {
 			return FieldDescriptorProto_Type_TYPE_INT32;
@@ -5239,7 +5302,7 @@ namespace IS {
 			repeated = 2;
 			return FieldDescriptorProto_Type_TYPE_UINT64;
 		} else {
-			string msg = "[AttributeNameToFieldType] Not matched attrType: "  + attrType;
+			string msg = "[AttributeTypeToProtoFieldType] Not matched attrType: "  + attrType;
 			throw std::logic_error(msg);
 		}
 		return FieldDescriptorProto_Type_TYPE_STRING;
