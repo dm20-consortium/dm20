@@ -60,6 +60,7 @@ namespace IS {
 		map<string, int> evalMaxIdxMap;
 		bool checkAccessMap(const string &user, const string &op);
 		string errMsg = "";
+		int adminColumnStartIdx = 0;
 
     public:
 		// table_type
@@ -113,6 +114,7 @@ namespace IS {
         int getAttributeSize() const;
         int getAdminAttributeSize() const;
 		bool deleteAttribute(int index);
+		int getAdminColumnStartIdx() const;
         Schema concat(Schema target); // 未使用
         Schema subset(std::vector<string> attrNameList); //未使用
 

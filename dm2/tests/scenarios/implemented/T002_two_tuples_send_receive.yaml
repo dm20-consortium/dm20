@@ -19,7 +19,7 @@ steps:
 
   - run:
       description: ISへメッセージを2件送信する
-      command: echo -e "a,b\nc,d" | dm2mes
+      command: echo -e "a,b\nc,d" | dm2mes -w 2
 
   - wait: 2
 

@@ -339,11 +339,8 @@ namespace IS {
 				int resize = tupleset.getTuple(0).size() + retList.at(0).size();
 				int insertColNum = tupleset.getTuple(0).size();
 				//REL_COMMENT logger->trace("[" + this->type + "] resize:" + to_string(resize) + " insertCOlNum:" + to_string(insertColNum));
-
 				any val;
-
 				for (int idx = 0; idx < tupleset.size(); idx++) {
-
 					tupleset.getTuple(idx).resize(resize);
 					for (unsigned int i = 0; i < retList.at(0).size(); i++) {
 						stringUtil.getAnyValFromString(retList.at(idx).at(i), retsType.at(i), val);

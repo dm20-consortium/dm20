@@ -377,6 +377,7 @@ namespace IS {
 									streamSchemaMap.erase(tableName);
 								} else {
 									streamSchemaMap[tableName].appendAdminColumn();
+									//cout << tableName << "," << streamSchemaMap[tableName].getAdminColumnStartIdx() << endl;
 								}
 							}
 						}
