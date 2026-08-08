@@ -1,6 +1,9 @@
 CXX = g++
-CXXFLAGS = -std=c++14
 
+# C_PLUSのバージョン設定, PROTOBUF関連の設定
+include ../../common.mk
+
+CFLAGS    = -std=${CPLUS_VER} 
 LIBS = \
 	-lxerces-c \
 	-ldmclient \
@@ -15,13 +18,16 @@ LIBS = \
 	-lgeos_c \
 	-pthread
 
-TARGETS = send_cs.out
+TARGETS = recv_test_stream.out send_test_stream.out
 
 .PHONY: all clean
 
 all: $(TARGETS)
 
-send_cs.out: send_cs.cpp
+recv_test_stream.out: recv_test_stream.cpp
+	$(CXX) $(CXXFLAGS) $< $(LIBS) -o $@
+
+send_test_stream.out: send_test_stream.cpp
 	$(CXX) $(CXXFLAGS) $< $(LIBS) -o $@
 
 clean:

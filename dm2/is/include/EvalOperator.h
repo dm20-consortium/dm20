@@ -5,6 +5,10 @@
 #include "is/StringUtil.h"
 #include "Settings.h"
 
+#include <cstdlib>
+#include <stdlib.h>
+#include <dlfcn.h>
+
 #include <log4cxx/logger.h>
 
 using namespace log4cxx;
@@ -20,7 +24,10 @@ namespace IS {
 
 	class EvalOperator : public Operator
 	{
-	private:
+	private:	
+		// 使用するユーザ関数の定義パターン
+		using multiFunc = vector<vector<string>>(*)(vector<vector<string>>);
+
 		const string MyName = "Eval";
 		LoggerPtr logger = Logger::getLogger("EvalOperator");
 		StringUtil stringUtil;
@@ -44,6 +51,14 @@ namespace IS {
 			OTHER = -3
 		};
 
+		void* evalHandle = NULL;
+		multiFunc evalFunc = NULL;
+		bool evalLibLoaded = false;
+		void initializeEval(TupleSet& tupleset);
+		long createArgList(TupleSet& tupleset, vector<vector<string>>& argList);
+		void appendReturnValue(TupleSet& tupleset, const vector<vector<string>>& retList, const long &time);
+		bool loadEvalFunction();
+		bool executeEvalFunction(const vector<vector<string>>& argList, vector<vector<string>>& retList);
 	public:
 		static const string  LIB_PREFIX;
 		static const string  TYPE_PREFIX;

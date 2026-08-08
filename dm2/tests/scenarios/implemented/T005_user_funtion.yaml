@@ -1,0 +1,35 @@
+id: T004
+
+name: User Function test
+
+description: |
+  ユーザ定義関数が正常コールされることを確認する
+
+services:
+  - name: dm2is
+    description: IS (DBシステム) を起動する
+    command: dm2is -d conf
+
+  - name: receiver
+    description: ISからのメッセージ受信を最大2件待つ
+    command: dm2mes -r -c "UF_PLUS(1,1)"
+
+steps:
+  - wait: 2
+
+  - run:
+      description: ISへメッセージを2件送信する
+      command: echo hello | dm2mes
+
+  - wait: 2
+
+expect:
+  receiver_log:
+    description: ログに下記が出力されること
+    contains:
+      - 2
+
+cleanup:
+  stop:
+    - dm2is
+    - receiver

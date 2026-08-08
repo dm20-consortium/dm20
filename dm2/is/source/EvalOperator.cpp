@@ -2,16 +2,9 @@
 #include "is/TupleSet.h"
 #include "is/DmException.h"
 
-#include <cstdlib>
-#include <stdlib.h>
-#include <dlfcn.h>
-
 using std::cout;		// cout
 using std::endl;		// endl
 using namespace std;
-
-// 使用するユーザ関数の定義パターン
-using multiFunc = vector<vector<string>>(*)(vector<vector<string>>);
 
 namespace IS {
 	// 初期化
@@ -48,7 +41,12 @@ namespace IS {
 
 	EvalOperator::~EvalOperator()
 	{
-		//cout << "EvalOperator destractor" << endl;
+		if (evalHandle != NULL) {
+			dlclose(evalHandle);
+			evalHandle = NULL;
+			evalFunc = NULL;
+			evalLibLoaded = false;
+		}
 	}
 
 	/**
@@ -103,43 +101,16 @@ namespace IS {
 	}
 
 	/**
-	 * オペレータ処理
+	 * 初期化処理
 	 *
 	 * @author	Nagoya University
 	 * @date	2018/03/13
 	 *
-	 * @param [in,out]	ts	タプルセット
+	 * @param [in]	tupleset	タプルセット
 	 *
-	 * @return	正常にデータ処理を実施でき、次のオペレータに渡す際にtrue
 	 */
-
-	bool EvalOperator::process(vector<IS::TupleSet>& ts)
+	void EvalOperator::initializeEval(TupleSet& tupleset)
 	{
-		logger->debug("[" + this->type + "] ========== Eval START ========== ");
-		void *handle = NULL;
-		long time = 0, getTime = 0;
-		bool ret = true;
-
-#if MEASURE_MODE == 1
-		long startTime = DmUtil::getTimeMicrosec();
-		long procTime = startTime;
-		int step = 1;
-#endif
-
-		// evalは1つのtuplesetを使用
-		TupleSet& tupleset = ts.at(0);
-
-		// DEBUG 与えられたタプル情報の出力
-		printInputInfo(tupleset, this->argument);
-
-		// 単体テスト用
-		/*
-		if (libName.empty() || argTypeStr.empty() || retTypeStr.empty()) {
-			string msg;
-			bool doAggregate;
-			checkParameter(msg, doAggregate);
-		}*/
-
 		// 初回処理時、もしくは前回からAttributeサイズに変化がある場合(再帰クエリ)
 		if (argProcList.size() == 0 || previousAttributeNum != tupleset.getSchemaRef().getAttributeSize()) {
 			argProcList.clear();
@@ -148,24 +119,30 @@ namespace IS {
 
 			// 引数に応じた処理を予め把握しておく
 			string targetName;
+			string type = "";
 			for (unsigned int i = 0; i < args.size(); i++) {
 				targetName = args.at(i);
 				if (tupleset.getSchemaRef().isExistAttribute(targetName)) {
 					argProcList.push_back(tupleset.getSchemaRef().getAttributeIdx(targetName));
+					type = to_string(tupleset.getSchemaRef().getAttributeIdx(targetName));
 				}
 				else {
 					if (stringUtil.isNumber(targetName)) {
 						argProcList.push_back(static_cast<int>(procType::NUMBER));
+						type = "NUMBER";
 					}
 					else if (stringUtil.isString(targetName)) {
 						argProcList.push_back(static_cast<int>(procType::STRING));
+						type = "STRING";
 					}
 					else {
 						logger->debug("[" + this->type + "] Not found target column. name:" + targetName);
 						// 指定フィールドが見つからなかった場合は直値と判断
 						argProcList.push_back(static_cast<int>(procType::OTHER));
+						type = "OTHER";
 					}
 				}
+				logger->debug("Idx: " + std::to_string(i) + ", name: " + targetName + ", type: " + type);
 			}
 
 			// schemaの設定
@@ -202,86 +179,43 @@ namespace IS {
 			}
 		}
 
-#if MEASURE_MODE == 1
-		long now = DmUtil::getTimeMicrosec();
-		double msec = (now - procTime) / 1000.0;
-		logger->info("[" + this->type + "] STAT_STEP" + to_string(step++) + " parameter analytics processing time: " + to_string(msec) + "[ms]");
-		procTime = now;
-#endif
-
-		tupleset.SetSchema(outputSchema);
-
-#if MEASURE_MODE == 1
-		now = DmUtil::getTimeMicrosec();
-		msec = (now - procTime) / 1000.0;
-		logger->info("[" + this->type + "] STAT_STEP" + to_string(step++) + " schema settings processing time: " + to_string(msec) + "[ms]");
-		procTime = now;
-#endif
-
-		if (tupleset.size() == 0) {
-			// DEBUG 抽出されたタプル情報の出力
-			printOutputInfo(tupleset);
-
-#if MEASURE_MODE == 1
-			now = DmUtil::getTimeMicrosec();
-			msec = (now - startTime) / 1000.0;
-			logger->info("[" + this->type + "] STAT_STEP7 total processing time: " + to_string(msec) + "[ms]");
-			procTime = now;
-#endif
-
-			logger->debug("[" + this->type + "] ========== Eval  END  ========= ");
-			return true;
-		}
-		string evalLibPath = settings.getConfigDirectory() + settings.EVAL_LIB_DIR + libName;
-		handle = dlopen(evalLibPath.c_str(), RTLD_LAZY);
-		if (handle == NULL) {
-			logger->error("[" + this->type + "] error: dlopen. libName : " + libName);
-			logger->error(std::string(dlerror()));
-			return false;
-		}
-
-#if MEASURE_MODE == 1
-		now = DmUtil::getTimeMicrosec();
-		msec = (now - procTime) / 1000.0;
-		logger->info("[" + this->type + "] STAT_STEP" + to_string(step++) + " dlopen processing time: " + to_string(msec) + "[ms]");
-		procTime = now;
-#endif
-
-		// 汎化された引数戻り値の型を用いてユーザ定義関数を実体化
-		multiFunc func = NULL;
-		func = (multiFunc)dlsym(handle, functionName.c_str());
-		if (func == NULL) {
-			logger->error("[" + this->type + "] error: dlsym. info : " + std::string(dlerror()));
-			return false;
-		}
-		vector<vector<string>> argList, retList;
+	}
+	/**
+	 * TupleSetからユーザ定義関数に渡す引数リストへ変換する
+	 *
+	 * @author	Nagoya University
+	 * @date	2018/03/13
+	 *
+	 * @param [in]	tupleset	タプルセット
+	 * @param [out]	argList	引数リスト
+	 *
+	 * @return	最新時刻
+	 */
+	long EvalOperator::createArgList(TupleSet& tupleset, vector<vector<string>>& argList)
+	{
 		argList.resize(tupleset.size());
-		//REL_COMMENT logger->trace("[" + this->type + "] argList.size:" + std::to_string(argList.size()));
-
+		
 		any val;
-		string targetName;
+		long time = 0, getTime = 0;
 		// Tuple毎に処理を実施
 		for (int idx = 0; idx < tupleset.size(); idx++) {
 			time = 0;
 			for (unsigned int i = 0; i < args.size(); i++) {
-				targetName = args.at(i);
+				string targetName = args.at(i);
 				vector<string> delList = { "'","\"" };
 				switch (argProcList.at(i)) {
 				case static_cast<int>(procType::NUMBER) :
 					// 数値である場合
 					argList.at(idx).push_back(targetName);
-					//REL_COMMENT logger->trace("[" + this->type + "] argList[" + std::to_string(idx) + "][" + std::to_string(i) + "].push_back: input data(number):" + targetName);
 					break;
 				case static_cast<int>(procType::STRING) :
 					// 文字列である場合
 					stringUtil.deleteStrings(targetName, delList);
 					argList.at(idx).push_back(targetName);
-					//REL_COMMENT logger->trace("[" + this->type + "] argList[" + std::to_string(idx) + "][" + std::to_string(i) + "].push_back: input data(string):" + targetName);
 					break;
 				case static_cast<int>(procType::OTHER) :
 					// 指定された属性が見つからなかった場合は直値と判断
 					argList.at(idx).push_back(targetName);
-					//REL_COMMENT logger->trace("[" + this->type + "] argList[" + std::to_string(idx) + "][" + std::to_string(i) + "].push_back: input data(other):" + targetName);
 					break;
 				default :
 					// 指定された属性が見つかった場合は値をListに加える
@@ -290,7 +224,7 @@ namespace IS {
 					tupleset.getTuple(idx).getTimestampByIdx(argProcList.at(i), getTime);
 					// 属性の中で最新の値をセット
 					if (time < getTime) time = getTime;
-					//REL_COMMENT logger->trace("[" + this->type + "] argList[" + std::to_string(idx) + "][" + std::to_string(i) + "].push_back: columnName(" + tupleset.getSchema().getAttributeName(argProcList.at(i)) + "):" + stringUtil.getAnyString(val));
+					//logger->info("[" + this->type + "] argList[" + std::to_string(idx) + "][" + std::to_string(i) + "].push_back: columnName(" + tupleset.getSchema().getAttributeName(argProcList.at(i)) + "):" + stringUtil.getAnyString(val));
 					break;
 
 				}
@@ -299,114 +233,185 @@ namespace IS {
 			// ToDo: 元の属性を引き継ぐべきか？入れ子になった場合、引き継げるか？
 			if (time == 0) time = DmUtil::getTimeMillisec();
 			// 引数の末尾に時刻をセット
-			argList.at(idx).push_back(stringUtil.getAnyString(time));
+			//argList.at(idx).push_back(stringUtil.getAnyString(time));
 		}
-#if MEASURE_MODE == 1
-		now = DmUtil::getTimeMicrosec();
-		msec = (now - procTime) / 1000.0;
-		logger->info("[" + this->type + "] STAT_STEP" + to_string(step++) + " create argument processing time: " + to_string(msec) + "[ms]");
-		procTime = now;
-#endif
+		return time;
+	}
+	/**
+	 * 戻り値リスト作成
+	 *
+	 * @author	Nagoya University
+	 * @date	2018/03/13
+	 *
+	 * @param [in]	tupleset	タプルセット
+	 * @param [out]	retList	戻り値リスト
+	 * @param [in]	retList	最新時刻
+	 *
+	 */
+	void EvalOperator::appendReturnValue(TupleSet& tupleset, const vector<vector<string>>& retList, const long &time)
+	{
+		if (retList.size() <= 0) {
+			tupleset.resize(0);
+			logger->warn("[" + this->type + "] Data was not returned. parameter:" + parameter);
+			return;
+		}
+		if (retList.size() == (unsigned int)tupleset.size() && retsName.size() == 1) {
+			// 行数が一致する場合
+			//REL_COMMENT logger->trace("[" + this->type + "] rows num is same. Append column. retList.size():" + std::to_string(retList.size()) + " tupleset.size():" + std::to_string(tupleset.size()));
 
+			int resize = tupleset.getTuple(0).size() + retList.at(0).size();
+			int insertColNum = tupleset.getTuple(0).size();
+			//REL_COMMENT logger->trace("[" + this->type + "] resize:" + to_string(resize) + " insertCOlNum:" + to_string(insertColNum));
+			any val;
+			for (int idx = 0; idx < tupleset.size(); idx++) {
+				tupleset.getTuple(idx).resize(resize);
+				for (unsigned int i = 0; i < retList.at(0).size(); i++) {
+					stringUtil.getAnyValFromString(retList.at(idx).at(i), retsType.at(i), val);
+					tupleset.getTuple(idx).setValue(insertColNum + i, val, time);
+				}
+			}
+		}
+		else {
+			// 行数が不一致の場合
+			int resize = tupleset.getTuple(0).size() + retList.at(0).size();
+			int insertColNum = tupleset.getTuple(0).size();
+			tupleset.resize(retList.size());
+			unsigned int setIndex = 0;
+			any val;
+			for (unsigned int idx = 0; idx < retList.size(); idx++) {
+				Tuple tuple = tupleset.getTuple(idx);
+				tuple.resize(resize);
+				for (unsigned int i = 0; i < retList.at(0).size(); i++) {
+					stringUtil.getAnyValFromString(retList.at(idx).at(i), retsType.at(i), val);
+					tuple.setValue(insertColNum + i, val, time);
+				}
+				tupleset.setTuple(setIndex++, tuple);
+			}
+			outputSchema.appendEvalColumnRange(parameter, insertColNum, insertColNum + retList.at(0).size() - 1);
+			tupleset.SetSchema(outputSchema);
+			
+			// 下記の方法は不採用。全タプルをクリアした上でセットしている。このやり方だと、a, b とカラムがある中、UF_PLUS(a)を呼び出した時、a, b列が消える。
+			/*
+			tupleset.clearTuples();
+			tupleset.resize(retList.size());
+			Tuple tuple(retList.at(0).size());
+			unsigned int setIndex = 0;
+			any val;
+			for (unsigned int idx = 0; idx < retList.size(); idx++) {
+				tuple.clearValue();
+				for (unsigned int i = 0; i < retList.at(0).size(); i++) {
+					stringUtil.getAnyValFromString(retList.at(idx).at(i), retsType.at(i), val);
+					tuple.setValue(i, val, time);
+				}
+				tupleset.setTuple(setIndex++, tuple);
+			}
+			*/
+		}
+		return;
+	}
+	/**
+	 * ユーザ定義関数のライブラリロード処理
+	 *
+	 * @author	Nagoya University
+	 * @date	2018/03/13
+	 *
+	 * @return	正常にロードできたか？
+	 */
+	bool EvalOperator::loadEvalFunction() 
+	{
+		if (evalLibLoaded) return true;
+
+		string evalLibPath = settings.getConfigDirectory() + settings.EVAL_LIB_DIR + libName;
+		evalHandle = dlopen(evalLibPath.c_str(), RTLD_LAZY);
+		if (evalHandle == NULL) {
+			logger->error("[" + this->type + "] error: dlopen. libName : " + libName);
+			logger->error(std::string(dlerror()));
+			return false;
+		}
+
+		evalFunc = (multiFunc)dlsym(evalHandle, functionName.c_str());
+		if (evalFunc == NULL) {
+			logger->error("[" + this->type + "] error: dlsym. info : " + std::string(dlerror()));
+			dlclose(evalHandle);
+			return false;
+		}
+		evalLibLoaded = true;
+		return true;
+	}
+	/**
+	 * ユーザ定義関数の実行処理
+	 *
+	 * @author	Nagoya University
+	 * @date	2018/03/13
+	 *
+	 * @param [in]	argList	引数リスト
+	 * @param [in,out]	retList	戻り値リスト
+	 *
+	 * @return	正常にデータ処理を実施でき、次のオペレータに渡す際にtrue
+	 */
+	bool EvalOperator::executeEvalFunction(const vector<vector<string>>& argList, vector<vector<string>>& retList)
+	{
 		try {
 			// 取得した引数を元に動的関数を実行
-			retList = func(argList);
+			retList = evalFunc(argList);
 		}
 		catch (const CastException &ex) {
 			logger->error("[" + this->type + "] UserFunction(" + functionName + ") throws exception.  msg:" + ex.getMessage());
-			ret = false;
+			return false;
 		}
 		catch (const exception &ex) {
 			string what(ex.what());
 			logger->error("[" + this->type + "] UserFunction(" + functionName + ") throws exception. what:" + what);
-			ret = false;
+			return false;
+		}
+		return true;
+	}	
+	/**
+	 * オペレータ処理
+	 *
+	 * @author	Nagoya University
+	 * @date	2018/03/13
+	 *
+	 * @param [in,out]	ts	タプルセット
+	 *
+	 * @return	正常にデータ処理を実施でき、次のオペレータに渡す際にtrue
+	 */
+	bool EvalOperator::process(vector<IS::TupleSet>& ts)
+	{
+		logger->debug("[" + this->type + "] ========== Eval START ========== ");
+		bool ret = true;
+		vector<vector<string>> argList, retList;
+
+		// evalは1つのtuplesetを使用
+		TupleSet& tupleset = ts.at(0);
+
+		// DEBUG 与えられたタプル情報の出力
+		printInputInfo(tupleset, this->argument);
+
+		// 初期化
+		initializeEval(tupleset);
+		tupleset.SetSchema(outputSchema);
+
+		if (tupleset.size() == 0) {
+			logger->debug("[" + this->type + "] ========== Eval  END  ========= ");
+			return true;
+		}
+		// DLLロード
+		if (!loadEvalFunction()) {
+			return false;
 		}
 
-#if MEASURE_MODE == 1
-		now = DmUtil::getTimeMicrosec();
-		msec = (now - procTime) / 1000.0;
-		logger->info("[" + this->type + "] STAT_STEP" + to_string(step++) + " UserFunction(" + functionName + ") processing time: " + to_string(msec) + "[ms]");
-		procTime = now;
-#endif
-
-		//REL_COMMENT logger->trace("[" + this->type + "] result.size row:" + std::to_string(retList.size()) + " tupleset.size : " + std::to_string(tupleset.size()) + " retsName.size():" + std::to_string(retsName.size()));
-		if (retList.size() > 0) {
-			//REL_COMMENT logger->trace("[" + this->type + "] result.size col:" + std::to_string(retList.at(0).size()));
-			if (retList.size() == (unsigned int)tupleset.size() && retsName.size() == 1) {
-				// 行数が一致する場合
-				//REL_COMMENT logger->trace("[" + this->type + "] rows num is same. Append column. retList.size():" + std::to_string(retList.size()) + " tupleset.size():" + std::to_string(tupleset.size()));
-
-				int resize = tupleset.getTuple(0).size() + retList.at(0).size();
-				int insertColNum = tupleset.getTuple(0).size();
-				//REL_COMMENT logger->trace("[" + this->type + "] resize:" + to_string(resize) + " insertCOlNum:" + to_string(insertColNum));
-				any val;
-				for (int idx = 0; idx < tupleset.size(); idx++) {
-					tupleset.getTuple(idx).resize(resize);
-					for (unsigned int i = 0; i < retList.at(0).size(); i++) {
-						stringUtil.getAnyValFromString(retList.at(idx).at(i), retsType.at(i), val);
-						tupleset.getTuple(idx).setValue(insertColNum + i, val, time);
-					}
-				}
-			}
-			else {
-				// 行数が不一致の場合
-				int resize = tupleset.getTuple(0).size() + retList.at(0).size();
-				int insertColNum = tupleset.getTuple(0).size();
-				tupleset.resize(retList.size());
-				unsigned int setIndex = 0;
-				any val;
-				for (unsigned int idx = 0; idx < retList.size(); idx++) {
-					Tuple tuple = tupleset.getTuple(idx);
-					tuple.resize(resize);
-					for (unsigned int i = 0; i < retList.at(0).size(); i++) {
-						stringUtil.getAnyValFromString(retList.at(idx).at(i), retsType.at(i), val);
-						tuple.setValue(insertColNum + i, val, time);
-					}
-					tupleset.setTuple(setIndex++, tuple);
-				}
-				outputSchema.appendEvalColumnRange(parameter, insertColNum, insertColNum + retList.at(0).size() - 1);
-				tupleset.SetSchema(outputSchema);
-				
-				// 下記の方法は不採用。全タプルをクリアした上でセットしている。このやり方だと、a, b とカラムがある中、UF_PLUS(a)を呼び出した時、a, b列が消える。
-				/*
-				tupleset.clearTuples();
-				tupleset.resize(retList.size());
-				Tuple tuple(retList.at(0).size());
-				unsigned int setIndex = 0;
-				any val;
-				for (unsigned int idx = 0; idx < retList.size(); idx++) {
-					tuple.clearValue();
-					for (unsigned int i = 0; i < retList.at(0).size(); i++) {
-						stringUtil.getAnyValFromString(retList.at(idx).at(i), retsType.at(i), val);
-						tuple.setValue(i, val, time);
-					}
-					tupleset.setTuple(setIndex++, tuple);
-				}
-				*/
-			}
+		// ユーザ定義関数用引数リスト作成
+		long time = createArgList(tupleset, argList);
+		// ユーザ定義関数実行
+		if (!executeEvalFunction(argList, retList)) {
+			return false;
 		}
-		else {
-			tupleset.resize(0);
-			logger->warn("[" + this->type + "] Data was not returned. parameter:" + parameter);
-		}
-
-#if MEASURE_MODE == 1
-		now = DmUtil::getTimeMicrosec();
-		msec = (now - procTime) / 1000.0;
-		logger->info("[" + this->type + "] STAT_STEP" + to_string(step++) + " append return value processing time: " + to_string(msec) + "[ms]");
-		procTime = now;
-#endif
-
-		dlclose(handle);
+		// 戻り値をTupleSetへ反映
+		appendReturnValue(tupleset, retList, time);
 
 		// DEBUG 抽出されたタプル情報の出力
 		printOutputInfo(tupleset);
-
-#if MEASURE_MODE == 1
-		now = DmUtil::getTimeMicrosec();
-		msec = (now - startTime) / 1000.0;
-		logger->info("[" + this->type + "] STAT_STEP" + to_string(step++) + " total processing time: " + to_string(msec) + "[ms]");
-#endif
 
 		logger->debug("[" + this->type + "] ========== Eval  END  ========= ");
 		return ret;
