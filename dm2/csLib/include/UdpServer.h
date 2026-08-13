@@ -21,9 +21,7 @@ namespace CS{
 		UdpServer(){
 		}
 		int Init(const std::string& fd_name, std::string interface_name, std::string port_no);
-		int Init(const std::string& fd_name);
 		int RecvPacket(send_message &buf_, int socket_res_);
-		int RecvClientData(clientdata &buf_, int socket_res_);
 		virtual ~UdpServer(){
 		}
 	};

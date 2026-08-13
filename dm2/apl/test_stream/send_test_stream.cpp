@@ -86,7 +86,7 @@ int main(int argc, char *argv[])
 			reinterpret_cast<const char*>(data),
 			size);
 		*/
-		constexpr size_t size = 33000;
+		constexpr size_t size = 330000;
 
 		std::string test_bytes;
 		test_bytes.resize(size);

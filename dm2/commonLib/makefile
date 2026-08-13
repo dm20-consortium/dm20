@@ -2,15 +2,9 @@
 PREFIX ?= /usr/local
 LIBDIR := $(PREFIX)/lib
 
-#トレースログ機能(1:有効,0:無効) ※無効にするとACCEANヘッダからtracelogがなくなる
-TRACELOG = 0
-
-#LID毎優先処理機能(0:無効, 1:有効)
-LID_PRIORITY = 0
-
 COMPILER = g++
 TARGET = dm2SocketInterface
-CFLAGS = -DTRACELOG=$(TRACELOG) -DLID_PRIORITY=$(LID_PRIORITY) -std=c++11 -pthread -MMD -MP -Wall -O3 -fPIC -llog4cxx
+CFLAGS = -std=c++11 -pthread -MMD -MP -Wall -O3 -fPIC -llog4cxx
 INCLUDES = -I../csLib/include -I./include/dm2SocketInterface -I../secLib/include
 
 OBJ_DIR = obj/dm2SocketInterface
@@ -24,6 +18,7 @@ IF_SOURCES = \
 
 CSLIB_SOURCES = \
 	$(SRC_DIR_CSLIB)/socket/Socket.cpp \
+	$(SRC_DIR_CSLIB)/socket/SocketUtil.cpp \
 	$(SRC_DIR_CSLIB)/socket/SocketUdp.cpp \
 	$(SRC_DIR_CSLIB)/socket/UdpMcNwClient.cpp \
 	$(SRC_DIR_CSLIB)/socket/UdpMcNwServer.cpp \

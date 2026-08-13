@@ -42,7 +42,6 @@ namespace CS{
 
 		int Init(const std::string& fd_name, std::string interface_name, std::string port_no) override;
 		int RecvPacket(send_message &buf_, int socket_res_) override;
-		int RecvClientData(clientdata &buf_, int socket_res_) override;
 
 		int InitServer(std::string receive_ip_addr, std::string port_no);
 		

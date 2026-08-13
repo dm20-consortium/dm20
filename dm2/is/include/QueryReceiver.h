@@ -45,7 +45,6 @@ namespace IS {
 		std::mutex mtx;
 		bool tuple_ready = false;
 		void returnMngID(unsigned int mngId, const RecvData &data, const int &tcpPort);
-		void transferQuery(const unsigned long long execSID, RecvData &data, string &query);
 
 		// 管理番号
 		int TCPPORT = 0;

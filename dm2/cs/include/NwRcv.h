@@ -50,9 +50,6 @@ namespace CS {
 		// 重複確認用非順序型MAPオブジェクト生成。key値：車両SID＋シーケンス番号, value値：受信時刻
 		UnorderedMap<string, time_t> vehicle_sid_sq_id_received_time_map;
 
-		//--- vehicle & cloud ---
-		//Queue<clientdata> rcv_q(MAX_QUEUE_SIZE);	// キューオブジェクト生成
-
 	private:
 		log4cxx::LoggerPtr logger;		// log
 	};

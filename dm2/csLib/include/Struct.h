@@ -31,7 +31,7 @@ namespace CS{
 
 
 	/**
-	 * @enum	clientdata
+	 * @enum	MSG_TYPE
 	 *
 	 * @brief	DM2.0ヘッダに載せるメッセージ種別
 	 *
@@ -192,15 +192,7 @@ namespace CS{
 		float wave_quality;
 	};
 
-	/**
-	 * @struct	send_message
-	 *
-	 * @brief	DM2.0通信データフレームフォーマット
-	 *
-	 * @author	Nagoya University
-	 * @date	2018/03/14
-	 */
-	struct send_message{
+	struct send_message_header {
 		/** @brief	送信元SID */
 		unsigned long long src_station_id;
 		/** @brief	宛先SID */
@@ -237,18 +229,39 @@ namespace CS{
 		int flagment_sum;
 		/** @brief	フラグメントオフセット */
 		int flagment_offset;
-		#if TRACELOG == 1
-		/** @brief	トレースログ */
-		std::array<tracelog, TRACEPOINT> tracelogs;
-		#endif
 		/** @brief 優先度フラグ */
 		int priority_level;
-		#if LID_PRIORITY == 1
-		/** @brief LID毎優先機能によるポリシング時間 */
-		int policing_time;
-		#endif
+	};
+	/**
+	 * @struct	send_message
+	 *
+	 * @brief	DM2.0通信データフレームフォーマット
+	 *
+	 * @author	Nagoya University
+	 * @date	2018/03/14
+	 */
+	struct send_message{
+		/** @brief  ヘッダ */
+		send_message_header header;
 		/** @brief	DM2.0データペイロード */
 		char dm2_payload[MSGSIZE];
+	};
+
+	/**
+	 * @struct	send_message_vector
+	 *
+	 * @brief	IS/APLインタフェースデータ構造体
+	 *
+	 * @author	Nagoya University
+	 * @date	2018/03/14
+	 */
+	struct send_message_vector{
+		/** @brief  ヘッダ */
+		send_message_header header;
+		/** @brief  IPアドレス */
+		//char from_ip[NI_MAXHOST];
+		/** @brief	DM2.0データペイロード */
+		std::vector<char> dm2_payload;
 	};
 
 	struct send_message_mng {
@@ -256,37 +269,6 @@ namespace CS{
 	    char ip[NI_MAXHOST];
 	    char ctl_flag[20];
 	};
-
-	/**
-	 * @struct	send_message_upper
-	 *
-	 * @brief	IS/APLインタフェースデータ構造体
-	 *
-	 * @author	Nagoya University
-	 * @date	2018/03/14
-	 */
-	struct send_message_upper{
-		/** @brief	送信元SID */
-		//int src_station_id;
-		unsigned long long src_station_id;
-		/** @brief	宛先SID */
-		//int dst_station_id;
-		unsigned long long dst_station_id;
-		/** @brief	レーンID */
-		//int lane_id;
-		unsigned long long lane_id;
-		/** @brief	再送レベル */
-		short retry_level;
-		/** @brief	再送時間(s) */
-		int retry_lifetime;
-		/** @brief  再送間隔(ms) */
-		int retry_interval;
-		/** @brief  IPアドレス */
-		char from_ip[NI_MAXHOST];
-		/** @brief	DM2.0データペイロード */
-		std::string dm2_payload;
-	};
-
 
 	/**
 	 * @struct	csmng_message
@@ -371,30 +353,6 @@ namespace CS{
 		char message[3000];
 	};
 
-	/**
-	 * @struct	clientdata
-	 *
-	 * @brief	受信データと送信元IPアドレスの対応
-	 *
-	 * @author	Nagoya University
-	 * @date	2018/03/14
-	 */
-	struct clientdata{
-		int priority_num;
-		/** @brief	送信元IPアドレス */
-		char from_ip[NI_MAXHOST];
-		/** @brief	EdgeNwRcvのworkerでの処理のタイプ */
-		int transfer_type;
-		/** @brief	EdgeNwRcvのworkerで使用するレーンID管轄エッジSID */
-		//int lid_controll_edge_sid;
-		unsigned long long lid_controll_edge_sid;
-		/** @brief	受信データ */
-		struct send_message msg;
-
-		bool operator<(const clientdata& rhs) const{
-			return priority_num < rhs.priority_num;
-		}
-	};
 
 
 	/******************************************

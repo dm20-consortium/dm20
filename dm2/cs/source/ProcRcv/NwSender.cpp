@@ -55,7 +55,7 @@ NwSender::~NwSender(void)
  * @date	2023/03/21
  * @return
  */
-std::thread* NwSender::Run(CS::Queue<CS::clientdata>* queue)
+std::thread* NwSender::Run(CS::Queue<CS::send_message_vector>* queue)
 {
 	LOG4CXX_DEBUG(logger, settings.interface_names[setting_num] + " " + "start");
 	p_queue = queue;
@@ -77,7 +77,7 @@ std::thread* NwSender::Run(CS::Queue<CS::clientdata>* queue)
  * 
  * @return void
  */
-int NwSender::send_to_edge(const NwSender* param, clientdata& se_cdata, addrinfo& res_addr_first_, string udp_port_number)
+int NwSender::send_to_edge(const NwSender* param, send_message_vector& buf_, addrinfo& res_addr_first_, string udp_port_number)
 {
 	const NwSender* me = param;	// 自身のメンバへのアクセスはmeを通じて行うこと
 	string interface_name = me->settings.interface_names[me->setting_num];
@@ -88,28 +88,21 @@ int NwSender::send_to_edge(const NwSender* param, clientdata& se_cdata, addrinfo
 	//エッジに送信
 	//unsigned long long now_time;
 	string log_str = "";
-	struct send_message buf_ = {};
 
-	//(se_cdata.msg).src_station_id = me->settings.my_sid;
+	//(se_cdata).src_station_id = me->settings.my_sid;
 	//struct timespec ts;
 	//timespec_get(&ts, TIME_UTC);
-	//(se_cdata.msg).duplication_check_id = ts.tv_sec * 1000000000 + ts.tv_nsec;
-	log_str = Util(me->dm2util).PrintSend_message(se_cdata.msg);
+	//(se_cdata).duplication_check_id = ts.tv_sec * 1000000000 + ts.tv_nsec;
+	log_str = Util(me->dm2util).PrintClient_data(buf_);
 	LOG4CXX_DEBUG(me->logger, interface_name + " " + log_str);
 
-	//LOG4CXX_DEBUG(me->logger, "se_cdata.msg.dm2_payload = " + std::string(se_cdata.msg.dm2_payload));
+	//LOG4CXX_DEBUG(me->logger, "se_cdata.dm2_payload = " + std::string(se_cdata.dm2_payload));
 
-#if TRACELOG == 1
-	// tracelogの取得と格納
-	get_tracelog(trace_on, ref(se_cdata.msg), my_sid, VPRWT, rcv_q.Size());
-#endif
-	
 	//clock_gettime(CLOCK_REALTIME, &ts);
 	//now_time = ts.tv_sec * 1000000000 + ts.tv_nsec;
 	
 	int res_sendto = 0;
 	// 送信
-	buf_ = se_cdata.msg;
 	switch(socket_type) {
 		case 0:
 			LOG4CXX_DEBUG(me->logger, "UDP（ユニキャスト, 暗号化なし）送信開始");
@@ -182,7 +175,7 @@ void NwSender::sender(const NwSender* param, const string confDirPath)
 	//------------------------------------------------------------
 
 	string log_str = "";
-	struct clientdata w_cdata; //受信データ　＋　送信元IPアドレスの構造体
+	struct send_message_vector w_cdata; //受信データ　＋　送信元IPアドレスの構造体
 	
 	bool errOutput = true;
 	bool exit_flg = false;
@@ -210,13 +203,13 @@ void NwSender::sender(const NwSender* param, const string confDirPath)
 			}
 			try {
 				// sidからIPに変換する
-				ip_address = me->sidManagement.sid2ip(w_cdata.msg.dst_station_id);
-				LOG4CXX_DEBUG(me->logger, "SID:" + std::to_string(w_cdata.msg.dst_station_id) + ", IP:" + ip_address);
+				ip_address = me->sidManagement.sid2ip(w_cdata.header.dst_station_id);
+				LOG4CXX_DEBUG(me->logger, "SID:" + std::to_string(w_cdata.header.dst_station_id) + ", IP:" + ip_address);
 			}
 			catch (...)
 			{
 				if (errOutput) {
-					string errmsg = to_string(w_cdata.msg.dst_station_id);
+					string errmsg = to_string(w_cdata.header.dst_station_id);
 					LOG4CXX_ERROR(me->logger, "[sid-ip変換エラー]sid:" + errmsg + ",file:" + sid2ipFileName);
 					errOutput = false;
 				}

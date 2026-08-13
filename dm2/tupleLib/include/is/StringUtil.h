@@ -149,12 +149,17 @@ namespace IS {
 		bool isNumber(const string &input);
 		bool isString(const string &input);
 		string getClassName(const type_info& id);
+
 		bool compress(string inStr, Bytef *outBuf);
 		vector<char> compress(string inStr);
-		int decompress(char *inBuf, char *outBuf);
-		bool compressUsingZstd(string inStr, int inSize, void *outBuf, int *outSize);
 		vector<char> compressUsingZstd(string inStr, int inSize);
+		bool compressUsingZstd(string inStr, int inSize, void *outBuf, int *outSize);
+		
+		int decompress(char *inBuf, char *outBuf);
+		bool decompress(const char *inBuf, size_t inSize, std::string& outBuf);
 		bool decompressUsingZstd(char *inBuf, char *outBuf, int inSize, int *outSize);
+		bool decompressUsingZstd(const char *inBuf, size_t inSize, std::string& outBuf);
+
 		void getIsHeader(char *buf, IsHeaderInfo &info);
 		int setCompressedBufWithHeader(string inStr, char *outBuf, char compressFlg, long key);
 		vector<char> setCompressedBufWithHeader(string inStr, char compressFlg, long key);

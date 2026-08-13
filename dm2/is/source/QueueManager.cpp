@@ -625,14 +625,7 @@ namespace IS {
 	void QueueManager::recvDataToTuples(const string &schema_name, const string &payload, vector<Tuple> &tuples, Schema &schema, string &tableName, const bool &payloadCheck)
 	{
 		if (schema_name == "") {
-			// XMLパーサへ電文解析を依頼し、タプルへ変換
-			IS::InformationSourceParser &isp = IS::InformationSourceParser::get_instance();
-			isp.init();
-			isp.getTuplesBySAX(payload, tableName, tuples);
-			isp.finalize();
-			getSchema(tableName, schema);
-			//REL_COMMENT logger->trace("[addQueueProc] getTuplesBySAX after");
-			// end
+			logger->warn("[QueueManager] No Schema Name");
 		} else {
 			// ProtoBufパーサに電文解析を依頼し、タプルへ変換
 			tableName = schema_name;

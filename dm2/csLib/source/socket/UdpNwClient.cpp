@@ -244,22 +244,6 @@ namespace CS{
 		return ret;
 	}
 	/**
-	* @fn	int UdpNwClient::SendClientData(struct clientdata &buf_)
-	*
-	* @brief	sendto送信(clientdata型)
-	*
-	* @author	Shinichi Kusayama
-	* @date	2026/6/4
-	*
-	* @param [in,out]	buf_ 	送信メッセージバッファ
-	*
-	* @return	int sendtoの戻り値
-	*/
-	int UdpNwClient::SendClientData(struct clientdata &buf_) {
-		int ret = Socket::SendClientData(buf_, *res);
-		return ret;
-	}
-	/**
 	* @fn	int UdpNwClient::SendPacket(struct send_message &buf_)
 	*
 	* @brief	sendto送信(send_message型)
@@ -272,7 +256,23 @@ namespace CS{
 	* @return	int sendtoの戻り値
 	*/
 	int UdpNwClient::SendPacket(struct send_message &buf_) {
-		int ret = Sendto(buf_, *res);
+		int ret = Sendto(buf_, *res, sizeof(buf_));
+		return ret;
+	}
+	/**
+	* @fn	int UdpNwClient::SendPacket(struct send_message_vector &buf_)
+	*
+	* @brief	sendto送信(send_message_vector型)
+	*
+	* @author	Shinichi Kusayama
+	* @date	2026/6/4
+	*
+	* @param [in,out]	buf_ 	送信メッセージバッファ
+	*
+	* @return	int sendtoの戻り値
+	*/
+	int UdpNwClient::SendPacket(struct send_message_vector &buf_) {
+		int ret = SendtoDivision(buf_, *res, MSGSIZE);
 		return ret;
 	}
 }

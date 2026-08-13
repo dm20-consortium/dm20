@@ -32,7 +32,7 @@ ProcSender::~ProcSender()
     delete pthread_duplicate_manage;
 }
 
-std::thread* ProcSender::Run(CS::Queue<CS::clientdata> *queue)
+std::thread* ProcSender::Run(CS::Queue<CS::send_message_vector> *queue)
 {
     LOG4CXX_INFO(logger, "start");
 	p_queue = queue;
@@ -68,13 +68,13 @@ void ProcSender::sender(const ProcSender *param, UnorderedMap<string, time_t> &s
 
     // 自車のCS(VehicleProcRcv)向け送信用socketFD作成
     UdpProcClient owncsudpprocclient;
-    sockaddr_un own_cs_addr = owncsudpprocclient.Init(confDirPath + FD_CStoCS);
+    owncsudpprocclient.Init(confDirPath + FD_CStoCS, "", "");
 
     // Security向け送信用socketFD作成
     UdpProcClient ownsecudpprocclient;
-    sockaddr_un own_sec_addr = ownsecudpprocclient.Init(confDirPath + FD_CStoSEC);
+    ownsecudpprocclient.Init(confDirPath + FD_CStoSEC, "", "");
 
-    struct clientdata cdata;    // 受信データ　＋　送信元IPアドレスの構造体
+    struct send_message_vector cdata;    // 受信データ　＋　送信元IPアドレスの構造体
     bool send_result = false;
     int max_sendto_times = me->settings.max_sendto_times;
     int cs_duplicate_check = me->settings.cs_duplicate_check;
@@ -86,13 +86,8 @@ void ProcSender::sender(const ProcSender *param, UnorderedMap<string, time_t> &s
         //LOG4CXX_DEBUG(me->logger, "pop before");
         cdata = me->p_queue->Pop();
         //LOG4CXX_DEBUG(me->logger, "pop after");
-        log_str = Util(me->dm2util).PrintSend_message(cdata.msg);
+        log_str = Util(me->dm2util).PrintClient_data(cdata);
         LOG4CXX_INFO(me->logger, log_str);
-
-#if TRACELOG == 1
-        // tracelogの取得と格納
-        get_tracelog(trace_on, ref(cdata.msg), my_sid, VNWWT, rcv_q.Size());
-#endif
 
         // 重複受信チェック
         if (cs_duplicate_check == 1)
@@ -100,7 +95,7 @@ void ProcSender::sender(const ProcSender *param, UnorderedMap<string, time_t> &s
             if( me->duplicate_receive_check(me, cdata, sid_sq_id_received_time_map))
             {
                 duplicate_cnt++;
-                string msg = "重複受信チェックに該当 : No." + to_string(duplicate_cnt) + ",src_sid:" + to_string(cdata.msg.src_station_id) + ",check_id:" + to_string(cdata.msg.duplication_check_id);
+                string msg = "重複受信チェックに該当 : No." + to_string(duplicate_cnt) + ",src_sid:" + to_string(cdata.header.src_station_id) + ",check_id:" + to_string(cdata.header.duplication_check_id);
                 // 重複あり
                 LOG4CXX_INFO(me->logger, msg);
                 if (duplicate_cnt % 100000 == 1) {
@@ -116,13 +111,12 @@ void ProcSender::sender(const ProcSender *param, UnorderedMap<string, time_t> &s
         send_result = false;
 
          // ■IS部にデータを送信
-        if((cdata.msg).msg_type == DM2TYPE_IS)
+        if(cdata.header.msg_type == DM2TYPE_IS)
         {
             LOG4CXX_DEBUG(me->logger, "IS部に送信 開始");
             for(int i = 0; i< max_sendto_times; i++)
             {
-			    // UdpReceiveInterfaceには client_data型で渡す
-                if(ownisudpclient.SendClientData(cdata) < 0) {
+                if(ownisudpclient.SendPacket(cdata) < 0) {
                     send_result = false;
                     LOG4CXX_DEBUG(me->logger, "IS部に送信 失敗");
                 }
@@ -134,21 +128,21 @@ void ProcSender::sender(const ProcSender *param, UnorderedMap<string, time_t> &s
             }
         }
         // ■APL部にデータを送信
-        else if((cdata.msg).msg_type == DM2TYPE_APL)
+        else if(cdata.header.msg_type == DM2TYPE_APL)
         {
-            string fd_path = confDirPath + string((cdata.msg).fd_name);
+            string fd_path = confDirPath + string(cdata.header.fd_name);
             LOG4CXX_DEBUG(me->logger, "APL部に送信 開始");
             UdpProcClient udpclientapl;
-            sockaddr_un server_apl_addr = udpclientapl.Init(confDirPath);
+            udpclientapl.Init(confDirPath, "", "");
             for(int i = 0; i < max_sendto_times; i++)
             {
 			    // UdpReceiveInterfaceには client_data型で渡す
-                if(udpclientapl.Sendto(cdata, server_apl_addr) < 0) {   
+                if(udpclientapl.SendPacket(cdata) < 0) {   
                     send_result = false;
                     LOG4CXX_DEBUG(me->logger, "APL部に送信 失敗");
                     // APLへの送信に失敗した場合、socketを再生成してデータ送信を試みる
                     udpclientapl.CloseSocketFd();
-                    server_apl_addr = udpclientapl.Init(confDirPath);
+                    udpclientapl.Init(confDirPath, "", "");
                 }
                 else {
                     send_result = true;
@@ -160,15 +154,15 @@ void ProcSender::sender(const ProcSender *param, UnorderedMap<string, time_t> &s
             udpclientapl.CloseSocketFd();
         }
         //■CS(ProcRcv)にデータを転送
-        else if((cdata.msg).msg_type == DM2TYPE_CS)
+        else if(cdata.header.msg_type == DM2TYPE_CS)
         {
             LOG4CXX_DEBUG(me->logger, "CSに送信 開始");
-            if((cdata.msg).cs_message_detail == DM2CS_MSG_ACK)
+            if(cdata.header.cs_message_detail == DM2CS_MSG_ACK)
             {
-                (cdata.msg).transmission_flag++; // CSへの転送フラグをプラス１
+                cdata.header.transmission_flag++; // CSへの転送フラグをプラス１
                 for(int i = 0; i < max_sendto_times; i++)
                 {
-                    if(owncsudpprocclient.Sendto(cdata.msg, own_cs_addr) < 0) {
+                    if(owncsudpprocclient.SendPacket(cdata) < 0) {
                         send_result = false;
                         LOG4CXX_DEBUG(me->logger, "CSに送信 失敗");
                     } 
@@ -181,13 +175,13 @@ void ProcSender::sender(const ProcSender *param, UnorderedMap<string, time_t> &s
             }
         }
         //■Security部にデータを送信
-        else if((cdata.msg).msg_type == DM2TYPE_SEC)
+        else if(cdata.header.msg_type == DM2TYPE_SEC)
         {
             LOG4CXX_DEBUG(me->logger, "Security部に送信 開始");
             for(int i = 0; i< max_sendto_times; i++)
             {
 			    // UdpReceiveInterfaceには client_data型で渡す
-                if(ownsecudpprocclient.Sendto(cdata, own_sec_addr) < 0) {
+                if(ownsecudpprocclient.SendPacket(cdata) < 0) {
                     send_result = false;
                     LOG4CXX_DEBUG(me->logger, "Security部に送信 失敗");
                 }
@@ -206,7 +200,7 @@ void ProcSender::sender(const ProcSender *param, UnorderedMap<string, time_t> &s
 }
 
 /**
- * @fn int ProcSender::duplicate_receive_check(clientdata& cdata)
+ * @fn int ProcSender::duplicate_receive_check(send_message_vector& cdata)
  * @brief 同時通信重複チェック
  * @param cdata 受信データ構造体
  * @return int 0:重複データなし, 1:重複データあり
@@ -214,14 +208,14 @@ void ProcSender::sender(const ProcSender *param, UnorderedMap<string, time_t> &s
  *            ただし、重複受信数が状況によって変わるため重複確認マップからのキー削除は定期的な削除のみとする
  *            マップは既存のUnorderedMapではなく、std::mapを使用
  */
-int ProcSender::duplicate_receive_check(const ProcSender* param, clientdata &cdata, UnorderedMap<string, time_t> &duplicate_check_map)
+int ProcSender::duplicate_receive_check(const ProcSender* param, send_message_vector &cdata, UnorderedMap<string, time_t> &duplicate_check_map)
 {
     const ProcSender* me = param;
 
 	// strcpy(cdata.from_ip, src_ip); //送信元IPアドレスの格納
 	int ret = 0;
 	// 既に受信済になっていないか、重複確認マップを検索
-    string key = to_string((cdata.msg).src_station_id) + to_string((cdata.msg).duplication_check_id);
+    string key = to_string(cdata.header.src_station_id) + to_string(cdata.header.duplication_check_id);
 
     LOG4CXX_DEBUG(me->logger, "重複チェック開始：" + key);
     if (duplicate_check_map.UnorderedMapKeyExist(key) )

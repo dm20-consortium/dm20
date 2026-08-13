@@ -68,7 +68,6 @@ namespace IS {
 
 		// 処理
 		virtual bool process(vector<IS::TupleSet>& ts);
-		bool process(string queryXML);
 
 		//int getLaneId(TupleSet &ts);
 		unsigned long long getLaneId(TupleSet &ts);

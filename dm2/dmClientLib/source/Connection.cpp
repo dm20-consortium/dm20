@@ -896,9 +896,6 @@ void Connection::reconnect()
 
 void Connection::receiveData(const int port)
 {
-#if DEBUG == 1
-	cout << "[receiveData] START. port : " << port << endl;
-#endif
 	struct timeval timeout;
 	char buf[IPv4_UDP_MAX_BYTE * 10];
 	string receiveData = "";
@@ -934,9 +931,6 @@ void Connection::receiveData(const int port)
 			if (callBackMp.size() == 0 && callBackClassMp.size() == 0)
 			{
 				// クラス内で管理している管理IDが消えていないか確認、消えていたらスレッド終了
-#if DEBUG == 1
-				cout << "[receiveData] All continuous query cleared. Receive Thread End" << endl;
-#endif
 				isExit = true;
 				break;
 			}
@@ -975,7 +969,7 @@ void Connection::receiveData(const int port)
 			vector<Tuple> tuples;
 			struct ProtobufHeaderInfo headerInfo;
 			pp.getProtobufHeaderInfo(receiveData, headerInfo);
-			// cout << "headerSize:" << headerInfo.headerSize << ",payload_size:" << headerInfo.header.payload_size << endl;
+			cout << "headerSize:" << headerInfo.headerSize << ",payload_size:" << headerInfo.header.payload_size << endl;
 			if (headerInfo.headerSize != 0)
 			{
 				Schema schema;
@@ -983,7 +977,7 @@ void Connection::receiveData(const int port)
 				vector<string> nameList, typeList;
 				vector<std::unordered_map<string, string>> valList, timeList, nullList;
 				std::unordered_map<string, string> valmap, timemap, nullValmap;
-				string protobufStr = string(headerInfo.payload_p, headerInfo.header.payload_size);
+				string protobufStr = string(headerInfo.payload_p, receiveData.size() - headerInfo.headerSize);
 				pp.queryResultDeserialize(protobufStr, headerInfo.header.table_name, tuples, nameList, typeList);
 				mngId = headerInfo.header.mngId;
 
@@ -1592,7 +1586,7 @@ cleanup:
 
 inline void Connection::dataIntegration(string &buf, std::unordered_map<string, vector<string>> &recvDataMap, string &result)
 {
-	int flagment = 0, flagmentMax = 0, protobufSize = 0;
+	int flagment = 0, flagmentMax = 0;
 	string key;
 
 
@@ -1602,31 +1596,26 @@ inline void Connection::dataIntegration(string &buf, std::unordered_map<string, 
 	pp.getProtobufHeaderInfo(buf, headerInfo);
 	flagment = headerInfo.header.fragment_index;
 	flagmentMax = headerInfo.header.total_fragments;
-	protobufSize = headerInfo.headerSize + headerInfo.header.payload_size;
 	key = headerInfo.header.key;
-	//cout << "[dataIntegration] UDP recv headerInfo  key:" << key << " flagment:" << flagment << " max:" << flagmentMax << endl;
+	//cout << "[dataIntegration] UDP recv headerInfo  key:" << key << " flagment:" << flagment << " max:" << flagmentMax << " size:" << headerInfo.header.payload_size << endl;
 	// resultMapに受信途中がないかチェック
 	auto itr = recvDataMap.find(key);
 	if (itr != recvDataMap.end()) {
 		// 受信途中が存在する
-//		cout << "[dataIntegration] flagment:" << flagment << endl;
-		recvDataMap[key].at(flagment) = buf;
+		recvDataMap[key].at(flagment) = buf.substr(headerInfo.headerSize);
 	}
 	else {
 		// 新規に受信
 		vector<string> data(flagmentMax);
-//		cout << "[dataIntegration] flagment:" << flagment << endl;
 		data.at(flagment) = buf;
 		recvDataMap[key] = data;
 	}
 
 	bool recvFinish = true;
 	for (string str : recvDataMap[key]) {
-//		cout << "[dataIntegration] str:" << str << endl;
 		// 用意した配列に全てデータが入っていない場合は未受信データあり
 		if (str.length() == 0) recvFinish = false;
 	}
-//	cout << "[dataIntegration] " << recvFinish << endl;
 
 	if (recvFinish) {
 		// 全てのデータを受信出来たらデータを繋ぎ合わせてMapは削除

@@ -15,7 +15,7 @@
 #include <fstream>
 #include <sstream>
 
-#include "Cs.h"
+#include "Struct.h"
 
 
 namespace CS{

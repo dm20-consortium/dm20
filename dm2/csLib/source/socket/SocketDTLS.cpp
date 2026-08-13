@@ -394,7 +394,7 @@ namespace CS{
 
 
 	/**
-	 * @fn	int SocketDTLS::Recvfrom(int fd, sockaddr_storage &ss_, Queue<clientdata> * get_rcv_q, int recv_size_, int my_sid_)
+	 * @fn	int SocketDTLS::Recvfrom(int fd, sockaddr_storage &ss_, Queue<send_message_vector> * get_rcv_q, int recv_size_, int my_sid_)
 	 *
 	 * @brief	DTLS受信受付処理
 	 *
@@ -405,8 +405,8 @@ namespace CS{
 	 * @param	int		受信メッセージバッファ
 	 * @return	int		受信サイズ
 	 */
-	//int SocketDTLS::Recvfrom(int fd, send_message &buf_, sockaddr_storage &ss_, Queue<clientdata> * get_rcv_q, int recv_size_, int my_sid_){
-	int SocketDTLS::Recvfrom(int fd, sockaddr_storage &ss_, Queue<clientdata> * get_rcv_q, int recv_size_, unsigned long long my_sid_, const std::string &fd_cs_to_cs){
+	//int SocketDTLS::Recvfrom(int fd, send_message &buf_, sockaddr_storage &ss_, Queue<send_message_vector> * get_rcv_q, int recv_size_, int my_sid_){
+	int SocketDTLS::Recvfrom(int fd, sockaddr_storage &ss_, Queue<send_message_vector> * get_rcv_q, int recv_size_, unsigned long long my_sid_, const std::string &fd_cs_to_cs){
 		BIO *bio;
 		struct timeval timeout;
 
@@ -456,7 +456,7 @@ namespace CS{
 	}
 
 	/**
-	 * @fn	int SocketDTLS::socketDTLSProcess(void *info, Queue<clientdata> * get_rcv_q, int recv_size_, int my_sid_)
+	 * @fn	int SocketDTLS::socketDTLSProcess(void *info, Queue<send_message_vector> * get_rcv_q, int recv_size_, int my_sid_)
 	 *
 	 * @brief	DTLS受信処理
 	 *
@@ -465,14 +465,11 @@ namespace CS{
 	 *
 	 * @param	void				アドレス情報格納構造体へのポインタ
 	 * @param	send_message		電文格納用構造体
-	 * @return	Queue<clientdata>	キュー連携
+	 * @return	Queue<send_message_vector>	キュー連携
 	 */
-	//void SocketDTLS::socketDTLSProcess(void *info, send_message &buf_, Queue<clientdata> * get_rcv_q, int recv_size_, int my_sid_)
-	void SocketDTLS::socketDTLSProcess(void *info, Queue<clientdata> * get_rcv_q, int recv_size_, unsigned long long my_sid_, const std::string &fd_cs_to_cs)
+	void SocketDTLS::socketDTLSProcess(void *info, Queue<send_message_vector> * get_rcv_q, int recv_size_, unsigned long long my_sid_, const std::string &fd_cs_to_cs)
 	{
 		send_message buf_;
-		// 分割ペイロードサイズ = 分割全体サイズ - ヘッダのサイズ (send_message構造体からペイロードサイズを引いたもの)
-		int division_size = recv_size_ - (sizeof(buf_) - MSGSIZE);
 		ssize_t len = 0;
 		struct pass_info *pinfo = (struct pass_info *)info;
 		SSL *ssl = pinfo->ssl;
@@ -486,22 +483,19 @@ namespace CS{
 		double start_time = 0;
 		double end_time = 0;
 			
-		sockaddr_un own_cs_addr;
 		UdpProcClient owncsudpprocclient;
 		//自クラウドのCS(ProcRcv)向け送信用socketFD作成
-		own_cs_addr = owncsudpprocclient.Init(fd_cs_to_cs);
+		owncsudpprocclient.Init(fd_cs_to_cs, "", "");
 
+		send_message_vector vectorBuf;
 		int combination_map_clear_time_ = 100;
 		UnorderedMap<std::string, time_t> flagment_data_receive_time_map;
 		UnorderedMap<std::string, std::vector<std::string>> flagment_data_combination_map;
-		std::thread th0(ClearUnorderedMap, 
+		std::thread th0(SocketUtil::ClearUnorderedMap, 
 				std::ref(combination_map_clear_time_),
 				std::ref(flagment_data_combination_map),
 				std::ref(flagment_data_receive_time_map));
 
-		int flagment = 0, flagment_max = 0;
-		std::string key = "";
-		std::string combined_payload = "";
 		//OPENSSL_assert(pinfo->client_addr.ss.ss_family == pinfo->server_addr.ss.ss_family);
 
 		start_time = calcTime();
@@ -613,79 +607,24 @@ namespace CS{
 						break;
 				}
 			} else {
-				bool doSend = false;
-				clientdata m_cdata;
-				strcpy(m_cdata.from_ip, server_addr_str.c_str());
-				//LOG4CXX_DEBUG(logger, "SSL_read payload:" + std::string(buf_.dm2_payload));
-				if(buf_.flagment_sum == 1){
-					m_cdata.msg = buf_;
-					//std::cout << buf_.dm2_payload << std::endl;
-					doSend = true;
-				}else if(buf_.flagment_sum > 1){
-					//std::cout << std::string(buf_.dm2_payload, division_size) << std::endl;
-					//分割されたデータの結合処理
-					flagment = buf_.flagment_offset;
-					flagment_max = buf_.flagment_sum;
-					key = std::to_string(buf_.src_station_id).append(std::to_string(buf_.flagment_duplication_check_id));
-
-					//flagment_data_receive_time_mapを更新
-					try{
-						flagment_data_receive_time_map.UnorderedMapUpdate(key, time(NULL));
-					}catch(std::out_of_range& e){
-						if(flagment_data_receive_time_map.UnorderedMapInsert(key, time(NULL)) < 0){
-							//std::cout << "FILE:" << __FILE__ <<  ", LINE:" << __LINE__ << " " << "keyが存在するのでInsert中止" << std::endl;
-						}
-					}
-
-					// flagment_data_combination_mapに受信途中がないかチェック
-					if(flagment_data_combination_map.UnorderedMapKeyExistVector(key) == true){
-						// 受信途中が存在する場合
-						try{
-							flagment_data_combination_map.UnorderedMapUpdateVectorValueThenDecrease(key, flagment, std::string(buf_.dm2_payload, division_size));
-						}catch(std::out_of_range& oor){
-							std::cout << "FILE:" << __FILE__ <<  ", LINE:" << __LINE__ << " " << "out_of_range" << std::endl;
-						}
-						//keyのvectorの要素数がflagment_maxと同値なら全てデータが揃ったと判断し、結合及び削除してからnotifyする。
-						combined_payload = flagment_data_combination_map.UnorderedMapVectorCombineAndDeletePlusSize(key, flagment_max);
-
-						if(combined_payload.length() > 0){
-							combined_payload.copy(buf_.dm2_payload, MSGSIZE);
-							buf_.flagment_offset = 0;
-							buf_.flagment_sum = 1;
-							m_cdata.msg = buf_;
-							//std::cout << buf_.dm2_payload << std::endl;
-							doSend = true;
-							flagment_data_receive_time_map.UnorderedMapErase(key);
-						}
-					}else{
-						// 受信途中が存在しない場合
-						try{
-							flagment_data_combination_map.UnorderedMapInsertVectorPlusSize(key, flagment_max, flagment, std::string(buf_.dm2_payload, division_size));
-						}catch(std::out_of_range& oor){
-							std::cout << "FILE:" << __FILE__ <<  ", LINE:" << __LINE__ << " " << "out_of_range" << std::endl;
-						}
-					}
-
-				}else{
-					std::cout << "FILE:" << __FILE__ <<  ", LINE:" << __LINE__ << " " << "受信データのflagment_sum値が想定外:" << buf_.flagment_sum << std::endl;
+				if (!SocketUtil::combineFragment(buf_, vectorBuf, flagment_data_receive_time_map, flagment_data_combination_map)) {
+					continue;
 				}
-				if (doSend) {
-					// 宛先SIDが自分(車両)宛てである場合
-					if((m_cdata.msg).dst_station_id == my_sid_ || (m_cdata.msg).dst_station_id == 90000000) {
-						get_rcv_q->Push(m_cdata);
-					//宛先SIDが0の場合(想定外)
-					} else if((m_cdata.msg).dst_station_id == 0){
-						LOG4CXX_WARN(logger, "宛先SIDが0の場合(想定外)");
-					//宛先SIDが自分(車両)宛て以外の場合
-					} else {
-						if (!doFirst) {
-							LOG4CXX_WARN(logger, "[宛先SIDが自分(車両)宛て以外の場合] SID:" + std::to_string((m_cdata.msg).dst_station_id));
-							doFirst = true;
-						}
-						if ((m_cdata.msg).transmission_flag <= 5) { 
-							(m_cdata.msg).transmission_flag++; //転送フラグをプラス１
-							owncsudpprocclient.Sendto(m_cdata.msg, own_cs_addr);
-						}
+				// 宛先SIDが自分(車両)宛てである場合
+				if(vectorBuf.header.dst_station_id == my_sid_ || vectorBuf.header.dst_station_id == 90000000) {
+					get_rcv_q->Push(vectorBuf);
+				//宛先SIDが0の場合(想定外)
+				} else if(vectorBuf.header.dst_station_id == 0){
+					LOG4CXX_WARN(logger, "宛先SIDが0の場合(想定外)");
+				//宛先SIDが自分(車両)宛て以外の場合
+				} else {
+					if (!doFirst) {
+						LOG4CXX_WARN(logger, "[宛先SIDが自分(車両)宛て以外の場合] SID:" + std::to_string(vectorBuf.header.dst_station_id));
+						doFirst = true;
+					}
+					if (vectorBuf.header.transmission_flag <= 5) { 
+						vectorBuf.header.transmission_flag++; //転送フラグをプラス１
+						owncsudpprocclient.SendPacket(vectorBuf);
 					}
 				}
 			}
@@ -769,47 +708,14 @@ namespace CS{
 	* @param buf_		送信データ構造体 
 	* @param send_size_	分割サイズ
 	*/
-	int SocketDTLS::SendtoDivision(send_message &buf_, int send_size_){
-		int header_size = sizeof (buf_) - MSGSIZE;						// ヘッダのサイズ
-		int division_size = send_size_ - (sizeof(buf_) - MSGSIZE);		// 分割サイズ
-		if (buf_.payload_size <= division_size) {
-			return Sendto(buf_, header_size + buf_.payload_size);
-		}
-		int flagment_num = 0;
-		struct timespec ts;
-		char payload_[MSGSIZE];
-		memcpy(payload_, buf_.dm2_payload, MSGSIZE);
-		memset(buf_.dm2_payload, '\0', division_size);
-		
-		//送信データのflagment_duplication_check_idに現在時刻を設定
-		timespec_get(&ts, TIME_UTC);
-		buf_.flagment_duplication_check_id = ts.tv_sec * 1000000000 + ts.tv_nsec;
-		
-		//フラグメント数を計算
-		flagment_num = buf_.payload_size / division_size;
-		buf_.flagment_sum = flagment_num;
-		
-		//フラグメント時の端数の有無を求める
-		if(buf_.payload_size % division_size != 0){
-			flagment_num++;
-		}
-		buf_.flagment_sum = flagment_num;
+	int SocketDTLS::SendtoDivision(send_message_vector &buf_, int send_size_){
+		std::vector<send_message> sendBufList = convertToSendMessage(buf_, send_size_);
 		int len = 0;
-		//フラグメントごとにデータを送信
-		for(int i= 0; i < flagment_num - 1; i++){
-			buf_.flagment_offset = i;
-			memset(buf_.dm2_payload, '\0', MSGSIZE);
-			memcpy(buf_.dm2_payload, payload_+ division_size * i, division_size);
-			len = Sendto(buf_, send_size_);
-		}
-		if (len >= 0) {
-			// 最後の送信サイズ = ヘッダサイズ + ペイロードサイズ - 分割して送信したペイロードサイズ
-			int last_send_size_ = header_size + buf_.payload_size - division_size * (flagment_num - 1);
-			buf_.flagment_offset = flagment_num - 1;
-			memset(buf_.dm2_payload, '\0', MSGSIZE);
-			memcpy(buf_.dm2_payload, payload_+ division_size * (flagment_num - 1), division_size);
-			//std::cout << "[flagment data]No." << flagment_num - 1 << ":" << buf_.dm2_payload << std::endl;
-			len = Sendto(buf_, last_send_size_);
+		const int header_size = sizeof(send_message_header);
+		for (int i = 0; i < (int)sendBufList.size(); i++) {
+			send_message& sendBuf = sendBufList.at(i);
+			len = Sendto(sendBuf, header_size + sendBuf.header.payload_size);
+			if (len < 0)  break;
 		}
 		return len;
 	}

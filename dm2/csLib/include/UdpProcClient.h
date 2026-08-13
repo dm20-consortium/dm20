@@ -34,8 +34,8 @@ namespace CS{
 		sockaddr_un InitClient(const char* fd_);
 
 		void Init(const std::string& fd_name, const std::string& port, const std::string& ip) override;
-		int SendClientData(struct clientdata &buf_) override;
 		int SendPacket(struct send_message &buf_) override;
+		int SendPacket(struct send_message_vector &buf_) override;
 	};
 }
 #endif

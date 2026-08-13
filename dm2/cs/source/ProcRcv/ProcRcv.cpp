@@ -14,7 +14,7 @@ using namespace log4cxx;
 
 // グローバルに共有（NwSender の起動に関わるパラメータ）
 vector<INwSender*> senders;			// インスタンス格納リスト
-vector<Queue<clientdata>*> queues;	// キュー
+vector<Queue<send_message_vector>*> queues;	// キュー
 vector<std::thread*> threads;		// スレッド
 std::mutex sender_mutex;
 
@@ -28,7 +28,7 @@ void AddNewSender(ProcRcvSettings& settings, uint count) {
     std::lock_guard<std::mutex> lock(sender_mutex);
 
     CS::INwSender* p_sender = new NwSender(settings, count);
-    Queue<clientdata>* p_queue = new Queue<clientdata>(MAX_QUEUE_SIZE);
+    Queue<send_message_vector>* p_queue = new Queue<send_message_vector>(MAX_QUEUE_SIZE);
 
     senders.push_back(p_sender);
     queues.push_back(p_queue);
@@ -210,7 +210,7 @@ int main(int argc, char *argv[])
 
 	// queuesの破棄
 	for(uint index = 0; index < queues.size(); index++) {
-		Queue<clientdata>* p_queue = queues[index];
+		Queue<send_message_vector>* p_queue = queues[index];
 		delete p_queue;
 	}
 	queues.clear();

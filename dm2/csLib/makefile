@@ -2,23 +2,20 @@
 PREFIX ?= /usr/local
 INSTALL_LIBDIR := $(PREFIX)/lib
 
-TRACELOG     = 0
-LID_PRIORITY = 0
 ARCH         := $(shell uname -m)
-
 
 COMPILER  = g++
 CPLUS_VER = c++11
 
 TARGETS   = libdm2container.a libdm2util.a libdm2socket.a
-CFLAGS    = -DTRACELOG=${TRACELOG} -DLID_PRIORITY=${LID_PRIORITY} -c -std=$(CPLUS_VER) -pthread -MMD -MP -Wall -O3
+CFLAGS    = -c -std=$(CPLUS_VER) -pthread -MMD -MP -Wall -O3
 LDFLAGS   = -L$(LIB_DIR) -L$(CURDIR)/sslLib
 INCLUDE   = -I./include -I../secLib/include
 
 # === ファイル ===
 CONTAINER_OBJS = obj/container/Queue.o obj/container/UnorderedMap.o obj/container/Map.o
 UTIL_OBJS      = obj/util/Util.o
-SOCKET_OBJS    = obj/socket/Socket.o obj/socket/SocketUdp.o obj/socket/SocketDTLS.o \
+SOCKET_OBJS    = obj/socket/SocketUtil.o obj/socket/Socket.o obj/socket/SocketUdp.o obj/socket/SocketDTLS.o \
                  obj/socket/UdpMcNwClient.o obj/socket/UdpMcNwServer.o \
                  obj/socket/DtlsNwClient.o obj/socket/DtlsNwServer.o \
                  obj/socket/UdpNwClient.o obj/socket/UdpNwServer.o \

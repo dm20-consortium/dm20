@@ -1740,6 +1740,59 @@ namespace IS {
 		return len;
 	}
 	/**
+	* 展開処理
+	*
+	* @author	Shinichi Kusayama
+	* @date	2022/05/10
+	*
+	* @param	inBuf	展開前データ
+	* @param	outBuf	展開後データ
+	*
+	* @return	展開結果
+	*/
+	bool StringUtil::decompress(const char *inBuf, size_t inSize, std::string& outBuf)
+	{
+		z_stream z;
+		memset(&z, 0, sizeof(z));
+
+		if (inflateInit(&z) != Z_OK) {
+			cerr << "[decompress] inflateInit Error." << endl;
+			return false;
+		}
+		// 64KB読みながら展開していく
+		std::vector<char> buffer(64 * 1024);
+
+		z.next_in = (Bytef *)inBuf;
+		z.avail_in = static_cast<uInt>(inSize);
+
+		outBuf.clear();
+
+		int status = Z_OK;
+
+		while (status == Z_OK) {
+			z.next_out = (Bytef *)buffer.data();
+			z.avail_out = buffer.size();
+
+			status = inflate(&z, Z_NO_FLUSH);
+
+			size_t produced = buffer.size() - z.avail_out;
+
+			if (produced > 0) {
+				outBuf.append(buffer.data(), produced);
+			}
+		}
+
+		inflateEnd(&z);
+
+		if (status != Z_STREAM_END) {
+			cerr << "[decompress] inflate Error." << endl;
+			outBuf.clear();
+			return false;
+		}
+
+		return true;
+	}
+	/**
 	* 圧縮処理 (Zstandard)
 	*
 	* @author	Shinichi Kusayama
@@ -1826,6 +1879,49 @@ namespace IS {
 			rtn = false;
 		}
 		return rtn;
+	}
+	/**
+	* 展開処理 (Zstandard)
+	*
+	* @author	Shinichi Kusayama
+	* @date	2022/03/01
+	*
+	* @param	inStr	展開前データ
+	* @param	outBuf	展開後データ
+	* @param	inSize	展開前データサイズ
+	* @param	outSize	展開後データサイズ
+	*
+	* @return	正常にデータ処理を実施できた場合はtrue
+	*/
+	bool StringUtil::decompressUsingZstd(const char *inBuf, size_t inSize, std::string& outBuf)
+	{
+		unsigned long long rSize = ZSTD_getFrameContentSize(inBuf, inSize);
+
+		if (rSize == ZSTD_CONTENTSIZE_ERROR) {
+			cerr << "[decompressUsingZstd] Invalid compressed data."
+				<< endl;
+			return false;
+		}
+
+		if (rSize == ZSTD_CONTENTSIZE_UNKNOWN) {
+			cerr << "[decompressUsingZstd] Unknown decompressed size."
+				<< endl;
+			return false;
+		}
+
+		outBuf.resize(static_cast<size_t>(rSize));
+
+		size_t dSize = ZSTD_decompress(&outBuf[0], rSize, inBuf, inSize);
+
+		if (ZSTD_isError(dSize)) {
+			cerr << "[decompressUsingZstd] Decompress Error. " << ZSTD_getErrorName(dSize) << endl;
+			outBuf.clear();
+			return false;
+		}
+
+		outBuf.resize(dSize);
+
+		return true;
 	}
 	/**
 	* XML文字列から指定されたタグの中身を取得する

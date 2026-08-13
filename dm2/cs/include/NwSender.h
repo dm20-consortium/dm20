@@ -25,7 +25,7 @@ namespace CS{
 	{
 	public:
 		virtual ~INwSender() {}
-		virtual std::thread* Run(CS::Queue<CS::clientdata>* queue) = 0;
+		virtual std::thread* Run(CS::Queue<CS::send_message_vector>* queue) = 0;
 		virtual Socket* getSocket() = 0;
 		virtual void setRunExitThreadFlg() = 0;
 	};
@@ -57,14 +57,14 @@ namespace CS{
 		std::mutex ipChangeMutex; // 同期用ミューテックス	
 
 		static void sender(const NwSender* param, const string confDirPath);
-		static int send_to_edge(const NwSender* param, clientdata& se_cdata, addrinfo& res_addr_first_, std::string udp_port_number);
+		static int send_to_edge(const NwSender* param, send_message_vector& se_cdata, addrinfo& res_addr_first_, std::string udp_port_number);
 		
-		Queue<clientdata>* p_queue;					// ProcReceiverから送信データを受け取るためのキュー
+		Queue<send_message_vector>* p_queue;					// ProcReceiverから送信データを受け取るためのキュー
 	public:
 		NwSender(ProcRcvSettings &settings, uint count);
 		~NwSender();
 
-		std::thread* Run(CS::Queue<CS::clientdata>* queue);
+		std::thread* Run(CS::Queue<CS::send_message_vector>* queue);
 		Socket* getSocket();
 		void setRunExitThreadFlg();
 	};

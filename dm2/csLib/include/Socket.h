@@ -1,13 +1,14 @@
 #ifndef SOCKET_H
 #define SOCKET_H
-
-#include "Cs.h"
+#include <ifaddrs.h>
 #include <openssl/evp.h>
 #include <openssl/rand.h>
 #include <openssl/hmac.h>
 #include <openssl/aes.h>
 #include <openssl/evp.h>
 #include <openssl/rand.h>
+#include "Struct.h"
+#include "UnorderedMap.h"
 
 namespace CS{
 	//epol用
@@ -90,26 +91,24 @@ namespace CS{
 		int Bind(int socket_, sockaddr* addr_, socklen_t addr_len_);
 
 		int Recv(send_message &buf_);
-		int Recv(struct clientdata &buf_);
 
 		int Recvfrom(int socket_res_, send_message &buf_, sockaddr_storage &ss_);
 		int Recvfrom(int socket_res_, send_message &buf_, sockaddr_storage &ss_, int recv_size_);
-		int Recvfrom(int socket_res_, clientdata &buf_, sockaddr_storage &ss_, int recv_size_);
 		int RecvfromEtM(int socket_res_, send_message &buf_, sockaddr_storage &ss_, int recv_size_, const std::string &aesKey);
 		int RecvfromEtMonPki(int socket_res_, send_message &buf_, sockaddr_storage &ss_, int recv_size_, const std::string &aesKey);
 
-		int Sendto(send_message &buf_, sockaddr_un &addr_);
-		int Sendto(struct clientdata &buf_, sockaddr_un &addr_);
-		int SendClientData(struct clientdata &buf_, addrinfo &addr_);
-		int Sendto(send_message &buf_, addrinfo &addr_);
+		int Sendto(send_message &buf_, sockaddr_un &addr_, const int& send_size_);
+		int Sendto(send_message &buf_, addrinfo &addr_, const int& send_size_);
 		int Sendto(send_message &buf_, addrinfo &addr_, int send_size_, std::string udp_port_number_);
 		int SendtoEtM(send_message &buf_, addrinfo &addr_, int send_size_, std::string udp_port_number_, const std::string &aesKey);
 		int SendtoEtMonPki(send_message &buf_, addrinfo &addr_, int send_size_, std::string udp_port_number_, const std::string &aesKey);
 		int Sendto(char *buf_, addrinfo &addr_, int send_size_, std::string udp_port_number_);
 
-		int SendtoDivision(send_message &buf_, addrinfo &addr_, int send_size_, std::string udp_port_number_, int socket_type, const std::string &aesKey);
-		int SendtoDivision(send_message &buf_, addrinfo &addr_, int send_size_, std::string udp_port_number_);
-		int SendtoDivision(send_message &buf_, sockaddr_un addr_, char *payload_, const int &fragment_size_);
+		int SendtoDivision(send_message_vector &buf_, addrinfo &addr_, int send_size_, std::string udp_port_number_, int socket_type, const std::string &aesKey);
+		int SendtoDivision(send_message_vector &buf_, addrinfo &addr_, int send_size_, std::string udp_port_number_);
+		std::vector<send_message> convertToSendMessage(const send_message_vector& src_, int send_size_);
+		int SendtoDivision(send_message_vector& buf_, sockaddr_un& addr_, const int& send_size_);
+		int SendtoDivision(send_message_vector& buf_, addrinfo& addr_, const int& send_size_);
 
 		int Getnameinfo(sockaddr_storage &ss_, char src_ip_[NI_MAXHOST]);
 

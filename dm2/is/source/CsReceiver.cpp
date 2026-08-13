@@ -65,44 +65,36 @@ namespace IS {
 	 * @param	buffer	受信バッファ
 	 */
 
-	void CsReceiver::notify(send_message_upper buffer)
+	void CsReceiver::notify(send_message_vector buffer)
 	{
-		
-		// TODO : CSが分割送信を対応するまでの暫定対応 //
-		//string receiveData, integData;
-		//receiveData = buffer.dm2_payload;
-		//dataIntegration(receiveData, integData);
-		//if (integData.length() > 0) {
-		//	cs_rcv_q.Push(integData);
-		//}
 		RecvData data;
 		StringUtil stringUtil;
 		data.schema_name = "";
-		data.cs_ip_address = buffer.from_ip;
-		data.payload = buffer.dm2_payload;
+		if (buffer.dm2_payload.empty()) return;
+		
+		//data.cs_ip_address = buffer.from_ip;
+		data.payload.assign(buffer.dm2_payload.begin(), buffer.dm2_payload.end());
 		char *payload_p = &data.payload[0];
 		struct IsHeaderInfo headerInfo;
 		stringUtil.getIsHeader(payload_p, headerInfo);
 		logger->debug(string("CsReceiver - Flg:") + string(1, headerInfo.header.compressFlg));
 		int len = 0;
-		if (headerInfo.header.compressFlg == '1' || headerInfo.header.compressFlg == '2') {
-			char bufTmp[IPv4_UDP_MAX_BYTE * 10];
-			memset(bufTmp, 0, sizeof(bufTmp));
+		if (headerInfo.header.compressFlg == '1' || headerInfo.header.compressFlg == '2' ) {
+			std::string decompressedData;
+			bool deCompress = false;
 			if (headerInfo.header.compressFlg == '1') {
-				len = stringUtil.decompress(headerInfo.payload_p, bufTmp);
+				deCompress = stringUtil.decompress(headerInfo.payload_p, data.payload.length() - headerInfo.headerSize, decompressedData);
 			} else {
-				int outSize;
-				if (stringUtil.decompressUsingZstd(headerInfo.payload_p, bufTmp, headerInfo.header.length, &outSize)) {
-					len = outSize;
-				}
+				deCompress = stringUtil.decompressUsingZstd(headerInfo.payload_p, headerInfo.header.length, decompressedData);
 			}
+			if (!deCompress) return;
+			
+			data.payload = decompressedData;
+			len = data.payload.length();
 			logger->debug("CsReceiver - Length:" + std::to_string(len));
-			if (len > 0) {
-				data.payload = string(bufTmp, len);
-				char *payload_p = &data.payload[0];
-				// 解凍されたバッファから再度ヘッダ情報を読み取る
-				stringUtil.getIsHeader(payload_p, headerInfo);
-			}
+			char *payload_p = &data.payload[0];
+			// 解凍されたバッファから再度ヘッダ情報を読み取る
+			stringUtil.getIsHeader(payload_p, headerInfo);
 		} else if (headerInfo.header.compressFlg == '0') {
 			data.payload = string(headerInfo.payload_p, data.payload.length() - headerInfo.headerSize);
 			len = data.payload.length();
@@ -119,7 +111,7 @@ namespace IS {
 			len = data.payload.length();
 		}
 
-		logger->debug("IS_RCV SrcSID:" + std::to_string(buffer.src_station_id) + ", LaneID:" + std::to_string(buffer.lane_id) + ", pay_load:" + data.payload + "\n");
+		logger->debug("IS_RCV SrcSID:" + std::to_string(buffer.header.src_station_id) + ", LaneID:" + std::to_string(buffer.header.lane_id) + ", pay_load:" + data.payload + "\n");
 		if (len > 0) cs_rcv_q.Push(data);
 
 	}

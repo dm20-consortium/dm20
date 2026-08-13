@@ -117,7 +117,8 @@ namespace IS {
 
 			int len = recvUsingHeader(sockfd, buf, NULL, false, false);
 			//int len = recvfrom(sockfd, buf, sizeof(buf), 0, (struct sockaddr *)&from, &addrlen);
-
+			//if (len >0) cout << len << endl;
+			//continue;
 			if (len < 0)
 			{
 				// timeout. so continue
@@ -194,6 +195,13 @@ namespace IS {
 		if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)) < 0) {
 			logger->error("[setUDPconfig] setsockopt Error");
 		}
+		// UDPあふれが起きる場合、下記で受信バッファサイズを拡張できているか確認
+		// int rcvbuf = 64 * 1024 * 1024;
+		// setsockopt(sockfd, SOL_SOCKET, SO_RCVBUF, &rcvbuf, sizeof(rcvbuf));
+		// int rcvbuf2 = 0;
+		// socklen_t optlen = sizeof(rcvbuf2);
+		// getsockopt(sockfd, SOL_SOCKET, SO_RCVBUF, &rcvbuf2, &optlen);
+		// cout << "[UDP] SO_RCVBUF = " << rcvbuf2 << endl;
 
 		// socketへのバインド
 		if (bind(sockfd, (struct sockaddr *)&server, sizeof(server)) < 0)
@@ -537,7 +545,7 @@ namespace IS {
 
 	inline void NetworkSource::dataIntegration(string &buf, std::unordered_map<string, vector<string>> &recvDataMap, string &result)
 	{
-		int flagment = 0, flagmentMax = 0;
+		int fragment = 0, fragmentMax = 0;
 		string key;
 		IS::ProtobufParser &pp = IS::ProtobufParser::get_instance();
 		struct ProtobufHeaderInfo headerInfo;
@@ -550,23 +558,20 @@ namespace IS {
 		}
 		else {
 			key = headerInfo.header.key;
-			flagment = headerInfo.header.fragment_index;
-			flagmentMax = headerInfo.header.total_fragments;
+			fragment = headerInfo.header.fragment_index;
+			fragmentMax = headerInfo.header.total_fragments;
 		}
-		cout << "flagment:" << flagment << ",flagmentMax:" << flagmentMax << endl;
-#if DEBUG == 1
-		cout << "UDP recv headerInfo  key:" << key << " flagment:" << flagment << " max:" << flagmentMax << endl;
-#endif
+
 		// resultMapに受信途中がないかチェック
 		auto itr = recvDataMap.find(key);
 		if (itr != recvDataMap.end()) {
 			// 受信途中が存在する
-			recvDataMap[key].at(flagment) = buf;
+			recvDataMap[key].at(fragment) = buf.substr(headerInfo.headerSize);
 		}
 		else {
 			// 新規に受信
-			vector<string> data(flagmentMax);
-			data.at(flagment) = buf;
+			vector<string> data(fragmentMax);
+			data.at(fragment) = buf;
 			recvDataMap[key] = data;
 		}
 
@@ -583,6 +588,7 @@ namespace IS {
 			}
 			recvDataMap.erase(key);
 		}
+		//cout << "[NetworkSource] fragment Id:" << fragment << ", Count:" << fragmentMax << ", Length:" << buf.length() << ", TotalLength:" << result.length() << endl;
 	}
 
 	/**
@@ -1550,6 +1556,7 @@ namespace IS {
 					now_len = SSL_read(ssl, bufTmp, sizeof(bufTmp));
 				} else {
 					now_len = recvfrom(sock, bufTmp, sizeof(bufTmp), 0, (struct sockaddr *)&from, &addrlen);
+					//cout << now_len << endl;
 					if (addrlen == 0 || now_len <= 0) {
 						return -1;		// undefined address
 					}

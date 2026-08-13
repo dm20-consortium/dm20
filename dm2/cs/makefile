@@ -3,19 +3,13 @@
 PREFIX ?= /usr/local
 BINDIR     := $(PREFIX)/bin
 
-#トレースログ機能(1:有効,0:無効) ※無効にするとACCEANヘッダからtracelogがなくなる
-TRACELOG = 0
-
 #CSで使用するキューサイズ設定
 MAX_QUEUE_SIZE = 2129920000
-
-#LID毎優先処理機能(0:無効, 1:有効)
-LID_PRIORITY = 0
 
 COMPILER=g++
 SHELL=/bin/sh
 CC  = $(COMPILER)
-CFLAGS    = -std=c++11 -pthread -MMD -MP -Wall -O3 -DTRACELOG=${TRACELOG} -DMAX_QUEUE_SIZE=${MAX_QUEUE_SIZE} -DLID_PRIORITY=${LID_PRIORITY}
+CFLAGS    = -std=c++11 -pthread -MMD -MP -Wall -O3 -DMAX_QUEUE_SIZE=${MAX_QUEUE_SIZE}
 LDFLAGS   = -L../csLib/lib -Wl,-rpath /usr/local/lib -L../secLib/lib 
 INCLUDES = -Iinclude -I../csLib/include -I../secLib/include
 LIBS      = -ldm2socket -ldm2container -ldm2util -llog4cxx -lcrypto -lssl -ldm2security

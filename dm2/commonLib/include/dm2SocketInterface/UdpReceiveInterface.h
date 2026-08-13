@@ -17,23 +17,24 @@ namespace CS{
 	class UdpReceiveInterface
 	{
 	private:
-		send_message_upper upper_buf_;
-		//send_message buf_;
-		struct clientdata buf_;
+		send_message_vector vectorBuf;
+ 		struct send_message buf;
 
 	public:
 
 		UdpReceiveInterface();
 		
-		void run(const char* fd_name, std::function<void(send_message_upper)>notify);
+		void run(const char* fd_name, std::function<void(send_message_vector)>notify);
 
-		void run_is(const std::string &fd_name, const std::string &nic, const std::string &port, std::function<void(send_message_upper)>notify);
+		void run_is(const std::string &fd_name, const std::string &nic, const std::string &port, std::function<void(send_message_vector)>notify);
 
-		void run_sec(const std::string &fd_name, std::function<void(send_message_upper)>notify);
+		void run_sec(const std::string &fd_name, std::function<void(send_message_vector)>notify);
 
-		void run_mng_ctl(const std::string &fd_name, std::function<void(send_message_upper)>notify);
+		void run_mng_ctl(const std::string &fd_name, std::function<void(send_message_vector)>notify);
 		
-		void notify(send_message_upper upper_buf_);
+		void run_common(const std::string &fd_name, std::function<void(send_message_vector)>notify);
+
+		void notify(send_message_vector upper_buf_);
 
 		~UdpReceiveInterface(){}
 	};

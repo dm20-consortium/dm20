@@ -1,41 +1,51 @@
-#include "Cs.h"
+#include "Util.h"
 #include <sys/types.h>
 #include <sys/stat.h>
 
 namespace CS{
 	std::string Util::PrintSend_message(send_message &sm){
 		std::string res_str = "";
-		res_str = "src_station_id:" + std::to_string(sm.src_station_id) 
-		        + ", dst_station_id:" + std::to_string(sm.dst_station_id)
-				+ ", src_station_type:" + std::to_string(sm.src_station_type) 
-				+ ", dst_station_type:" + std::to_string(sm.dst_station_type)
-				+ ", transmission_flag:" + std::to_string(sm.transmission_flag) 
-				+ ", duplication_check_id:" + std::to_string(sm.duplication_check_id) 
-				+ ", lane_id:" + std::to_string(sm.lane_id) 
-				+ ", retry_level:" + std::to_string(sm.retry_level) 
-				+ ", retry_data_id:" + std::to_string(sm.retry_data_id) 
-				+ ", retry_lifetime:" + std::to_string(sm.retry_lifetime) 
-				+ ", msg_type:" + std::to_string(sm.msg_type) 
-				+ ", cs_message_detail:" + std::to_string(sm.cs_message_detail) 
-				+ ", fd_name:" + std::string(sm.fd_name, 40) 
-				+ ", flagment_duplication_check_id:" + std::to_string(sm.flagment_duplication_check_id) 
-				+ ", flagment_sum" + std::to_string(sm.flagment_sum) 
-				+ ", flagment_offset:" + std::to_string(sm.flagment_offset) 
-				+ ", priority_level:" + std::to_string(sm.priority_level);
-		#if LID_PRIORITY == 1
-		res_str = res_str + ", policing_time:" + std::to_string(sm.policing_time); 
-		#endif
+		res_str = "src_station_id:" + std::to_string(sm.header.src_station_id) 
+		        + ", dst_station_id:" + std::to_string(sm.header.dst_station_id)
+				+ ", src_station_type:" + std::to_string(sm.header.src_station_type) 
+				+ ", dst_station_type:" + std::to_string(sm.header.dst_station_type)
+				+ ", transmission_flag:" + std::to_string(sm.header.transmission_flag) 
+				+ ", duplication_check_id:" + std::to_string(sm.header.duplication_check_id) 
+				+ ", lane_id:" + std::to_string(sm.header.lane_id) 
+				+ ", retry_level:" + std::to_string(sm.header.retry_level) 
+				+ ", retry_data_id:" + std::to_string(sm.header.retry_data_id) 
+				+ ", retry_lifetime:" + std::to_string(sm.header.retry_lifetime) 
+				+ ", msg_type:" + std::to_string(sm.header.msg_type) 
+				+ ", cs_message_detail:" + std::to_string(sm.header.cs_message_detail) 
+				+ ", fd_name:" + std::string(sm.header.fd_name, 40) 
+				+ ", flagment_duplication_check_id:" + std::to_string(sm.header.flagment_duplication_check_id) 
+				+ ", flagment_sum" + std::to_string(sm.header.flagment_sum) 
+				+ ", flagment_offset:" + std::to_string(sm.header.flagment_offset) 
+				+ ", priority_level:" + std::to_string(sm.header.priority_level);
 		res_str = res_str + ", dm2_payload:" + std::string(sm.dm2_payload, MSGSIZE); 
 		return res_str;
 	}
-	std::string Util::PrintClient_data(clientdata &cd){
+	std::string Util::PrintClient_data(send_message_vector &sm){
 		std::string res_str = "";
-		res_str = PrintSend_message(cd.msg);
-		std::string from_ip = cd.from_ip;
-		res_str += ",w_cdata.from_ip:" + from_ip;
+		res_str = "src_station_id:" + std::to_string(sm.header.src_station_id) 
+		        + ", dst_station_id:" + std::to_string(sm.header.dst_station_id)
+				+ ", src_station_type:" + std::to_string(sm.header.src_station_type) 
+				+ ", dst_station_type:" + std::to_string(sm.header.dst_station_type)
+				+ ", transmission_flag:" + std::to_string(sm.header.transmission_flag) 
+				+ ", duplication_check_id:" + std::to_string(sm.header.duplication_check_id) 
+				+ ", lane_id:" + std::to_string(sm.header.lane_id) 
+				+ ", retry_level:" + std::to_string(sm.header.retry_level) 
+				+ ", retry_data_id:" + std::to_string(sm.header.retry_data_id) 
+				+ ", retry_lifetime:" + std::to_string(sm.header.retry_lifetime) 
+				+ ", msg_type:" + std::to_string(sm.header.msg_type) 
+				+ ", cs_message_detail:" + std::to_string(sm.header.cs_message_detail) 
+				+ ", fd_name:" + std::string(sm.header.fd_name, 40) 
+				+ ", flagment_duplication_check_id:" + std::to_string(sm.header.flagment_duplication_check_id) 
+				+ ", flagment_sum" + std::to_string(sm.header.flagment_sum) 
+				+ ", flagment_offset:" + std::to_string(sm.header.flagment_offset) 
+				+ ", priority_level:" + std::to_string(sm.header.priority_level);
 		return res_str;
 	}
-
 	/**
 	 * @fn	std::string Util::ReadConfigPath(const char* key, const std::string &pathname_str)
 	 *

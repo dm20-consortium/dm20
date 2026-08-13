@@ -72,16 +72,8 @@ struct send_message{
     int flagment_sum;
     /** @brief	フラグメントオフセット */
     int flagment_offset;
-    #if TRACELOG == 1
-    /** @brief	トレースログ */
-    std::array<tracelog, TRACEPOINT> tracelogs;
-    #endif
     /** @brief 優先度フラグ */
     int priority_level;
-    #if LID_PRIORITY == 1
-    /** @brief LID毎優先機能によるポリシング時間 */
-    int policing_time;
-    #endif
     /** @brief	DM2.0データペイロード */
     char dm2_payload[MSGSIZE];
 };

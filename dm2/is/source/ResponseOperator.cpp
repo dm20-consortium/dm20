@@ -494,7 +494,7 @@ namespace IS {
 					if (isSslShutdown(ssl)) break;
 					ret = SSL_write(ssl, sendPtr, sendSize);
 				}
-				logger->info("[ResponseOperator] sendSize:" + to_string(sendSize) + " ,compressFlg:" + compressFlg);
+				logger->debug("[ResponseOperator] sendSize:" + to_string(sendSize) + " ,compressFlg:" + compressFlg);
 				if (ret > 0) {
 					sendSumLen = sendSumLen + ret;
 				} else {

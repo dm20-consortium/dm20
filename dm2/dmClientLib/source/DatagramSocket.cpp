@@ -133,14 +133,13 @@ bool DatagramSocket::sendStreamData(const string &streamName, const vector<Tuple
 
 	procTime = DmUtil::getTimeMicrosec();
 #endif
-
 	IS::ProtobufParser &pp = IS::ProtobufParser::get_instance();
 	sendDataList = pp.createStreamList(streamName, tuples, this->key, IPv4_UDP_MAX_BYTE);
 	if (sendDataList.empty()) {
 		cerr << "[sendStreamData] Serialization failure using protobuf" << endl;
 		return false;
 	}
-	//cout << "[sendDataList] sendDataList_size: " << sendDataList.size() << endl;
+	cout << "[sendDataList] sendDataList_size: " << sendDataList.size() << endl;
 #if MEASURE_MODE == 1
 	now = DmUtil::getTimeMicrosec();
 	msec = (now - procTime) / 1000.0;
@@ -157,22 +156,25 @@ bool DatagramSocket::sendStreamData(const string &streamName, const vector<Tuple
 	}
 	unsigned int sendSumLen = 0;
 	for (string sendData : sendDataList) {
-		char *sendPointer = (char *)sendData.c_str();
-		int sendSize = sendData.length();
+		vector<char> sendBuf;
+		const char* sendPtr;
+		size_t sendSize;
 		if (compressFlg == '1' || compressFlg == '2') {
-			char outbuf[IPv4_UDP_MAX_BYTE];
 			long key = DmUtil::getTimeMicrosec();
-			int compressedSize = stringUtil.setCompressedBufWithHeader(sendData, outbuf, compressFlg, key);
-			if (compressedSize > 0) {
-				sendPointer = outbuf;
-				sendSize = compressedSize;
-			}
+			sendBuf = stringUtil.setCompressedBufWithHeader(sendData, compressFlg, key);
+			sendPtr = sendBuf.data();
+			sendSize = sendBuf.size();
+		}
+		if (sendBuf.empty()) {
+			sendPtr = sendData.data();
+			sendSize = sendData.size();
 		}
 		if (ssl == NULL) {
-			len = send(sock, sendPointer, sendSize, 0);
+			len = send(sock, sendPtr, sendSize, 0);
+			//if (sendDataList.size() >= 5) sleep(0.1);
 		}
 		else {
-			len = SSL_write(ssl, sendPointer, sendSize);
+			len = SSL_write(ssl, sendPtr, sendSize);
 		}
 
 		if (len > 0) {
@@ -186,9 +188,9 @@ bool DatagramSocket::sendStreamData(const string &streamName, const vector<Tuple
 			cout << "[sendStreamData] Failed to send UDP errmsg: " << std::strerror(errno) << endl;;
 			for (int retry = 1; retry <= 3; retry++) {
 				if (ssl == NULL) {
-					len = send(sock, sendPointer, sendSize, 0);
+					len = send(sock, sendPtr, sendSize, 0);
 				} else {
-					len = SSL_write(ssl, sendPointer, sendSize);
+					len = SSL_write(ssl, sendPtr, sendSize);
 				}
 				if (len > 0) {
 					sendSumLen = sendSumLen + len;

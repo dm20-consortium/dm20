@@ -55,7 +55,7 @@ NwReceiver::~NwReceiver(void)
  * @date	2023/03/21
  * @return
  */
-std::thread* NwReceiver::Run(CS::Queue<CS::clientdata>* queue)
+std::thread* NwReceiver::Run(CS::Queue<CS::send_message_vector>* queue)
 {
 	LOG4CXX_INFO(logger, settings.interface_names[setting_num] + " " + "start");
 	p_queue = queue;
@@ -95,6 +95,14 @@ void NwReceiver::receiver(const NwReceiver* param, const string &confDirPath)
 	struct epoll_event ev, ev_ret[NEVENTS];
 	int sockfd_common; // それぞれのインタフェースの共通socketディスクリプタ
 	string ip_address;
+	std::map<int, string> start_message = {
+		{0,  "UDP(ユニキャスト, 暗号化なし) 受信開始"},
+		{10, "UDP(ユニキャスト, 暗号化あり) 受信開始"},
+		{11, "UDP(ユニキャスト, 暗号化・署名あり) 受信開始"},
+		{1, "UDP(マルチキャスト) 受信開始"},
+		{2, "DTLS 受信開始"}
+	};
+	LOG4CXX_INFO(me->logger, start_message[socket_type]);
 	switch(socket_type) {
 		case 0:
 		case 10:
@@ -134,31 +142,24 @@ void NwReceiver::receiver(const NwReceiver* param, const string &confDirPath)
 		exit(EXIT_FAILURE);			// [TODO]失敗した際にexitでよいか？
 	}
 	send_message buf;	// 受信データ構造体のオブジェクト
-	clientdata m_cdata; // スレッドに渡す受信データ構造体のオブジェクト
+	send_message_vector vectorBuf;
 	struct sockaddr_storage ss; // IPv4/IPv6の両方に対応するための構造体
 
 	unsigned long long now_time;
 	struct timespec ts;
-	// 分割ペイロードサイズ = 分割全体サイズ - ヘッダのサイズ (send_message構造体からペイロードサイズを引いたもの)
-	int division_size = cs_packet_size - (sizeof(buf) - MSGSIZE);
 
 	int combination_map_clear_time_ = 100;
 	UnorderedMap<std::string, time_t> flagment_data_receive_time_map;
 	UnorderedMap<std::string, std::vector<std::string>> flagment_data_combination_map;
-	std::thread th0(ClearUnorderedMap, 
+	std::thread th0(SocketUtil::ClearUnorderedMap, 
 			std::ref(combination_map_clear_time_),
 			std::ref(flagment_data_combination_map),
 			std::ref(flagment_data_receive_time_map));
 
 	bool doFirst = false;
-	int flagment = 0, flagment_max = 0;
-	std::string key = "";
-	std::string combined_payload = "";
-
-	sockaddr_un own_cs_addr;
 	UdpProcClient owncsudpprocclient;
 	//自クラウドのCS(ProcRcv)向け送信用socketFD作成
-	own_cs_addr = owncsudpprocclient.Init(fd_cs_to_cs);
+	 owncsudpprocclient.Init(fd_cs_to_cs, "", "");
 	while (1)
 	{
 		nfds = epoll_wait(epfd, ev_ret, NEVENTS, EPOLL_TIMEOUT);
@@ -180,111 +181,49 @@ void NwReceiver::receiver(const NwReceiver* param, const string &confDirPath)
 				memset(&buf, 0, sizeof(buf));
 				switch(socket_type) {
 					case 0:
-						LOG4CXX_DEBUG(me->logger, "UDP(ユニキャスト, 暗号化なし) 受信開始");
 						res = ((UdpNwServer*)(me->server))->Recvfrom(sockfd_common, buf, ss);
 						break;
 					case 10:
-						LOG4CXX_DEBUG(me->logger, "UDP(ユニキャスト, 暗号化あり) 受信開始");
-						//res = ((UdpNwServer*)(me->server))->RecvfromDecrypt(sockfd_common, buf, ss, sizeof(buf), iv);
 						res = ((UdpNwServer*)(me->server))->RecvfromEtM(sockfd_common, buf, ss, sizeof(buf), aes_key);
 						break;
 					case 11:
-						LOG4CXX_DEBUG(me->logger, "UDP(ユニキャスト, 暗号化・署名あり) 受信開始");
 						//res = ((UdpNwServer*)(me->server))->RecvfromDecrypt(sockfd_common, buf, ss, sizeof(buf), iv);
 						res = ((UdpNwServer*)(me->server))->RecvfromEtMonPki(sockfd_common, buf, ss, sizeof(buf), aes_key);
 						break;
 					case 1:
-						LOG4CXX_DEBUG(me->logger, "UDP(マルチキャスト) 受信開始");
 						res = ((UdpNwServer*)(me->server))->Recvfrom(sockfd_common, buf, ss);
 						break;
 					case 2:
-						LOG4CXX_DEBUG(me->logger, "DTLS 受信開始");
 						res = ((DtlsNwServer*)(me->server))->Recvfrom(sockfd_common, ss, me->p_queue, cs_packet_size, me->settings.my_sid, fd_cs_to_cs);
 						break;
 				}
-
-				if (res < 0)
-				{
+				if (res < 0) {
 					LOG4CXX_INFO(me->logger, interface_name + " " + "Recvfrom fail");
 					continue;
 				}
-				bool doSend = false;
-				//std::cout << res << std::endl;
-				if (res >= 0) {
-					if(buf.flagment_sum == 1){
-						doSend = true;
-					}else if(buf.flagment_sum > 1){
-						//分割されたデータの結合処理
-						flagment = buf.flagment_offset;
-						flagment_max = buf.flagment_sum;
-						key = std::to_string(buf.src_station_id).append(std::to_string(buf.flagment_duplication_check_id));
-
-						//flagment_data_receive_time_mapを更新
-						try{
-							flagment_data_receive_time_map.UnorderedMapUpdate(key, time(NULL));
-						}catch(std::out_of_range& e){
-							if(flagment_data_receive_time_map.UnorderedMapInsert(key, time(NULL)) < 0){
-								#if DEBUG >= 2
-								std::cout << "FILE:" << __FILE__ <<  ", LINE:" << __LINE__ << " " << "keyが存在するのでInsert中止" << std::endl;
-								#endif
-							}
-						}
-
-						// flagment_data_combination_mapに受信途中がないかチェック
-						if(flagment_data_combination_map.UnorderedMapKeyExistVector(key) == true){
-							// 受信途中が存在する場合
-							try{
-								flagment_data_combination_map.UnorderedMapUpdateVectorValueThenDecrease(key, flagment, std::string(buf.dm2_payload, division_size));
-							}catch(std::out_of_range& oor){
-								std::cout << "FILE:" << __FILE__ <<  ", LINE:" << __LINE__ << " " << "out_of_range" << std::endl;
-							}
-							//keyのvectorの要素数がflagment_maxと同値なら全てデータが揃ったと判断し、結合及び削除してからnotifyする。
-							combined_payload = flagment_data_combination_map.UnorderedMapVectorCombineAndDeletePlusSize(key, flagment_max);
-
-							if(combined_payload.length() > 0){
-								combined_payload.copy(buf.dm2_payload, MSGSIZE);
-								buf.flagment_offset = 0;
-								buf.flagment_sum = 1;
-								doSend = true;
-								flagment_data_receive_time_map.UnorderedMapErase(key);
-							}
-						}else{
-							// 受信途中が存在しない場合
-							try{
-								flagment_data_combination_map.UnorderedMapInsertVectorPlusSize(key, flagment_max, flagment, std::string(buf.dm2_payload, division_size));
-							}catch(std::out_of_range& oor){
-								std::cout << "FILE:" << __FILE__ <<  ", LINE:" << __LINE__ << " " << "out_of_range" << std::endl;
-							}
-						}
-
-					}else{
-						std::cout << "FILE:" << __FILE__ <<  ", LINE:" << __LINE__ << " " << "受信データのflagment_sum値が想定外:" << buf.flagment_sum << std::endl;
-					}
+				if (!SocketUtil::combineFragment(buf, vectorBuf, flagment_data_receive_time_map, flagment_data_combination_map)) {
+					continue;
 				}
-				if (!doSend) continue;
-				//std::cout << buf.dm2_payload << std::endl;
-				LOG4CXX_INFO(me->logger, interface_name + " " + "Recvfrom Success!");
-				m_cdata.msg = buf;
-				strcpy(m_cdata.from_ip, ip_address.c_str());
-				log_str = Util(me->dm2util).PrintSend_message(m_cdata.msg);
+				
+				//strcpy(m_cdata.from_ip, ip_address.c_str());
+				log_str = Util(me->dm2util).PrintClient_data(vectorBuf);
 				LOG4CXX_INFO(me->logger, interface_name + " " + log_str);
-				LOG4CXX_DEBUG(me->logger, m_cdata.msg.dm2_payload);
 
 				// 宛先SIDが自分(車両)宛てである場合
-				if((m_cdata.msg).dst_station_id == me->settings.my_sid || (m_cdata.msg).dst_station_id == 90000000)
+				if(vectorBuf.header.dst_station_id == me->settings.my_sid || vectorBuf.header.dst_station_id == 90000000)
 				{
 					LOG4CXX_DEBUG(me->logger, "interface_name + " " + 宛先SIDが自分(車両)宛てである場合");
 
 					clock_gettime(CLOCK_REALTIME, &ts);
 					now_time = ts.tv_sec * 1000000000 + ts.tv_nsec;
-					log_str =  "lid=," + to_string((m_cdata.msg).lane_id) + "," + to_string(now_time).substr(6);
+					log_str =  "lid=," + to_string(vectorBuf.header.lane_id) + "," + to_string(now_time).substr(6);
 					LOG4CXX_INFO(me->logger, log_str);
 
 					// APL/IS/CSProcへ送るため、キューに入れて受け渡す(同時通信重複チェックはキューから取得後行う)
-					me->p_queue->Push(m_cdata);
+					me->p_queue->Push(vectorBuf);
 				} 
 				//宛先SIDが0の場合(想定外)
-				else if((m_cdata.msg).dst_station_id == 0){
+				else if(vectorBuf.header.dst_station_id == 0){
 					LOG4CXX_WARN(me->logger, interface_name + " " + "宛先SIDが0の場合(想定外)");
 				}
 				//宛先SIDが自分(車両)宛て以外の場合
@@ -293,9 +232,10 @@ void NwReceiver::receiver(const NwReceiver* param, const string &confDirPath)
 						LOG4CXX_WARN(me->logger, interface_name + " " + "宛先SIDが自分(車両)宛て以外の場合");
 						doFirst = true;
 					}
-					if ((m_cdata.msg).transmission_flag <= 10) { 
-						(m_cdata.msg).transmission_flag++; //転送フラグをプラス１
-						owncsudpprocclient.Sendto(m_cdata.msg, own_cs_addr);
+					if (vectorBuf.header.transmission_flag <= 10) { 
+						vectorBuf.header.transmission_flag++; //転送フラグをプラス１
+						//ToDo: 転送機能復活
+						owncsudpprocclient.SendPacket(vectorBuf);
 					}
 					// 自分宛以外の場合は、そのままメッセージを送るべき宛先に送付する
 					//me->p_queue->Push(m_cdata);

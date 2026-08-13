@@ -59,8 +59,7 @@ namespace CS{
 		static int THREAD_cleanup(void);
 		static int handle_socket_error(void);
 		static void* connection_handle(void *info);
-		//void socketDTLSProcess(void *info ,send_message &buf_, Queue<clientdata> * get_rcv_q, int recv_size_, int my_sid_);
-		void socketDTLSProcess(void *info, Queue<clientdata> * get_rcv_q, int recv_size_, unsigned long long my_sid_, const std::string &fd_cs_to_cs);
+		void socketDTLSProcess(void *info, Queue<send_message_vector> * get_rcv_q, int recv_size_, unsigned long long my_sid_, const std::string &fd_cs_to_cs);
 		static double calcTime(void);
 		static void ClearUnorderedMap(int& combination_map_clear_time_, UnorderedMap<std::string, std::vector<std::string>>& flagment_data_combination_map_, 
 		              UnorderedMap<std::string, time_t>& flagment_data_receive_time_map_);
@@ -90,11 +89,10 @@ namespace CS{
 		int StartDtlsServer(int port, char *local_address, const std::string &confDirPath);
 		int StartDtlsClient(char *remote_address, char *local_address, int port, const std::string &confDirPath, bool &exit_flg_);
 
-		//int Recvfrom(int socket_res_, send_message &buf_, sockaddr_storage &ss_,Queue<clientdata> * get_rcv_q, int recv_size_, int my_sid_);
-		int Recvfrom(int socket_res_, sockaddr_storage &ss_,Queue<clientdata> * get_rcv_q, int recv_size_, unsigned long long my_sid_, const std::string &fd_cs_to_cs);
+		int Recvfrom(int socket_res_, sockaddr_storage &ss_, Queue<send_message_vector> * get_rcv_q, int recv_size_, unsigned long long my_sid_, const std::string &fd_cs_to_cs);
 
 		int Sendto(send_message &buf_, int send_size_);
-		int SendtoDivision(send_message &buf_, int send_size_);
+		int SendtoDivision(send_message_vector &buf_, int send_size_);
 
 		void CloseDtls();
 		void CloseSocketOnly();

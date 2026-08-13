@@ -20,8 +20,8 @@ namespace CS{
 		}
 		void Init(const std::string &fd_name, const std::string &is_port_number, const std::string &ip_address);
 		void Init(const std::string &fd_name);
-		int SendClientData(struct clientdata &buf_);
 		int SendPacket(struct send_message &buf_);
+		int SendPacket(struct send_message_vector &buf_);
 		void CloseSocketFd();
 	};
 }

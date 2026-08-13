@@ -21,7 +21,7 @@ namespace CS
 	{
 	public:
 		virtual ~INwReceiver() {}
-		virtual std::thread* Run(CS::Queue<CS::clientdata>* queue) = 0;
+		virtual std::thread* Run(CS::Queue<CS::send_message_vector>* queue) = 0;
 	};
 
 
@@ -42,7 +42,7 @@ namespace CS
         );
         ~NwReceiver();
 
-        std::thread* Run(CS::Queue<CS::clientdata> *queue);
+        std::thread* Run(CS::Queue<CS::send_message_vector> *queue);
 
     private:
         Util dm2util;
@@ -56,7 +56,7 @@ namespace CS
         string udp_port_number;           // 受信UDPポート番号
         string log_str;
         
-        Queue<clientdata>* p_queue;			// ProcSenderから受信データを渡すためのキュー
+        Queue<send_message_vector>* p_queue;			// ProcSenderから受信データを渡すためのキュー
 
         static void receiver(const NwReceiver* param, const string &confDirPath);
         

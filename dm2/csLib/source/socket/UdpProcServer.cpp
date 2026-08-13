@@ -117,21 +117,5 @@ namespace CS{
 	int UdpProcServer::RecvPacket(send_message &buf_, int socket_res_) {
 		return Socket::Recv(buf_);
 	}
-	/**
-	 * @fn	int RecvClientData(clientdata &buf_, int socket_res_)
-	 *
-	 * @brief	受信処理（clientdata型）
-	 *
-	 * @author	Nagoya University
-	 * @date	2026/6/4
-	 *
-	 * @param	buf_  			受信バッファ
-	 * @param	socket_res_  	ソケット情報
-	 *
-	 * @return	受信サイズ
-	 */
-	int UdpProcServer::RecvClientData(clientdata &buf_, int socket_res_) {
-		return Socket::Recv(buf_);
-	}
 
 }

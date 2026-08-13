@@ -1,6 +1,9 @@
-#include "Cs.h"
+#include "Socket.h"
+#include "SocketUtil.h"
+#include "UnorderedMap.h"
 #include "I2vSignatureProcessor.h"
 #include "I2vCryptoProcessor.h"
+
 namespace CS{
 	/**
 	* @fn	int Socket::CreateSocket(int sock_family_, int sock_type_)
@@ -92,23 +95,6 @@ namespace CS{
 	* @return	標準関数recvのリターン値
 	*/
 	int Socket::Recv(send_message &buf_){
-		return recv(socket_res_, &buf_, sizeof(buf_), 0);
-	}
-
-	/**
-	* @fn	int Socket::Recv((struct clientdata &buf_)
-	*
-	* @brief	recv受信処理
-	*
-	* @author	Shinichi Kusayama
-	* @date	2023/12/28
-	*
-	* @param 	[in,out] buf_	受信メッセージバッファ
-	* @return   int				recvの実行結果 
-	*
-	* @return	標準関数recvのリターン値
-	*/
-	int Socket::Recv(struct clientdata &buf_){
 		return recv(socket_res_, &buf_, sizeof(buf_), 0);
 	}
 
@@ -205,26 +191,6 @@ namespace CS{
     }
 
 	/**
-	* @fn	void Socket::Recvfrom(int socket_res_, clientdata &buf_, sockaddr_storage &ss_, int recv_size_)
-	*
-	* @brief	recvfrom受信処理 (CSからISへ電文を受信する場合は、clientdata型)
-	*
-	* @author	Shinichi Kusayama
-	* @date	2026/04/08
-	*
-	* @param 		  	socket_res_	ソケットID
-	* @param [in,out]	buf_	   	受信メッセージバッファ
-	* @param [in,out]	ss_		   	送信元IPアドレス
-	* @param [in]		recv_size_  受信サイズ
-	*/
-    int Socket::Recvfrom(int socket_res_, clientdata &buf_, sockaddr_storage &ss_, int recv_size_){
-		int res = 0;
-		socklen_t sslen = sizeof(ss_);
-		res = recvfrom(socket_res_, &buf_, recv_size_, 0, (struct sockaddr *)&ss_, &sslen);
-		return res;
-    }
-
-	/**
 	* @fn	int Socket::Sendto(send_message &buf_, sockaddr_un &addr_)
 	*
 	* @brief	sendto送信処理(バッファ渡し、sockaddr_un用、UdpProcClientから呼び出される)
@@ -237,43 +203,11 @@ namespace CS{
 	*
 	* @return	int 標準関数sendtoのリターン値
 	*/
-	int Socket::Sendto(send_message &buf_, sockaddr_un &addr_){
+	int Socket::Sendto(send_message &buf_, sockaddr_un &addr_, const int& send_size_){
 		//std::cout << "socket_res_:"  << socket_res_ << std::endl;
-		return sendto(socket_res_, &buf_, sizeof(buf_), 0, (struct sockaddr *)&addr_, sizeof(addr_));
+		return sendto(socket_res_, &buf_, send_size_, 0, (struct sockaddr *)&addr_, sizeof(addr_));
 	}
 
-	/**
-	* @fn	int Socket::Sendto(struct clientdata &buf_, sockaddr_un &addr_)
-	*
-	* @brief	sendto送信処理(バッファ渡し、sockaddr_un用、UdpProcClientから呼び出される)
-	*
-	* @author	Shinichi Kusayama
-	* @date	2023/12/28
-	*
-	* @param [in,out]	buf_ 	送信メッセージバッファ
-	* @param [in,out]	addr_	宛先IPアドレス
-	*
-	* @return	int 標準関数sendtoのリターン値
-	*/
-	int Socket::Sendto(struct clientdata &buf_, sockaddr_un &addr_){
-		return sendto(socket_res_, &buf_, sizeof(buf_), 0, (struct sockaddr *)&addr_, sizeof(addr_));
-	}
-	/**
-	* @fn	int Socket::SendClientData(struct clientdata &buf_, addrinfo &addr_)
-	*
-	* @brief	sendto送信処理(clientdata型)
-	*
-	* @author	Shinichi Kusayama
-	* @date	2026/6/4
-	*
-	* @param [in,out]	buf_ 	送信メッセージバッファ
-	* @param [in,out]	addr_	宛先IPアドレス
-	*
-	* @return	int 標準関数sendtoのリターン値
-	*/
-	int Socket::SendClientData(struct clientdata &buf_, addrinfo &addr_){
-		return sendto(socket_res_, &buf_, sizeof(buf_), 0, addr_.ai_addr, addr_.ai_addrlen);
-	}
 	/**
 	* @fn	int Socket::Sendto(char *buf_, addrinfo &addr_, int send_size_, std::string udp_port_number_)
 	*
@@ -335,8 +269,8 @@ namespace CS{
 		std::string buf_str(buf_char, send_size_);
 
 		authenticated_encryption_message ae_message;
-		size_t slen = SEC::I2vSignatureProcessor::makeSignature(buf_str, (unsigned char*)ae_message.sign, conf_dir_path_, buf_.src_station_id);
-		ae_message.signer_station_id = buf_.src_station_id;
+		size_t slen = SEC::I2vSignatureProcessor::makeSignature(buf_str, (unsigned char*)ae_message.sign, conf_dir_path_, buf_.header.src_station_id);
+		ae_message.signer_station_id = buf_.header.src_station_id;
 		ae_message.sign_size = slen; //short_size 2
 		ae_message.message_size = buf_str.length(); //short_size 2
 		memcpy(ae_message.message, buf_str.c_str(), buf_str.length());
@@ -384,8 +318,8 @@ namespace CS{
 	*
 	* @return	int sendtoの戻り値
 	*/
-	int Socket::Sendto(send_message &buf_, addrinfo &addr_){
-		return Sendto(buf_, addr_, sizeof(buf_), 0);
+	int Socket::Sendto(send_message &buf_, addrinfo &addr_, const int& send_size_){
+		return Sendto(buf_, addr_, send_size_, 0);
 	}
 
 	/**
@@ -403,49 +337,14 @@ namespace CS{
 	*
 	* @return	int sendtoの戻り値
 	*/
-	int Socket::SendtoDivision(send_message &buf_, addrinfo &addr_, int send_size_, std::string udp_port_number_){
-		int header_size = sizeof (buf_) - MSGSIZE;						// ヘッダのサイズ
-		int division_size = send_size_ - (sizeof(buf_) - MSGSIZE);		// 分割サイズ
-		if (buf_.payload_size <= division_size) {
-			return Sendto(buf_, addr_, header_size + buf_.payload_size, udp_port_number_);
-		}
-		int flagment_num = 0;
-		struct timespec ts;
-		char payload_[MSGSIZE];
-		memcpy(payload_, buf_.dm2_payload, MSGSIZE);
-		
-		memset(buf_.dm2_payload, '\0', division_size);
-		
-		//送信データのflagment_duplication_check_idに現在時刻を設定
-		timespec_get(&ts, TIME_UTC);
-		buf_.flagment_duplication_check_id = ts.tv_sec * 1000000000 + ts.tv_nsec;
-		
-		//フラグメント数を計算
-		flagment_num = buf_.payload_size / division_size;
-		buf_.flagment_sum = flagment_num;
-		
-		//フラグメント時の端数の有無を求める
-		if(buf_.payload_size % division_size != 0){
-			flagment_num++;
-		}
-		buf_.flagment_sum = flagment_num;
+	int Socket::SendtoDivision(send_message_vector &buf_, addrinfo &addr_, int send_size_, std::string udp_port_number_){
+		std::vector<send_message> sendBufList = convertToSendMessage(buf_, send_size_);
 		int len = 0;
-		//フラグメントごとにデータを送信
-		for(int i= 0; i < flagment_num - 1; i++){
-			buf_.flagment_offset = i;
-			memset(buf_.dm2_payload, '\0', MSGSIZE);
-			memcpy(buf_.dm2_payload, payload_+ division_size * i, division_size);
-			//std::cout << "[flagment data]No." << i << ":" << buf_.dm2_payload << std::endl;
-			len = Sendto(buf_, addr_, send_size_, udp_port_number_);
-		}
-		if (len >= 0) {
-			// 最後の送信サイズ = ヘッダサイズ + ペイロードサイズ - 分割して送信したペイロードサイズ
-			int last_send_size_ = header_size + buf_.payload_size - division_size * (flagment_num - 1);
-			buf_.flagment_offset = flagment_num - 1;
-			memset(buf_.dm2_payload, '\0', MSGSIZE);
-			memcpy(buf_.dm2_payload, payload_+ division_size * (flagment_num - 1), division_size);
-			//std::cout << "[flagment data]No." << flagment_num - 1 << ":" << buf_.dm2_payload << std::endl;
-			len = Sendto(buf_, addr_, last_send_size_, udp_port_number_);
+		const int header_size = sizeof(send_message_header);
+		for (int i = 0; i < (int)sendBufList.size(); i++) {
+			send_message& sendBuf = sendBufList.at(i);
+			len = Sendto(sendBuf, addr_, header_size + sendBuf.header.payload_size, udp_port_number_);
+			if (len < 0)  break;
 		}
 		return len;
 	}
@@ -466,110 +365,125 @@ namespace CS{
 	*
 	* @return	int sendtoの戻り値
 	*/
-	int Socket::SendtoDivision(send_message &buf_, addrinfo &addr_, int send_size_, std::string udp_port_number_, int socket_type, const std::string &aesKey){
-		int header_size = sizeof (buf_) - MSGSIZE;						// ヘッダのサイズ
-		int division_size = send_size_ - (sizeof(buf_) - MSGSIZE);		// 分割サイズ
-		if (buf_.payload_size <= division_size) {
-			if (socket_type == 10) {
-				return SendtoEtM(buf_, addr_, header_size + buf_.payload_size, udp_port_number_, aesKey);
-			} else {
-				return SendtoEtMonPki(buf_, addr_, header_size + buf_.payload_size, udp_port_number_, aesKey);
-			}
-		}
-		int flagment_num = 0;
-		struct timespec ts;
-		char payload_[MSGSIZE];
-		memcpy(payload_, buf_.dm2_payload, MSGSIZE);
-		
-		memset(buf_.dm2_payload, '\0', division_size);
-		
-		//送信データのflagment_duplication_check_idに現在時刻を設定
-		timespec_get(&ts, TIME_UTC);
-		buf_.flagment_duplication_check_id = ts.tv_sec * 1000000000 + ts.tv_nsec;
-		
-		//フラグメント数を計算
-		flagment_num = buf_.payload_size / division_size;
-		buf_.flagment_sum = flagment_num;
-		
-		//フラグメント時の端数の有無を求める
-		if(buf_.payload_size % division_size != 0){
-			flagment_num++;
-		}
-		buf_.flagment_sum = flagment_num;
+	int Socket::SendtoDivision(send_message_vector &buf_, addrinfo &addr_, int send_size_, std::string udp_port_number_, int socket_type, const std::string &aesKey){
+		std::vector<send_message> sendBufList = convertToSendMessage(buf_, send_size_);
 		int len = 0;
-		//フラグメントごとにデータを送信
-		for(int i= 0; i < flagment_num - 1; i++){
-			buf_.flagment_offset = i;
-			memset(buf_.dm2_payload, '\0', MSGSIZE);
-			memcpy(buf_.dm2_payload, payload_+ division_size * i, division_size);
-			//std::cout << "[flagment data]No." << i << ":" << buf_.dm2_payload << std::endl;
+		const int header_size = sizeof(send_message_header);
+		for (int i = 0; i < (int)sendBufList.size(); i++) {
+			send_message& sendBuf = sendBufList.at(i);
 			if (socket_type == 10) {
-				len = SendtoEtM(buf_, addr_, send_size_, udp_port_number_, aesKey);
+				len = SendtoEtM(sendBuf, addr_, header_size + sendBuf.header.payload_size, udp_port_number_, aesKey);
 			} else {
-				len = SendtoEtMonPki(buf_, addr_, send_size_, udp_port_number_, aesKey);
+				len = SendtoEtMonPki(sendBuf, addr_, header_size + sendBuf.header.payload_size, udp_port_number_, aesKey);
 			}
-		}
-		if (len >= 0) {
-			// 最後の送信サイズ = ヘッダサイズ + ペイロードサイズ - 分割して送信したペイロードサイズ
-			int last_send_size_ = header_size + buf_.payload_size - division_size * (flagment_num - 1);
-			buf_.flagment_offset = flagment_num - 1;
-			memset(buf_.dm2_payload, '\0', MSGSIZE);
-			memcpy(buf_.dm2_payload, payload_+ division_size * (flagment_num - 1), division_size);
-			//std::cout << "[flagment data]No." << flagment_num - 1 << ":" << buf_.dm2_payload << std::endl;
-			if (socket_type == 10) {
-				len = SendtoEtM(buf_, addr_, last_send_size_, udp_port_number_, aesKey);
-			} else {
-				len = SendtoEtMonPki(buf_, addr_, last_send_size_, udp_port_number_, aesKey);
-			}
+			if (len < 0)  break;
 		}
 		return len;
 	}
 
 	/**
-	* @fn	void Socket::SendtoDivision(send_message &buf_, char *payload_)
+	* @fn	void Socket::SendtoDivision(send_message_vector &buf_)
 	*
 	* @brief	sendto送信処理(バッファ渡し、sockaddr_un用)
 	*
-	* @author	Akihiko Maki
-	* @date		2019/03/26
+	* @author	Shinichi Kusayama
+	* @date		2026/8/10
 	*
 	* @param buf_		送信データ構造体 
-	* @param payload_	DM2.0ペイロード
-	* @param buf_		分割サイズ
 	*/
-	int Socket::SendtoDivision(send_message &buf_, sockaddr_un server_addr_, char *payload_, const int &fragment_size_){
-		int flagment_num = 0;
-		struct timespec ts;
-		memset(buf_.dm2_payload, '\0', fragment_size_);
-		
-		//送信データのflagment_duplication_check_idに現在時刻を設定
-		timespec_get(&ts, TIME_UTC);
-		buf_.flagment_duplication_check_id = ts.tv_sec * 1000000000 + ts.tv_nsec;
-		
-		//フラグメント数を計算
-		flagment_num = buf_.payload_size / fragment_size_;
-		buf_.flagment_sum = flagment_num;
-		
-		//フラグメント時の端数の有無を求める
-		if(buf_.payload_size % MSGSIZE != 0){
-			flagment_num++;
-		}
-		buf_.flagment_sum = flagment_num;
-		
+	int Socket::SendtoDivision(send_message_vector& buf_, sockaddr_un& addr_, const int& send_size_)
+	{
+		std::vector<send_message> sendBufList = convertToSendMessage(buf_, send_size_);
 		int len = 0;
-		//フラグメントごとにデータを送信
-		for(int i= 0; i < flagment_num - 1; i++){
-			buf_.flagment_offset = i;
-			memcpy(buf_.dm2_payload, payload_ + fragment_size_ * i, fragment_size_);
-			len = Sendto(buf_, server_addr_);
-		}
-		if (len >= 0) {
-			buf_.flagment_offset = flagment_num - 1;
-			memset(buf_.dm2_payload, '\0', MSGSIZE);
-			memcpy(buf_.dm2_payload, payload_ + flagment_num - 1, fragment_size_);
-			len = Sendto(buf_, server_addr_);
+		const int header_size = sizeof(send_message_header);
+		for (int i = 0; i < (int)sendBufList.size(); i++) {
+			send_message& sendBuf = sendBufList.at(i);
+			len = Sendto(sendBuf, addr_, header_size + sendBuf.header.payload_size);
+			if (len < 0)  break;
 		}
 		return len;
+	}
+	/**
+	* @fn	void Socket::SendtoDivision(send_message_vector &buf_)
+	*
+	* @brief	sendto送信処理(バッファ渡し、addrinfo用)
+	*
+	* @author	Shinichi Kusayama
+	* @date		2026/8/10
+	*
+	* @param buf_		送信データ構造体 
+	*/
+	int Socket::SendtoDivision(send_message_vector& buf_, addrinfo& addr_, const int& send_size_)
+	{
+		std::vector<send_message> sendBufList = convertToSendMessage(buf_, send_size_);
+		int len = 0;
+		const int header_size = sizeof(send_message_header);
+		for (int i = 0; i < (int)sendBufList.size(); i++) {
+			send_message& sendBuf = sendBufList.at(i);
+			len = Sendto(sendBuf, addr_, header_size + sendBuf.header.payload_size);
+			if (len < 0)  break;
+		}
+		return len;
+	}
+	/**
+	* @fn	std::vector<send_message> Socket::convertToSendMessage(const send_message_vector& src_, int send_size_)
+	*
+	* @brief	send_message_vectorからsend_messageへ変換
+	*
+	* @author	Shinichi Kusayama
+	* @date		2026/8/10
+	*
+	* @param src_		送信データ構造体 
+	* @param send_size_		送信サイズ
+	*
+	* @return	送信データ構造体
+	*/
+	std::vector<send_message> Socket::convertToSendMessage(const send_message_vector& src_, int send_size_)
+	{
+		std::vector<send_message> result;
+		int header_size = sizeof(send_message_header);
+		const int division_size = send_size_ - header_size;
+		const int payload_size = static_cast<int>(src_.dm2_payload.size());
+		
+		//std::cout << "[Socket::convertToSendMessage]header:" << header_size << ",div:" << division_size << ",payload: " << payload_size << std::endl;
+
+		//SocketUtil::print_send_message_header(src_.header);
+		// 分割不要
+		if (payload_size <= division_size) {
+			send_message sendBuf;
+			sendBuf.header = src_.header;
+			sendBuf.header.payload_size = payload_size;
+			sendBuf.header.flagment_offset = 0;
+			sendBuf.header.flagment_sum = 1;
+			memcpy(sendBuf.dm2_payload, src_.dm2_payload.data(), payload_size);
+			result.push_back(sendBuf);
+			//SocketUtil::print_send_message_header(sendBuf.header);
+		} else {
+			// フラグメント数
+			const int fragment_num = (payload_size + division_size - 1) / division_size;
+
+			// フラグメント重複チェックID
+			struct timespec ts;
+			timespec_get(&ts, TIME_UTC);
+			const unsigned long long duplication_id = ts.tv_sec * 1000000000ULL + ts.tv_nsec;
+			for (int i = 0; i < fragment_num; i++) {
+				const int offset = division_size * i;
+				const int fragment_size = std::min(division_size, payload_size - offset);
+				send_message sendBuf;
+				// ヘッダ
+				sendBuf.header = src_.header;
+				// フラグメント情報
+				sendBuf.header.payload_size = fragment_size;
+				sendBuf.header.flagment_sum = fragment_num;
+				sendBuf.header.flagment_offset = i;
+				sendBuf.header.flagment_duplication_check_id = duplication_id;
+				// ペイロード
+				memcpy(sendBuf.dm2_payload, src_.dm2_payload.data() + offset, fragment_size);
+				result.push_back(sendBuf);
+				//SocketUtil::print_send_message_header(sendBuf.header);
+			}
+		}
+		return result;
 	}
 	/**
 	* @fn	void Socket::Getnameinfo(sockaddr_storage &ss_, char src_ip_[NI_MAXHOST])

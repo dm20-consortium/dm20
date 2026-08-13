@@ -104,7 +104,7 @@ int main(int argc, char *argv[])
     // クラス初期化
     LOG4CXX_INFO(logger, "ProcReceiver, NwSender生成");
     ProcSender *proc_sender = new ProcSender(settings);
-    Queue<clientdata>* p_queue = new Queue<clientdata>(MAX_QUEUE_SIZE);
+    Queue<send_message_vector>* p_queue = new Queue<send_message_vector>(MAX_QUEUE_SIZE);
 
 	// 初期設定ファイルに定義されたネットワーク情報の個数分NwReceiverを生成する
 	vector<INwReceiver*> receivers;

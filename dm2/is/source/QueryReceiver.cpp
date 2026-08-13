@@ -117,40 +117,6 @@ namespace IS {
 	}
 	
 	/**
-	 * クエリ転送処理
-	 *
-	 * @author	Shinichi Kusayama
-	 * @date	2025/9/22
-	 *
-	 * @param	execSID	実行元SID
-	 * @param	payload	クエリ
-	 */
-	void QueryReceiver::transferQuery(const unsigned long long execSID, RecvData &data, string &query)
-	{
-		string resMsg;
-		ErrorCode resCode = ErrorCode::NO_ERR;
-		string errMsg = QM.parseQuery(query);
-		if (errMsg != "") {
-			resMsg = errMsg;
-			resCode = ErrorCode::QUERY_PARSE_ERR;
-		} else {
-			// クエリ転送処理
-			IS::TransferOperator *opX = new IS::TransferOperator(execSID, 0, 0);
-			opX->process(data.payload);
-			opX->exit();
-			delete opX;
-		}
-		// 処理結果を応答
-		TupleSet tupleset;
-		vector<TupleSet> ts;
-		ts.push_back(tupleset);
-		IS::ResponseOperator *opX = new IS::ResponseOperator(0, data, resCode, resMsg);
-		opX->process(ts);
-		opX->exit();
-		delete opX;
-
-	}
-	/**
 	* 受信処理
 	*
 	* @author	Nagoya University

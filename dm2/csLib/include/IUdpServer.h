@@ -11,7 +11,6 @@ namespace CS{
 		virtual ~IUdpServer();
 
 		virtual int Init(const std::string& fd_name, std::string interface_name, std::string port_no) = 0;
-		virtual int RecvClientData(clientdata &buf_, int socket_res_) = 0;
 		virtual int RecvPacket(send_message &buf_, int socket_res_) = 0;
 	};
 }

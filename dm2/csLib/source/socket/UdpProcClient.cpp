@@ -72,21 +72,6 @@ namespace CS{
 		CloseSocket();
 	}
 	/**
-	* @fn	int UdpProcClient::SendClientData(struct clientdata &buf_)
-	*
-	* @brief	sendto送信(clientdata型)
-	*
-	* @author	Shinichi Kusayama
-	* @date	2026/6/4
-	*
-	* @param [in,out]	buf_ 	送信メッセージバッファ
-	*
-	* @return	int sendtoの戻り値
-	*/
-	int UdpProcClient::SendClientData(struct clientdata &buf_) {
-		return Socket::Sendto(buf_, server_addr_);
-	}
-	/**
 	* @fn	int UdpProcClient::SendPacket(struct send_message &buf_)
 	*
 	* @brief	sendto送信(send_message型)
@@ -99,8 +84,24 @@ namespace CS{
 	* @return	int sendtoの戻り値
 	*/
 	int UdpProcClient::SendPacket(struct send_message &buf_) {
-		return Socket::Sendto(buf_, server_addr_);
+		return Socket::Sendto(buf_, server_addr_, sizeof(buf_));
 	}
+	/**
+	* @fn	int UdpProcClient::SendPacket(struct send_message_vector &buf_)
+	*
+	* @brief	sendto送信(send_message_vector型)
+	*
+	* @author	Shinichi Kusayama
+	* @date	2026/6/4
+	*
+	* @param [in,out]	buf_ 	送信メッセージバッファ
+	*
+	* @return	int sendtoの戻り値
+	*/
+	int UdpProcClient::SendPacket(struct send_message_vector &buf_) {
+		return Socket::SendtoDivision(buf_, server_addr_, MSGSIZE);
+	}
+
 }
 
 

@@ -48,7 +48,6 @@ namespace CS {
 		int retry_send_interval;					// 再送処理時のパケット送信の間隔(マイクロ秒)
 		int retry_map_clear_time;					// 再送処理用のMAPの古いデータの削除処理間隔(秒) 
 		int trace_on;								// トレースログのON/OFFフラグ
-		//Queue<clientdata> rcv_q(MAX_QUEUE_SIZE);	// キューオブジェクト生成
 		//--- confファイル読み込み End ---
 
 		// 再送処理管理用非順序型MAPオブジェクト生成。key値：再送時間 value値：送信データ

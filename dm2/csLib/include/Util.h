@@ -1,7 +1,12 @@
-#ifndef UTIL_H
-#define UTIL_H
+#ifndef SOCKETUTIL_H
+#define SOCKETUTIL_H
 
-#include "Cs.h"
+#include <limits.h>
+#include <sys/ipc.h>
+#include <sys/shm.h>
+#include "Struct.h"
+#include "Map.h"
+#include "UnorderedMap.h"
 #define ENV_DM2_CONF_PATH "DM2_CONF_DIR_PATH"
 
 namespace CS{
@@ -13,6 +18,8 @@ namespace CS{
 	 * @author	Nagoya University
 	 * @date	2018/03/14
 	 */
+	/** @brief dm2.confファイルの指定 */
+	const std::string CONF_FILE = "dm2.conf";
 
 	// template <typename T1, typename T2>
 	class Util
@@ -28,7 +35,7 @@ namespace CS{
 		};
 	public:
 		std::string PrintSend_message(send_message &sm);
-		std::string PrintClient_data(clientdata &cd);
+		std::string PrintClient_data(send_message_vector &sm);
 
 		bool chk_dm2conf_int_item(std::string item, int &value, bool doWarnLog);
 		bool chk_dm2conf_long_item(std::string item, long &value, bool doWarnLog);
@@ -57,6 +64,7 @@ namespace CS{
 		int MakeSharedId(const std::string file_path, int ipc_key_id, int shared_memory_size);
  		int GetSharedId(const std::string file_path, int ipc_key_id, int get_size);
 		void usage(const char *cmd);
+
 	};
 }
 #endif

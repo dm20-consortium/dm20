@@ -196,11 +196,10 @@ namespace IS {
 		string tblName = tupleset.getSchemaRef().getTableName();
 
 		UdpSendInterface udpsendinterface;
-		sockaddr_un server_addr;
 		udpsendinterface.Init(this->fdDirPath + FD_IStoCS, cs_port, cs_ip);
 		struct send_message buf;
-		buf.src_station_id = 0;
-		buf.lane_id = 0;
+		buf.header.src_station_id = 0;
+		buf.header.lane_id = 0;
 
 		Schema schema = tupleset.getSchemaRef();
 		string tablename = schema.getTableName();
@@ -217,37 +216,30 @@ namespace IS {
 				}
 			}
 		}
+		buf.header.dst_station_id = dstSID;
 		try {
-			//buf.src_station_id = stoi(mySid);
-			buf.src_station_id = stoull(mySid);
-			buf.dst_station_id = dstSID;
+			buf.header.src_station_id = stoull(mySid);
 
 			// 自身が車両のDBである場合はレーンIDを付与する
 			if (settings.getSIDType() == Settings::SID_TYPE::CAR) {
 				// レーンIDの付与
 				string name = QueuM.getLaneIdSchema(tblName);
 				if (name.length() == 0 || tupleset.size() == 0) {
-					buf.lane_id = LM.getLaneId();
+					buf.header.lane_id = LM.getLaneId();
 				}
 				else {
 					any val;
 					tupleset.getTuple(0).getValueByIdx(tupleset.getSchemaRef().getAttributeIdx(name), val);
 					//buf.lane_id = stoi(stringUtil.getAnyString(val));
-					buf.lane_id = stoull(stringUtil.getAnyString(val));
+					buf.header.lane_id = stoull(stringUtil.getAnyString(val));
 				}
 			}
 			tupleCnt = tupleset.size();
 		}
 		catch (const std::invalid_argument&) {
-			logger->error("[" + this->type + "][process] LINE:" + std::to_string(__LINE__) + " stoi エラー sid:" + to_string(buf.src_station_id) + " laneId:" + to_string(buf.lane_id));
+			logger->error("[" + this->type + "][process] LINE:" + std::to_string(__LINE__) + " stoi エラー sid:" + to_string(buf.header.src_station_id) + " laneId:" + to_string(buf.header.lane_id));
 		}
 
-#if MEASURE_MODE == 1
-		long now = DmUtil::getTimeMicrosec();
-		double msec = (now - procTime) / 1000.0;
-		logger->info("[" + this->type + "] STAT_STEP" + to_string(step++) + " read config parameter processing time: " + to_string(msec) + "[ms]");
-		procTime = now;
-#endif
 		string retXML;
 		if (tablename == "object_info" || tablename == "object_info_processed") {
 			setProto = true;
@@ -311,12 +303,6 @@ namespace IS {
 		}
 		if (retXML == "") return true;
 
-#if MEASURE_MODE == 1
-		now = DmUtil::getTimeMicrosec();
-		msec = (now - procTime) / 1000.0;
-		logger->info("[" + this->type + "] STAT_STEP" + to_string(step++) + " create xml processing time: " + to_string(msec) + "[ms]");
-		procTime = now;
-#endif
 		// 送信処理
 		if (setProto) {
 			string length_s = to_string(tablename.length());
@@ -327,34 +313,25 @@ namespace IS {
 			}
 		}
 		char compressFlg = settings.getParameter("COMPRESS_FLG")[0];
+		vector<char> sendBuf;
 		if (compressFlg == '1' || compressFlg == '2') {
-			char outbuf[UNCOMPRESSED_BUF_SIZE];
 			long key = DmUtil::getTimeMicrosec();
-			int sendSize = stringUtil.setCompressedBufWithHeader(retXML, outbuf, compressFlg, key);
-			if (sendSize > 0) {
-				udpsendinterface.IsStreamSendtoCs(buf.lane_id, buf.src_station_id, buf.dst_station_id, this->retry, this->lifeTime, outbuf, sendSize, fdDirPath);
-			} else {
+			sendBuf = stringUtil.setCompressedBufWithHeader(retXML, compressFlg, key);
+			if (sendBuf.empty()) {
 				logger->warn("[" + this->type + "] CompressProc is Failed. Retry by Uncompressed Data");
-				string s = "0" + retXML;
-				udpsendinterface.IsStreamSendtoCs(buf.lane_id, buf.src_station_id, buf.dst_station_id, this->retry, this->lifeTime, s, fdDirPath);
+			} else {
+				if (tupleCntSizeMap.find(tupleCnt) == tupleCntSizeMap.end()) {
+					tupleCntSizeMap[tupleCnt] = sendBuf.size();
+					logger->info("[" + this->type + "] " + tablename + " CompressInfo[before/after/count]," + to_string(retXML.length()) + "/" + to_string(tupleCntSizeMap[tupleCnt]) + "/" + to_string(tupleCnt));
+				}
 			}
-			if (tupleCntSizeMap.find(tupleCnt) == tupleCntSizeMap.end()) {
-				tupleCntSizeMap[tupleCnt] = sendSize;
-				logger->info("[" + this->type + "] " + tablename + " CompressInfo[before/after/count]," + to_string(retXML.length()) + "/" + to_string(sendSize) + "/" + to_string(tupleCnt));
-			}
-		} else {
-			string s = retXML;
-			udpsendinterface.IsStreamSendtoCs(buf.lane_id, buf.src_station_id, buf.dst_station_id, this->retry, this->lifeTime, s, fdDirPath);
 		}
-		logger->debug("[" + this->type + "] Transfer by UDP(CS).  MNGID:" + std::to_string(mngId) + " sendto(dstId):" + std::to_string(buf.dst_station_id) + " srcId:" + std::to_string(buf.src_station_id) + " Size:" + std::to_string(retXML.length()) + " byte TupleSize:" + std::to_string(tupleset.size()) );
+		if (sendBuf.empty()) {
+			sendBuf.assign(retXML.begin(), retXML.end());
+		}
+		udpsendinterface.IsStreamSendtoCs(buf.header.lane_id, buf.header.src_station_id, buf.header.dst_station_id, this->retry, this->lifeTime, std::move(sendBuf));
+		logger->debug("[" + this->type + "] Transfer by UDP(CS).  MNGID:" + std::to_string(mngId) + " sendto(dstId):" + std::to_string(buf.header.dst_station_id) + " srcId:" + std::to_string(buf.header.src_station_id) + " Size:" + std::to_string(retXML.length()) + " byte TupleSize:" + std::to_string(tupleset.size()) );
 		logger->debug("[" + this->type + "] Send payload:" + retXML + "\n");
-
-#if MEASURE_MODE == 1
-		now = DmUtil::getTimeMicrosec();
-		msec = (now - procTime) / 1000.0;
-		logger->info("[" + this->type + "] STAT_STEP" + to_string(step++) + " sendto(by CS) processing time: " + to_string(msec) + "[ms]");
-		procTime = now;
-#endif
 
 		long completeTime = DmUtil::getTimeMicrosec();
 		if (tupleset.info.recvTime != 0) {
@@ -369,85 +346,7 @@ namespace IS {
 			exitReady = true;
 		}
 
-#if MEASURE_MODE == 1
-		now = DmUtil::getTimeMicrosec();
-		msec = (now - startTime) / 1000.0;
-		logger->info("[" + this->type + "] STAT_STEP" + to_string(step++) + " total processing time: " + to_string(msec) + "[ms]");
-#endif
-
 		logger->debug("[" + this->type + "] ========== Transfer  END  ========== ");
 		return true;
 	}
-	/**
-	* オペレータ処理
-	*
-	* @author       Nagoya University
-	* @date 2025/01/20
-	*
-	* @param [in]       queryXML      クエリXML
-	*
-	* @return       正常にデータ処理を実施でき、次のオペレータに渡す際にtrue
-	*/
-	bool TransferOperator::process(string queryXML)
-	{
-			logger->debug("[" + this->type + "] ========== Transfer START ========== ");
-			if (code != ErrorCode::NO_ERR) {
-					logger->warn("[" + this->type + "] ERROR CODE: " + to_string((int)code) + ",CANCEL QUERY MNGID:" + std::to_string(mngId));
-					return false;
-			}
-
-#if MEASURE_MODE == 1
-			long startTime = DmUtil::getTimeMicrosec();
-			long procTime = startTime;
-			int step = 1;
-#endif
-			if (queryXML.size() == 0) {
-					logger->debug("[" + this->type + "] ========== Transfer  END  (No QueryXML) ========== ");
-					return false;
-			}
-
-			//自身のStationIDの読込(dm2.confから読み込む)
-			string mySid = settings.getParameter("MY_STATION_ID");
-			string cs_ip = settings.getParameter("CS_IP_ADDRESS");
-			string cs_port = settings.getParameter("CS_PORT_NUMBER");
-
-
-			UdpSendInterface udpsendinterface;
-			sockaddr_un server_addr;
-			udpsendinterface.Init(this->fdDirPath + FD_IStoCS, cs_port, cs_ip);
-			struct send_message buf;
-			
-			buf.src_station_id = stoull(mySid);
-			buf.dst_station_id = dstSID;
-
-			// 送信処理
-			char compressFlg = settings.getParameter("COMPRESS_FLG")[0];
-			if (compressFlg == '1' || compressFlg == '2') {
-					char outbuf[UNCOMPRESSED_BUF_SIZE];
-					long key = DmUtil::getTimeMicrosec();
-					int sendSize = stringUtil.setCompressedBufWithHeader(queryXML, outbuf, compressFlg, key);
-					if (sendSize > 0) {
-							udpsendinterface.IsStreamSendtoCs(0, buf.src_station_id, buf.dst_station_id, this->retry, this->lifeTime, outbuf, sendSize, fdDirPath);
-					} else {
-							logger->warn("[" + this->type + "] CompressProc is Failed. Retry by Uncompressed Data");
-							string s = "0" + queryXML;
-							udpsendinterface.IsStreamSendtoCs(0, buf.src_station_id, buf.dst_station_id, this->retry, this->lifeTime, s, fdDirPath);
-					}
-			} else {
-					string s = queryXML;
-					udpsendinterface.IsStreamSendtoCs(0, buf.src_station_id, buf.dst_station_id, this->retry, this->lifeTime, s, fdDirPath);
-			}
-			logger->debug("[" + this->type + "] Transfer by UDP(CS).  MNGID:" + std::to_string(mngId) + " sendto(dstId):" + std::to_string(buf.dst_station_id) + " srcId:" + std::to_string(buf.src_station_id) + " Size:" + std::to_string(queryXML.length()) + " byte");
-			logger->debug("[" + this->type + "] Send payload:" + queryXML + "\n");
-
-#if MEASURE_MODE == 1
-			now = DmUtil::getTimeMicrosec();
-			msec = (now - startTime) / 1000.0;
-			logger->info("[" + this->type + "] STAT_STEP" + to_string(step++) + " total processing time: " + to_string(msec) + "[ms]");
-#endif
-
-			logger->debug("[" + this->type + "] ========== Transfer  END  ========== ");
-			return true;
-	}
-
 }

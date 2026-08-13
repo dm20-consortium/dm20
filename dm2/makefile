@@ -39,6 +39,12 @@ cslink:
 	$(MAKE) -C commonLib
 	$(MAKE) -C cs
 
+csislink:
+	$(MAKE) -C csLib
+	$(MAKE) -C commonLib
+	$(MAKE) -C cs
+	$(MAKE) -C is link
+
 $(SUBDIRS):
 	$(MAKE) -C $@
 	

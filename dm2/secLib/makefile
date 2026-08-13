@@ -2,8 +2,6 @@
 PREFIX ?= /usr/local
 INSTALL_LIBDIR := $(PREFIX)/lib
 
-TRACELOG     = 0
-LID_PRIORITY = 0
 ARCH         := $(shell uname -m)
 
 
@@ -11,7 +9,7 @@ COMPILER  = g++
 CPLUS_VER = c++11
 
 TARGETS   = ./lib/libdm2security.a 
-CFLAGS    = -DTRACELOG=${TRACELOG} -DLID_PRIORITY=${LID_PRIORITY} -c -std=$(CPLUS_VER) -pthread -Wall -O3
+CFLAGS    = -c -std=$(CPLUS_VER) -pthread -Wall -O3
 INCLUDE   = -I./include
 SRCDIR    = ./source
 OBJDIR    = ./obj
