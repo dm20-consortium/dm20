@@ -22,6 +22,7 @@ find_package(gflags REQUIRED)
 find_package(Glog REQUIRED)
 
 find_package(islib REQUIRED)
+find_package(Dm2Proto REQUIRED)
 find_package(XercesC REQUIRED)
 
 include_directories(
@@ -31,6 +32,7 @@ include_directories(
   ${gflags_INCLUDE_DIRS}
   ${GeographicLib_INCLUDE_DIRS}
   ${islib_INCLUDE_DIR}
+  ${dm2proto_INCLUDE_DIR}
   ${dmi_utils_INCLUDE_DIRS}
 )
 
@@ -55,6 +57,7 @@ target_link_libraries(${PROJECT_NAME}
     glog::glog
     ${XercesC_LIBRARIES}
     ${islib_LIBRARIES}
+    ${dm2proto_LIBRARIES}
     dmi_utils
 )
 

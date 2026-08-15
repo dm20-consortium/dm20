@@ -66,6 +66,7 @@ namespace SocketUtil{
 		}
 		catch (std::out_of_range&) {
 			std::cout << "FILE:" << __FILE__ << ", LINE:" << __LINE__ << " out_of_range" << std::endl;
+			std::cout << "[Fragment] key=[" << key << "] flagment=" << flagment << " flagment_max=" << flagment_max << " payload_size=" << buf_.header.payload_size << std::endl;
 		}
 
 		return false;

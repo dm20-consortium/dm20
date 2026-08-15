@@ -195,7 +195,7 @@ source /opt/ros/humble/setup.bash
 ```
 上記後に[ビルド](#ビルド)
 
-- もしdm2をビルドした後にROS2 Humbleをインストールした場合は、まずは `make clean` を行ってから、build.bashを読み込み、ビルドの手順になります。
+- もし既にROS2をビルドする前にdm2をビルドしている場合は、C++14で作られたdm2のビルド資源を`make clean`でクリーンした後、改めて、/opt/ros/humble/setup.bashを読み込み、dm2をビルドする流れになります。
 
 ## 例
 [一般的な使用例は、こちら](../example/README.md)

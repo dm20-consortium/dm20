@@ -11,6 +11,7 @@ find_package(Boost REQUIRED COMPONENTS system filesystem)
 find_package(gflags REQUIRED)
 find_package(Glog REQUIRED)
 find_package(islib REQUIRED)
+find_package(Dm2Proto REQUIRED)
 find_package(XercesC REQUIRED)
 
 include_directories(
@@ -18,6 +19,7 @@ include_directories(
   ${CcamCooL4SensorIo_INCLUDE_DIR}
   ${Protobuf_INCLUDE_DIRS}
   ${islib_INCLUDE_DIR}
+  ${dm2proto_INCLUDE_DIR}
   ${Boost_INCLUDE_DIRS}
   ${gflags_INCLUDE_DIRS}
 )
@@ -32,8 +34,8 @@ target_link_libraries(${PROJECT_NAME}
   ${CcamCooL4SensorIo_LIBRARIES}
   ${Protobuf_LIBRARIES}
   ${islib_LIBRARIES}
+  ${dm2proto_LIBRARIES}
   ${Boost_LIBRARIES}
-  ${islib_LIBRARIES}
   ${XercesC_LIBRARIES}
   glog::glog
 )

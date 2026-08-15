@@ -15,26 +15,8 @@ DEPEND_INCLUDE := -I../api/include
 
 COMPILER := g++
 
-#/etc/os-releaseからメジャーバージョンを判定する
-UBUNTU_VERSION := $(shell . /etc/os-release && echo $$VERSION_ID | cut -d. -f1)
-
-CPLUS_VER := c++17
-ifeq ($(shell [ $(UBUNTU_VERSION) -le 22 ] && echo yes),yes)
-  ROS_DISTRO := $(shell echo $$ROS_DISTRO)
-  ifneq ($(ROS_DISTRO),humble)
-    CPLUS_VER := c++14
-  endif
-endif
-
-ifdef PROTO_PATH
-PROTOC := $(PROTO_PATH)/protoc/bin/protoc
-PROTOBUF_CFLAGS := -I$(PROTO_PATH)/protoc/include
-PROTOBUF_LIBS := -L$(PROTO_PATH)/protoc/lib
-else
-PROTOC := protoc
-PROTOBUF_CFLAGS := $(shell pkg-config --cflags protobuf)
-PROTOBUF_LIBS := $(shell pkg-config --libs-only-L protobuf)
-endif
+# C_PLUSのバージョン設定, PROTOBUF関連の設定
+include ../../common.mk
 
 CXXFLAGS := -std=$(CPLUS_VER) -fPIC -Wall $(PROTOBUF_CFLAGS)
 

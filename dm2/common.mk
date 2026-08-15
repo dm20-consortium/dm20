@@ -23,11 +23,13 @@ endif
 
 
 ifdef PROTO_PATH
+PROTOC := $(PROTO_PATH)/protoc/bin/protoc
 PROTOBUF_CFLAGS  := -I$(PROTO_PATH)/protoc/include
 PROTOBUF_LDFLAGS := -L$(PROTO_PATH)/protoc/lib
 PROTOBUF_LIBS    := -Wl,--whole-archive $(PROTO_PATH)/protoc/lib/libprotobuf.a -Wl,--no-whole-archive
 else
+PROTOC := protoc
 PROTOBUF_CFLAGS  := $(shell pkg-config --cflags protobuf)
-PROTOBUF_LDFLAGS := $(shell pkg-config --libs-only-L protobuf)
+PROTOBUF_LDFLAGS := $(shell pkg-config --libs protobuf)
 PROTOBUF_LIBS    := $(shell pkg-config --libs protobuf)
 endif

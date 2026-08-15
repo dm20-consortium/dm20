@@ -19,12 +19,14 @@ find_package(gflags REQUIRED)
 find_package(Glog REQUIRED)
 
 find_package(islib QUIET)
+find_package(Dm2Proto REQUIRED)
 message(STATUS "enable build with is: ${islib_FOUND}")
 
 include_directories(
   include
   ${Boost_INCLUDE_DIRS}
   ${islib_INCLUDE_DIR}
+  ${dm2proto_INCLUDE_DIR}
   ${Threads_INCLUDE_DIRS}
   ${gflags_INCLUDE_DIRS}
 )
@@ -126,6 +128,7 @@ if(${islib_FOUND})
       ${PROJECT_NAME}
       ${XercesC_LIBRARIES}
       ${islib_LIBRARIES}
+      ${dm2proto_LIBRARIES}
       glog::glog
     )
 
@@ -150,6 +153,7 @@ if(${islib_FOUND})
       ${CMAKE_THREAD_LIBS_INIT}
       ${XercesC_LIBRARIES}
       ${islib_LIBRARIES}
+      ${dm2proto_LIBRARIES}
       gflags
       glog::glog
       ${PROJECT_NAME}
@@ -174,6 +178,7 @@ if(${islib_FOUND})
       ${CMAKE_THREAD_LIBS_INIT}
       ${XercesC_LIBRARIES}
       ${islib_LIBRARIES}
+      ${dm2proto_LIBRARIES}
       gflags
       ${PROJECT_NAME}
       dmi_utils
