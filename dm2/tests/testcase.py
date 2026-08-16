@@ -61,32 +61,28 @@ class TestCase:
             return self.run_one({})
     
     def run_one(self, params):
-
         self.ctx.params = params
-
         self.print_header()
-
         success = False
 
         try:
-
             self.prepare.run()
-
             self.service.start()
-
             self.step.run()
 
             success = self.expect.verify()
 
         except Exception as e:
-
-            print(e)
+            print(f"testcase.run() FAILED: {e}")
             success = False
 
         finally:
-
-            self.cleanup.run()
-
+            try:
+                self.cleanup.run()
+                print("cleanup.run() SUCCESS")
+            except Exception as e:
+                print(f"cleanup.run() FAILED: {e}")
+                raise
         return success
     
     def run_cases(self):
