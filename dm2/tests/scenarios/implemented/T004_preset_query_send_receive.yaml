@@ -35,6 +35,10 @@ steps:
       command: dm2mes -R "1901000001,localhost"
 
   - run: 
+      description: 送信リストを追加登録された結果を確認する
+      command: cat conf/send_list_v4.csv
+
+  - run: 
       description: object_info_0_8_1ストリームをobject_info_0_8_0ストリームとして列を再構成し、自分自身のSID宛に送信依頼する。
       command: dm2mes -r "MASTER object_info_0_8_1 SELECT object_id,time,object_class_id_0,object_class_confidence_0,object_class_subclass_type_0,object_class_subclass_confidence_0,object_class_id_1,object_class_confidence_1,object_class_subclass_type_1,object_class_subclass_confidence_1,object_class_id_2,object_class_confidence_2,object_class_subclass_type_2,object_class_subclass_confidence_2,object_class_id_3,object_class_confidence_3,object_class_subclass_type_3,object_class_subclass_confidence_3,existency,geodetic_srid,latitude,longitude,altitude,projective_srid,prc_x,prc_y,prc_z,crp_id,dx_crp,dy_crp,dh_crp,lane_count,lane_position,lane_lateral_position,crp_id_begin,crp_id_end,lane_vertical_position,lane_id,dx_lane,dy_lane,dh_lane,semi_axis_length_major,semi_axis_length_minor,ellipse_orientation,altitude_accuracy,reference_point,move_direction_value,move_direction_accuracy,speed_value,speed_accuracy,yaw_rate_value,yaw_rate_accuracy,acceleration_value,acceleration_accuracy,orientation_value,orientation_accuracy,length_value,length_accuracy,width_value,width_accuracy,height_value,height_accuracy,static_status,shift_position,steering_angle_front,steering_angle_rear,brake_state,auxiliary_brake_state,throttle_position,exterior_lights,adaptive_cruise_control_system,cooperative_adaptive_cruise_control_system,pre_crash_safety_system,antilock_brake_system,traction_control_system,electronic_stability_control_system,lane_keeping_assist_system,lane_departure_warning_system,vehicle_size_type,vehicle_role,vehicle_extended_info,towing_vehicle,tracking_status,detection_count,lost_count,object_age,information_source_list FROM object_info_0_8_1 [rows 1] AS object_info_0_8_0" -D 1901000001
 

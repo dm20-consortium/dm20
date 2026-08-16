@@ -79,7 +79,6 @@ class TestCase:
         finally:
             try:
                 self.cleanup.run()
-                print("cleanup.run() SUCCESS")
             except Exception as e:
                 print(f"cleanup.run() FAILED: {e}")
                 raise

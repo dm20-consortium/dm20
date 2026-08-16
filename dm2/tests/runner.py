@@ -8,18 +8,16 @@ import glob
 from context import Context
 from testcase import TestCase
 
-def result_output(result):
+def result_output(result, failed_cases):
+    print("")
+    print("==========")
     if result:
-        print("")
-        print("==========")
         print("PASS")
         print("==========")
         sys.exit(0)
 
     else:
-        print("")
-        print("==========")
-        print("FAIL")
+        print(f"FAIL : {', '.join(failed_cases)}")
         print("==========")
         sys.exit(1)
 
@@ -32,22 +30,24 @@ def main():
 
     target = sys.argv[1]
 
+    failed_cases = []
     if os.path.isdir(target):
         files = sorted(glob.glob(os.path.join(target, "*.yaml")))
         overall = True
-        for f in files:
+        for i, f in enumerate(files, start=1):
             tc = TestCase(Context())
             tc.load(f)
 
             if not tc.run():
                 overall = False
-        result_output(overall)
+                failed_cases.append(tc.ctx.config["id"])
+        result_output(overall, failed_cases)
 
     else:
         testcase = TestCase(Context())
         testcase.load(target)
         result = testcase.run()
-        result_output(result)
+        result_output(result, failed_cases)
 
 if __name__ == "__main__":
     main()
