@@ -129,6 +129,7 @@ if(${islib_FOUND})
       ${XercesC_LIBRARIES}
       ${islib_LIBRARIES}
       ${dm2proto_LIBRARIES}
+      ${_proto_LIBRARIES}
       glog::glog
     )
 
@@ -154,6 +155,7 @@ if(${islib_FOUND})
       ${XercesC_LIBRARIES}
       ${islib_LIBRARIES}
       ${dm2proto_LIBRARIES}
+      ${_proto_LIBRARIES}
       gflags
       glog::glog
       ${PROJECT_NAME}
@@ -179,6 +181,7 @@ if(${islib_FOUND})
       ${XercesC_LIBRARIES}
       ${islib_LIBRARIES}
       ${dm2proto_LIBRARIES}
+      ${_proto_LIBRARIES}
       gflags
       ${PROJECT_NAME}
       dmi_utils

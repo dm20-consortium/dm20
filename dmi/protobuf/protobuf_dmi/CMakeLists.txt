@@ -35,6 +35,7 @@ target_link_libraries(${PROJECT_NAME}
   ${Protobuf_LIBRARIES}
   ${islib_LIBRARIES}
   ${dm2proto_LIBRARIES}
+  ${_proto_LIBRARIES}
   ${Boost_LIBRARIES}
   ${XercesC_LIBRARIES}
   glog::glog

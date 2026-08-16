@@ -13,7 +13,7 @@ TARGET    = ./bin/$(MODULE_NAME)
 COMPILER  = g++
 SRCDIR    = ./source
 
-INCLUDE   = -I./include -I../../dmClientLib/include -I../../tupleLib/include -I../../proto/is/include -I../../proto/api/include -I/usr/local/include/is/proto -I../../commonLib/include/dm2SocketInterface -I../../csLib/include $(PROTOBUF_CFLAGS)
+INCLUDE   = -I./include -I../../dmClientLib/include -I../../tupleLib/include -I../../proto/is/include -I../../proto/api/include -I/usr/local/include/is -I../../commonLib/include/dm2SocketInterface -I../../csLib/include $(PROTOBUF_CFLAGS)
 
 LDFLAGS   = -L../../dmClientLib/lib -L../../tupleLib/lib -L../../proto/is/lib -L../../proto/api/lib -L../../commonLib/lib -L../../secLib/lib  $(PROTOBUF_LDFLAGS)
 LIBS      = -lxerces-c -ldmclient -ltuple -ldm2proto_is -ldm2proto_api -lcrypto -lssl -lz -lzstd -lgeos_c -ldm2SocketInterface -ldm2security $(PROTOBUF_LIBS)

@@ -61,6 +61,7 @@ message(
   "islib_LIBRARIES ${islib_LIBRARIES}\n"
   "dm2proto_INCLUDE_DIR ${dm2proto_INCLUDE_DIR}\n"
   "dm2proto_LIBRARIES ${dm2proto_LIBRARIES}\n"
+  "_proto_LIBRARIES ${_proto_LIBRARIES}\n"
   )
 
 # (optional)
@@ -131,6 +132,7 @@ target_link_libraries(${PROJECT_NAME}
   ${YAML_CPP_LIBRARIES}
   ${islib_LIBRARIES}
   ${dm2proto_LIBRARIES}
+  ${_proto_LIBRARIES}
   rt
   dm2security
   )

@@ -63,8 +63,8 @@ endfunction()
 # cmakeするときも，自前でビルドしたprotobufライブラリを見てほしいので，libprotobuf.so等を得るようにした
 # 致し方なし
 SearchLibraries("dm2proto_api;dm2proto_is" "/usr/local/lib" _dm2proto_LIBRARIES)
-SearchLibraries("protobuf;protobuf-lite" "/usr/local/lib" _proto_LIBRARIES)
-SearchLibraries("protobuf;protobuf-lite" "/usr/lib/x86_64-linux-gnu" _proto_LIBRARIES)
+SearchLibraries("protobuf" "/usr/local/lib" _proto_LIBRARIES)
+SearchLibraries("protobuf" "/usr/lib/x86_64-linux-gnu" _proto_LIBRARIES)
 
 set(dm2proto_LIBRARIES "${_dm2proto_LIBRARIES};${_proto_LIBRARIES}")
 message(STATUS "dm2proto libraries: ${dm2proto_LIBRARIES};")

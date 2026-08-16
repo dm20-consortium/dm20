@@ -58,6 +58,7 @@ target_link_libraries(${PROJECT_NAME}
     ${XercesC_LIBRARIES}
     ${islib_LIBRARIES}
     ${dm2proto_LIBRARIES}
+    ${_proto_LIBRARIES}
     dmi_utils
 )
 

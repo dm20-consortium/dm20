@@ -3,8 +3,9 @@ arg IMAGE_TAG=20.04
 from dm2/proto:${IMAGE_TAG} as proto-image
 from dm2/tuplelib:${IMAGE_TAG} as tuplelib-image
 from dm2/seclib:${IMAGE_TAG} as seclib-image
-from dm2/dmclientlib:${IMAGE_TAG} as dmclientlib-image
 from dm2/commonlib:${IMAGE_TAG} as commonlib-image
+from dm2/dmclientlib:${IMAGE_TAG} as dmclientlib-image
+from dm2/dmclientlib:${IMAGE_TAG} as dmclientlib-image
 
 copy --from=seclib-image /dm20/secLib /dm20/secLib
 copy --from=seclib-image /usr/local/lib/libdm2security.a /usr/local/lib/
@@ -27,6 +28,7 @@ run apt-get update && \
     libpq-dev \
     libpqxx-dev \
     liblog4cxx-dev \
+    pkg-config \
   && rm -rf /var/lib/apt/lists/*
 
 copy --from=tuplelib-image /usr/local/include/is /usr/local/include/is
@@ -34,16 +36,20 @@ copy --from=tuplelib-image /usr/local/lib/libtuple.a /usr/local/lib/
 copy --from=proto-image /usr/local/bin/protoc /usr/local/bin/protoc
 copy --from=proto-image /usr/local/lib/libdm2proto* /usr/local/lib/
 copy --from=proto-image /usr/local/lib/libprotobuf* /usr/local/lib/
-copy --from=proto-image /usr/local/include/is/proto /usr/local/include/is/proto
+copy --from=proto-image /usr/local/include/is /usr/local/include/is
 copy --from=proto-image /usr/local/include/google /usr/local/include/google
-copy --from=dmclientlib-image /usr/local/include/is /usr/local/include/is
-copy --from=dmclientlib-image /usr/local/lib/libtuple.a /usr/local/lib/libtuple.a
-copy --from=dmclientlib-image /usr/local/lib/libdmclient.a /usr/local/lib/libdmclient.a
+copy --from=commonlib-image /dm20/commonLib /tmp/commonLib
+copy --from=commonlib-image /dm20/csLib /tmp/csLib
+copy --from=commonlib-image /usr/local/lib/libdm2SocketInterface.so /usr/local/lib/libdm2SocketInterface.so
+#copy --from=dmclientlib-image /usr/local/include/is /usr/local/include/is
+#copy --from=dmclientlib-image /usr/local/lib/libtuple.a /usr/local/lib/libtuple.a
+#copy --from=dmclientlib-image /usr/local/lib/libdmclient.a /usr/local/lib/libdmclient.a
 run ldconfig
 
 copy common.mk /tmp/common.mk
 copy apl/dm2mes /tmp/apl/dm2mes
 workdir /tmp/apl/dm2mes/
+
 
 run make clean
 run make all

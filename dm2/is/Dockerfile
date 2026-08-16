@@ -32,6 +32,7 @@ run apt-get update && \
     libboost-all-dev \
     libgoogle-glog-dev \
     libgflags-dev \
+    pkg-config \
   && rm -rf /var/lib/apt/lists/*
 
 
@@ -46,6 +47,7 @@ copy --from=proto-image /usr/local/lib/libdm2proto* /usr/local/lib/
 copy --from=proto-image /usr/local/lib/libprotobuf* /usr/local/lib/
 copy --from=proto-image /usr/local/include/is /usr/local/include/is
 copy --from=proto-image /usr/local/include/google /usr/local/include/google
+COPY --from=proto-image /usr/local/lib/pkgconfig/protobuf.pc /usr/local/lib/pkgconfig/
 copy --from=udptcpdmi-image /usr/local/include/cool4_api_dataclass /usr/local/include/cool4_api_dataclass
 copy --from=udptcpdmi-image /usr/local/include/dmi_utils /usr/local/include/dmi_utils
 copy --from=udptcpdmi-image /usr/local/include/udp_dmi /usr/local/include/udp_dmi
