@@ -85,7 +85,7 @@ class ServiceRunner:
             list(self.ctx.processes.keys())
         )
 
-        for name in targets:
+        for name in reversed(targets):
 
             self.stop_service(name)
 
