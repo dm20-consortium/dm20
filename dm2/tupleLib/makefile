@@ -10,7 +10,7 @@ include ../common.mk
 
 CFLAGS    = -std=$(CPLUS_VER) -shared -fPIC -O3 -pthread
 LDFLAGS   = $(PROTOBUF_LDFLAGS)
-INCLUDE   = -I./include -I../proto/api/include -I../proto/is/include -I/usr/local/include/is/proto $(PROTOBUF_CFLAGS)
+INCLUDE   = -I./include -I../proto/api/include -I../proto/is/include -I/usr/local/include/is $(PROTOBUF_CFLAGS)
 SRCDIR    = ./source
 OBJDIR    = ./obj
 LIBDIR_LOCAL = ./lib

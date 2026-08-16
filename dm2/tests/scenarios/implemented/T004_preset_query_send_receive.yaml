@@ -36,11 +36,11 @@ steps:
 
   - run: 
       description: 送信リストを追加登録された結果を確認する
-      command: echo $DM2_CONF_DIR_PATH
+      command: echo $?
 
   - run: 
       description: 送信リストを追加登録された結果を確認する
-      command: sleep 1
+      command: ls -l conf/send_list_v4.csv
 
   - run: 
       description: 送信リストを追加登録された結果を確認する

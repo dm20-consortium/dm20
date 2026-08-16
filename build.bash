@@ -1,10 +1,5 @@
 #!/bin/bash
 
-# DM Lib
-cd dm2
-make libs -f makefile_docker
-cd - > /dev/null
-
 # DMI
 readonly dirs=(
   ros2
@@ -19,8 +14,3 @@ do
   cd -
 done
 cd .. > /dev/null
-
-# IS/CS, messanger
-cd dm2
-make -f makefile_docker
-cd - > /dev/null

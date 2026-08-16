@@ -29,9 +29,6 @@ run apt-get update && \
     liblog4cxx-dev \
   && rm -rf /var/lib/apt/lists/*
 
-copy . /dm20/apl/dm2mes
-workdir /dm20/apl/dm2mes
-
 copy --from=tuplelib-image /usr/local/include/is /usr/local/include/is
 copy --from=tuplelib-image /usr/local/lib/libtuple.a /usr/local/lib/
 copy --from=proto-image /usr/local/bin/protoc /usr/local/bin/protoc
@@ -43,6 +40,11 @@ copy --from=dmclientlib-image /usr/local/include/is /usr/local/include/is
 copy --from=dmclientlib-image /usr/local/lib/libtuple.a /usr/local/lib/libtuple.a
 copy --from=dmclientlib-image /usr/local/lib/libdmclient.a /usr/local/lib/libdmclient.a
 run ldconfig
+
+copy common.mk /tmp/common.mk
+copy apl/dm2mes /tmp/apl/dm2mes
+workdir /tmp/apl/dm2mes/
+
 run make clean
 run make all
 run make install
