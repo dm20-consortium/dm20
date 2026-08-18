@@ -40,7 +40,19 @@ steps:
 
   - run: 
       description: 送信リストを追加登録された結果を確認する
-      command: ls -l conf/send_list_v4.csv
+      command: whoami
+
+  - run: 
+      description: 送信リストを追加登録された結果を確認する
+      command: id
+
+  - run: 
+      description: 送信リストを追加登録された結果を確認する
+      coomand: echo "DM2_CONF_DIR_PATH=$DM2_CONF_DIR_PATH"
+
+  - run: 
+      description: 送信リストを追加登録された結果を確認する
+      command: pwd
 
   - run: 
       description: 送信リストを追加登録された結果を確認する
