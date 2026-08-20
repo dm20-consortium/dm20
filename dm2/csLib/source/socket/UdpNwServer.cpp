@@ -191,7 +191,7 @@ namespace CS{
 	 */
 	int UdpNwServer::InitServer(std::string interface_name, std::string port_no, std::string _anycast_address, std::string &rtn_address, const int _IP_version){
 		memset(&hints, 0, sizeof(hints));
-		hints.ai_family = AF_UNSPEC; //IPv4/IPv6両方対応
+		hints.ai_family = AF_INET;
 		hints.ai_socktype = SOCK_DGRAM; //UDP送信
 		hints.ai_flags = AI_PASSIVE;
 		if (interface_name.empty()) {
