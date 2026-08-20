@@ -32,7 +32,7 @@ steps:
 
   - run: 
       description: 送信リストを追加登録する。追加するのは、{自分自身のSID,ローカルホスト}
-      command: dm2mes -R "1901000001,127.0.0.1" -f ./conf
+      command: dm2mes -R "1901000001,localhost" -f ./conf
 
   - run: 
       description: 送信リストを追加登録された結果を確認する
