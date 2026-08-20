@@ -403,10 +403,16 @@ namespace CS{
 	void UdpSendInterface::MngConnectionInfoSendtoCs(const char* send_fd_name_, unsigned long long src_stid_, unsigned long long dst_stid_, send_message_mng &sm)
 	{
 	    Init(send_fd_name_);
-		buf_.header.msg_type = DM2Type_MNG_CONN_REGIST;
-		memcpy(buf_.dm2_payload, &sm, sizeof (send_message_mng));
 
+		buf_vector_.header = {};
+		buf_vector_.dm2_payload.clear();
+		buf_vector_.header.src_station_id = src_stid_;
+		buf_vector_.header.dst_station_id = dst_stid_;
+		buf_vector_.header.msg_type = DM2Type_MNG_CONN_REGIST;
+		buf_vector_.dm2_payload.assign(reinterpret_cast<char*>(&sm), reinterpret_cast<char*>(&sm) + sizeof(send_message_mng)
+);
 		// 下記は未使用だが将来の拡張のためにセットしておく
+		/*
 	    buf_.header.src_station_id = src_stid_;
 	    buf_.header.dst_station_id = dst_stid_;
 	    buf_.header.retry_level = 0;
@@ -415,8 +421,8 @@ namespace CS{
 	    buf_.header.lane_id = 0;
 	    buf_.header.flagment_sum = 1;
 	    buf_.header.priority_level = 0;
-		
-	    if (SendPacket(buf_) < 0) {
+		*/
+	    if (SendPacket(buf_vector_) < 0) {
 	        std::cout << "FILE:" << __FILE__ <<  ", LINE:" << __LINE__ << " " << "Sendto fail." << std::endl;
 		}
 	    CloseSocketFd();

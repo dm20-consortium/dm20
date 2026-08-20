@@ -130,7 +130,7 @@ namespace SocketUtil{
 				+ ", cs_message_detail:" + std::to_string(header.cs_message_detail) 
 				+ ", fd_name:" + std::string(header.fd_name, sizeof(header.fd_name)) 
 				+ ", flagment_duplication_check_id:" + std::to_string(header.flagment_duplication_check_id) 
-				+ ", flagment_sum" + std::to_string(header.flagment_sum) 
+				+ ", flagment_sum:" + std::to_string(header.flagment_sum) 
 				+ ", flagment_offset:" + std::to_string(header.flagment_offset) 
 				+ ", priority_level:" + std::to_string(header.priority_level);
 		std::cout << res_str << std::endl;

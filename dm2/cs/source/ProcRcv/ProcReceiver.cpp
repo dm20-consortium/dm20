@@ -152,6 +152,7 @@ void ProcReceiver::sid_update_check(const ProcReceiver* me, const std::vector<ch
 		LOG4CXX_ERROR(me->logger, "Invalid SID or IP address received.");
 		return;
 	}
+	LOG4CXX_INFO(me->logger, "[receive] SID: " + std::to_string(sm.sid) + ", IP: " + sm_ip + ", FLG: " + sm_ctl_flag);
 	bool found_dtls_sid = false;
 	bool update_dtls_sid = false;
 	string dtlsFileName = "";        
@@ -162,15 +163,16 @@ void ProcReceiver::sid_update_check(const ProcReceiver* me, const std::vector<ch
 		string sid2ipFileName = me->settings.send_lists[idx];
 		sidManager.init(sid2ipFileName);
 		if (me->settings.socket_types[idx] == 2) {
+			// DTLSのケース
 			dtlsFileName = sid2ipFileName;
 			if (me->settings.dtls_dest_sids[idx] == sm.sid) {
 				found_dtls_sid = true;
 				std::string current_ip = sidManager.sid2ip(sm.sid);
 				if (current_ip != sm_ip) {
+					// IPアドレスを変更
 					sid_ip_update = true;
 					update_dtls_sid = true;
 					me->onStopSender(idx);
-					// 暫定対応：失効フラグ等を検討
 					me->settings.dtls_dest_sids[idx] = 0;
 					LOG4CXX_INFO(me->logger, "[Mod] SID: " + std::to_string(sm.sid) + ", IP: " + current_ip + " => " + sm_ip);
 				} else {
@@ -178,7 +180,6 @@ void ProcReceiver::sid_update_check(const ProcReceiver* me, const std::vector<ch
 						delete_flg = true;
 						sid_ip_update = true;
 						me->onStopSender(idx);
-						// 暫定対応：失効フラグ等を検討
 						me->settings.dtls_dest_sids[idx] = 0;
 						LOG4CXX_INFO(me->logger, "[Del] SID: " + std::to_string(sm.sid) + ", IP: " + current_ip + " => " + sm_ip);
 					}
@@ -188,6 +189,7 @@ void ProcReceiver::sid_update_check(const ProcReceiver* me, const std::vector<ch
 			sid_ip_update = true;
 		}
 		if (sid_ip_update) {
+			LOG4CXX_INFO(me->logger, "[Add] SID: " + std::to_string(sm.sid) + ", IP: " + sm_ip);
 			sidManager.updateSidIp(sm.sid, sm_ip, delete_flg);
 			me->settings.setFlag(idx);
 		}
