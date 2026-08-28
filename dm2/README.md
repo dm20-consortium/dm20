@@ -13,7 +13,9 @@ DM2.0 Platformの中で、端末間の通信を行うために必要なC++ライ
 
 ## 動作確認環境
 
-Ubuntu 20.04, Ubuntu 22.04, Ubuntu 24.04
+- Ubuntu 20.04, Ubuntu 22.04, Ubuntu 24.04, Ubuntu 26.04
+
+- DMIが、Ubuntu 26.04未対応につき、DMI、dm2両方をホスト上でビルドしたい場合は、Ubuntu 24.04を推奨します。
 
 ## Dockerイメージの構築
 
@@ -23,7 +25,7 @@ Ubuntu 20.04, Ubuntu 22.04, Ubuntu 24.04
 make without_dmi -f makefile_docker
 ```
 
-- DMI, dm2両方のDockerイメージを構築したい場合は、リポジトリのルートディレクトリ上で下記のコマンドを実行して下さい。約 20GB 程の空き容量が必要です。
+- DMI、dm2両方のDockerイメージを構築したい場合は、リポジトリのルートディレクトリ上で下記のコマンドを実行して下さい。約 20GB 程の空き容量が必要です。
 
 ```bash
 bash build.bash
@@ -56,27 +58,26 @@ Ubuntu LTS環境で、依存ライブラリをインストールした上で、m
 ## 依存ライブラリ
 
 ### Ubuntu バージョン別の依存ライブラリ一覧表
-| ライブラリ           | 20.04  | 22.04  | 24.04  |
-| --------------- | ------ | ------ | ------ |
-| g++             | 9.3.0  | 11.2.0 | 13.2.0 |
-| build-essential | 12.8   | 12.9   | 12.10  |
-| PostgreSQL      | 12.12  | 14.5   | 16.2   |
-| PostGIS         | 3.0.0  | 3.2.0  | 3.4.2  |
-| OpenSSL         | 1.1.1f | 3.0.2  | 3.0.13 |
-| libpqxx         | 6.4    | 6.4    | 7.8.1  |
-| GEOS            | 3.8.0  | 3.11.0 | 3.12.1 |
-| Xerces          | 3.2.2  | 3.2.3  | 3.2.4  |
-| log4cxx         | 0.10.0 | 0.12.1 | 1.1.0  |
-| zlib            | 1.2.11 | 1.2.11 | 1.3    |
-| Zstandard       | 1.4.4  | 1.4.8  | 1.5.5  |
-| Protobuf        | 21.12  | 21.12  | 21.12  |
-| libev           | 1.4.31 | 1.4.33 | 1.4.33 |
-| yaml-cpp        | 0.6.2  | 0.7.0  | 0.8.0  |
+| ライブラリ           | 20.04  | 22.04  | 24.04  | 26.04  |
+| --------------- | ------ | ------ | ------ | ------ |
+| g++             | 9.3.0  | 11.2.0 | 13.2.0 | 15.2.0 |
+| build-essential | 12.8   | 12.9   | 12.10  | 12.12  |
+| PostgreSQL      | 12.12  | 14.5   | 16.2   | 18.6   |
+| PostGIS         | 3.0.0  | 3.2.0  | 3.4.2  | 3.6.2  |
+| OpenSSL         | 1.1.1f | 3.0.2  | 3.0.13 | 3.5.5  |
+| libpqxx         | 6.4    | 6.4    | 7.8.1  | 7.10.0 |
+| GEOS            | 3.8.0  | 3.11.0 | 3.12.1 | 3.14.1 |
+| Xerces          | 3.2.2  | 3.2.3  | 3.2.4  | 3.2.4  |
+| log4cxx         | 0.10.0 | 0.12.1 | 1.1.0  | 1.5.0  |
+| zlib            | 1.2.11 | 1.2.11 | 1.3    | 1.3    |
+| Zstandard       | 1.4.4  | 1.4.8  | 1.5.5  | 1.5.7  |
+| Protobuf        | 21.12  | 21.12  | 21.12  | 21.12  |
+| yaml-cpp        | 0.6.2  | 0.7.0  | 0.8.0  | 0.8.0  |
 
 
 ## 依存ライブラリのインストール
 
-### Ubuntu 20.04 / 22.04 / 24.04 共通
+### Ubuntu 20.04 / 22.04 / 24.04 / 26.04 共通
 
 ```bash
 sudo apt update
@@ -93,6 +94,18 @@ sudo apt install -y \
   zlib1g-dev libzstd-dev \
   libyaml-cpp-dev
 ```
+### Ubuntu 26.04のみ
+
+```bash
+sudo apt install -y \
+  postgresql-18-postgis-3 \
+  libpqxx-7.10 \
+  libgeos++-dev libgeos-c1t64 libgeos-dev \
+  libxerces-c3.2t64 libxerces-c-dev \
+  protobuf-compiler libprotobuf-dev
+sudo ldconfig
+```
+
 ### Ubuntu 24.04のみ
 
 ```bash

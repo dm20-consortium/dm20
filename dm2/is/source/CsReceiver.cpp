@@ -111,7 +111,7 @@ namespace IS {
 			len = data.payload.length();
 		}
 
-		logger->debug("IS_RCV SrcSID:" + std::to_string(buffer.header.src_station_id) + ", LaneID:" + std::to_string(buffer.header.lane_id) + ", pay_load:" + data.payload + "\n");
+		logger->debug("IS_RCV SrcSID:" + std::to_string(buffer.header.src_station_id) + ", schema_name:" + data.schema_name + ", pay_load:" + data.payload + "\n");
 		if (len > 0) cs_rcv_q.Push(data);
 
 	}

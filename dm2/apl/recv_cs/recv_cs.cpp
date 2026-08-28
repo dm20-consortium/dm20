@@ -16,27 +16,50 @@ using namespace IS;
 
 #define MSGSIZE 64000
 
-struct send_message
-{
+struct send_message_header {
+    /** @brief	送信元SID */
     unsigned long long src_station_id;
+    /** @brief	宛先SID */
     unsigned long long dst_station_id;
+    /** @brief	送信元type */
     short src_station_type;
+    /** @brief	宛先type */
     short dst_station_type;
+    /** @brief	ペイロードサイズ */
     unsigned short payload_size;
+    /** @brief	転送フラグ */
     short transmission_flag;
+    /** @brief	重複チェックID */
     unsigned long long duplication_check_id;
+    /** @brief	レーンID */
     unsigned long long lane_id;
+    /** @brief	再送レベル */
     short retry_level;
+    /** @brief	再送データID */
     unsigned long long retry_data_id;
+    /** @brief	再送時間(ms) */
     int retry_lifetime;
+    /** @brief	メッセージ種別 */
     short msg_type;
+    /** @brief	CS詳細メッセージ  */
     short cs_message_detail;
+    /** @brief	ファイルディスクリプタ名称 (署名格納用としても使用される) */
     char fd_name[72];
+    /** @brief	署名サイズ */
     short sign_size;
+    /** @brief	フラグメントシーケンス番号 */
     unsigned long long flagment_duplication_check_id;
+    /** @brief	フラグメントトータル */
     int flagment_sum;
+    /** @brief	フラグメントオフセット */
     int flagment_offset;
+    /** @brief 優先度フラグ */
     int priority_level;
+};
+struct send_message{
+    /** @brief  ヘッダ */
+    send_message_header header;
+    /** @brief	DM2.0データペイロード */
     char dm2_payload[MSGSIZE];
 };
 
@@ -97,13 +120,13 @@ int main(int argc, char *argv[])
         cout << endl;
         cout << "====== [send_message] =============" << endl;
         cout << "recv bytes : " << recvSize << endl;
-        cout << "payload    : " << buf.payload_size << endl;
-        cout << "src_sid    : " << buf.src_station_id << endl;
-        cout << "dst_sid    : " << buf.dst_station_id << endl;
-        cout << "flagment_sum :" << buf.flagment_sum << endl;
+        cout << "payload    : " << buf.header.payload_size << endl;
+        cout << "src_sid    : " << buf.header.src_station_id << endl;
+        cout << "dst_sid    : " << buf.header.dst_station_id << endl;
+        cout << "flagment_sum :" << buf.header.flagment_sum << endl;
         cout << "==================================" << endl;
-        if (buf.flagment_sum > 1) {
-            cerr << "[ERROR] Integration-function not supported." << buf.flagment_sum << endl;
+        if (buf.header.flagment_sum > 1) {
+            cerr << "[ERROR] Integration-function not supported." << buf.header.flagment_sum << endl;
             continue;
         }
         //------------------------------------

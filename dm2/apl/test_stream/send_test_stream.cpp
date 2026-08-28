@@ -13,7 +13,8 @@ int main(int argc, char *argv[])
 	bool add_vector = false;
 	bool set_tuple = true;
 	bool set_vector = true;
-	while ((ch = getopt(argc, argv, "atv")) != -1) {
+	bool set_full_byte = false;
+	while ((ch = getopt(argc, argv, "abtv")) != -1) {
 		switch (ch) {
 		case 'a':
 			add_vector = true;
@@ -23,6 +24,9 @@ int main(int argc, char *argv[])
 			break;
 		case 'v':
 			set_vector = false;
+			break;
+		case 'b':
+			set_full_byte = true;
 			break;
 		default:
 			break;
@@ -67,33 +71,23 @@ int main(int argc, char *argv[])
 		vector<vector<unsigned int>> vector2_uint;
 		vector<vector<unsigned long long>> vector2_ulong;
 		vector<vector<bool>> vector2_bool;
-		/*
-		uint8_t data[] = {
-			0x00, 0x01, 0x02, 0x03,
-			0x10, 0x20, 0x30, 0x40,
-			0xFF, 0xFE, 0xFD, 0xFC,
-			0xAA, 0xBB, 0xCC, 0xDD,
-			0x11, 0x22, 0x33, 0x44,
-			0x55, 0x66, 0x77, 0x88,
-			0x99, 0x00, 0x12, 0x34,
-			0x56, 0x78, 0x9A, 0xBC
-		};
-
-		size_t size = sizeof(data);
-
 		std::string test_bytes;
-		test_bytes.assign(
-			reinterpret_cast<const char*>(data),
-			size);
-		*/
-		constexpr size_t size = 330000;
+		if (set_full_byte) {
+			constexpr size_t size = 33000;
+			test_bytes.resize(size);
+			for (size_t i = 0; i < size; ++i)
+			{
+				test_bytes[i] = static_cast<char>(i & 0xFF);
+			}
+		} else {
+			uint8_t data[] = {
+				0x00, 0x01, 0x02, 0x03,
+				0xFF, 0xFE, 0xFD, 0xFC,
+				0x56, 0x78, 0x9A, 0xBC
+			};
+			size_t size = sizeof(data);
 
-		std::string test_bytes;
-		test_bytes.resize(size);
-
-		for (size_t i = 0; i < size; ++i)
-		{
-			test_bytes[i] = static_cast<char>(i & 0xFF);
+			test_bytes.assign(reinterpret_cast<const char*>(data), size);
 		}
 		if (set_vector) {
 			vector_int.push_back(int_value);

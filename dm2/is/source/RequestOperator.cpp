@@ -198,25 +198,20 @@ namespace IS {
 		procTime = now;
 #endif
 
-#if MEASURE_MODE == 1
-		startTime = DmUtil::getTimeMicrosec();
-#endif
 		char compressFlg = settings.getParameter("COMPRESS_FLG")[0];
+		vector<char> sendBuf;
 		if (compressFlg == '1' || compressFlg == '2') {
-			char outbuf[IPv4_UDP_MAX_BYTE * 10];
 			long key = DmUtil::getTimeMicrosec();
-			int sendSize = stringUtil.setCompressedBufWithHeader(retXML, outbuf, compressFlg, key);
-			if (sendSize > 0) {
-				udpsendinterface.IsStreamSendtoCs(buf.header.lane_id, buf.header.src_station_id, buf.header.dst_station_id, 1, 60, outbuf, sendSize, fdDirPath);
-			} else {
+			sendBuf = stringUtil.setCompressedBufWithHeader(retXML, compressFlg, key);
+			if (sendBuf.empty()) {
 				logger->warn("[" + this->type + "] CompressProc is Failed. Retry by Uncompressed Data");
-				string s = "0" + retXML;
-				udpsendinterface.IsStreamSendtoCs(buf.header.lane_id, buf.header.src_station_id, buf.header.dst_station_id, 1, 60, retXML, fdDirPath);
 			}
-		} else {
-			string s = compressFlg + retXML;
-			udpsendinterface.IsStreamSendtoCs(buf.header.lane_id, buf.header.src_station_id, buf.header.dst_station_id, 1, 60, retXML, fdDirPath);
 		}
+		if (sendBuf.empty()) {
+			sendBuf.assign(retXML.begin(), retXML.end());
+		}
+		udpsendinterface.IsStreamSendtoCs(buf.header.lane_id, buf.header.src_station_id, buf.header.dst_station_id, 1, 60, std::move(sendBuf));
+		
 		logger->debug("[" + this->type + "] Request by UDP(CS). sendto(dstId):" + std::to_string(buf.header.dst_station_id) + " srcId:" + std::to_string(buf.header.src_station_id) + " laneId:" + std::to_string(buf.header.lane_id) + " size:" + std::to_string(retXML.length()));
 		logger->debug("[" + this->type + "] Send payload:" + retXML);
 

@@ -35,7 +35,7 @@ void usage(char *cmd)
             << "  -I <Interval>    Transmission Interval (millisecond)\n"
             << "  -h               Show this help\n";
 }
-struct send_message{
+struct send_message_header {
     /** @brief	送信元SID */
     unsigned long long src_station_id;
     /** @brief	宛先SID */
@@ -74,9 +74,14 @@ struct send_message{
     int flagment_offset;
     /** @brief 優先度フラグ */
     int priority_level;
+};
+struct send_message{
+    /** @brief  ヘッダ */
+    send_message_header header;
     /** @brief	DM2.0データペイロード */
     char dm2_payload[MSGSIZE];
 };
+
 unsigned long long createRandomId()
 {
     static std::random_device rd;
@@ -252,11 +257,10 @@ int main(int argc, char *argv[])
                     key);
 
             sendPayload.assign(outbuf, sendSize);
-        }
-        else {
-            //sendPayload.push_back('0');
-            //sendPayload += protobufPayload;
-            // 圧縮フラグ0セット時に、IS側でバグが存在したため、そのままセット（最新版では修正したが、未反映の環境があるため）
+        } else if (compressFlg == '0') {
+            sendPayload.push_back('0');
+            sendPayload += protobufPayload;
+        } else {
             sendPayload = protobufPayload;
         }
 
@@ -265,18 +269,18 @@ int main(int argc, char *argv[])
         //----------------------------------
 
         struct send_message buf;
-        buf.src_station_id = 1;
-        buf.dst_station_id = dest_sid;
-        buf.lane_id = 0;
-        buf.flagment_offset = 0;
-        buf.flagment_sum = 1;
-        buf.transmission_flag = 0;
-        buf.msg_type = 2;   // DM2TYPE_IS
+        buf.header.src_station_id = 1;
+        buf.header.dst_station_id = dest_sid;
+        buf.header.lane_id = 0;
+        buf.header.flagment_offset = 0;
+        buf.header.flagment_sum = 1;
+        buf.header.transmission_flag = 0;
+        buf.header.msg_type = 2;   // DM2TYPE_IS
         struct timespec ts;
         timespec_get(&ts, TIME_UTC);
-        buf.duplication_check_id = ts.tv_sec * 1000000000 + ts.tv_nsec;
+        buf.header.duplication_check_id = ts.tv_sec * 1000000000 + ts.tv_nsec;
 
-        buf.payload_size = sendPayload.size();
+        buf.header.payload_size = sendPayload.size();
         //cout << sendPayload.size() << endl;
         memcpy(buf.dm2_payload,
             sendPayload.data(),
@@ -285,7 +289,7 @@ int main(int argc, char *argv[])
         //----------------------------------
         // CS送信
         //----------------------------------
-        int send_size = sizeof(send_message) - MSGSIZE + buf.payload_size;
+        int send_size = sizeof(send_message) - MSGSIZE + buf.header.payload_size;
         sendto(sock, &buf, send_size, 0, (sockaddr*)&addr, sizeof(addr));
         
         auto end = chrono::steady_clock::now();

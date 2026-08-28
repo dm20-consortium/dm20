@@ -969,7 +969,7 @@ void Connection::receiveData(const int port)
 			vector<Tuple> tuples;
 			struct ProtobufHeaderInfo headerInfo;
 			pp.getProtobufHeaderInfo(receiveData, headerInfo);
-			cout << "headerSize:" << headerInfo.headerSize << ",payload_size:" << headerInfo.header.payload_size << endl;
+			//cout << "headerSize:" << headerInfo.headerSize << ",payload_size:" << headerInfo.header.payload_size << endl;
 			if (headerInfo.headerSize != 0)
 			{
 				Schema schema;
