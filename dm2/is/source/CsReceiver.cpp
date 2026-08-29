@@ -72,7 +72,7 @@ namespace IS {
 		data.schema_name = "";
 		if (buffer.dm2_payload.empty()) return;
 		
-		//data.cs_ip_address = buffer.from_ip;
+		data.cs_ip_address = buffer.header.fd_name;
 		data.payload.assign(buffer.dm2_payload.begin(), buffer.dm2_payload.end());
 		char *payload_p = &data.payload[0];
 		struct IsHeaderInfo headerInfo;

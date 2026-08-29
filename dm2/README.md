@@ -15,7 +15,7 @@ DM2.0 Platformの中で、端末間の通信を行うために必要なC++ライ
 
 - Ubuntu 20.04, Ubuntu 22.04, Ubuntu 24.04, Ubuntu 26.04
 
-- DMIが、Ubuntu 26.04未対応につき、DMI、dm2両方をホスト上でビルドしたい場合は、Ubuntu 24.04を推奨します。
+- DMIが、Ubuntu 26.04未対応につき、DMI、dm2両方をホスト上でビルドしたい場合は、Ubuntu 20.04～24.04を推奨します。
 
 ## Dockerイメージの構築
 

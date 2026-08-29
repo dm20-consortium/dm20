@@ -612,6 +612,8 @@ namespace CS{
 				}
 				// 宛先SIDが自分(車両)宛てである場合
 				if(vectorBuf.header.dst_station_id == my_sid_ || vectorBuf.header.dst_station_id == 90000000) {
+					// NIC指定時の受信IPアドレスをISへ連携（CS⇔IS間で使われていないfd_nameを間借り）
+					snprintf(vectorBuf.header.fd_name, sizeof(vectorBuf.header.fd_name), "%s", server_addr_str.c_str());
 					get_rcv_q->Push(vectorBuf);
 				//宛先SIDが0の場合(想定外)
 				} else if(vectorBuf.header.dst_station_id == 0){

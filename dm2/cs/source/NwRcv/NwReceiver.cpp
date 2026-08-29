@@ -204,8 +204,8 @@ void NwReceiver::receiver(const NwReceiver* param, const string &confDirPath)
 				if (!SocketUtil::combineFragment(buf, vectorBuf, flagment_data_receive_time_map, flagment_data_combination_map)) {
 					continue;
 				}
-				
-				//strcpy(m_cdata.from_ip, ip_address.c_str());
+				// NIC指定時の受信IPアドレスをISへ連携（CS⇔IS間で使われていないfd_nameを間借り）
+				snprintf(vectorBuf.header.fd_name, sizeof(vectorBuf.header.fd_name), "%s", ip_address.c_str());
 				log_str = Util(me->dm2util).PrintClient_data(vectorBuf);
 				LOG4CXX_INFO(me->logger, interface_name + " " + log_str);
 
