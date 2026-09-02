@@ -504,8 +504,10 @@ namespace IS {
 					logger->error("[" + this->type + "] Failed to send UDP errmsg: " + errMsg + ",ip:" + errIp);
 					//コネクションが切れた後に、再送しようとすると、プロセスが終了するため、キャンセルされるまでprocess関数内では何もしない。
 					send_err_flag = true;
-					bool checkSSL = checkSSLReturn(ret);
-					if (!checkSSL)  break;
+					if (ssl != NULL) {
+						bool checkSSL = checkSSLReturn(ret);
+						if (!checkSSL)  break;
+					}
 				}
 			}
 		}
