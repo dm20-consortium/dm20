@@ -341,9 +341,12 @@ namespace CS{
 		std::vector<send_message> sendBufList = convertToSendMessage(buf_, send_size_);
 		int len = 0;
 		const int header_size = sizeof(send_message_header);
+		int size = (int)sendBufList.size();
 		for (int i = 0; i < (int)sendBufList.size(); i++) {
 			send_message& sendBuf = sendBufList.at(i);
 			len = Sendto(sendBuf, addr_, header_size + sendBuf.header.payload_size, udp_port_number_);
+			// サイズが一定数以上だとバーストトラフィックになるのを防ぐため、sleepさせる
+			if (size > 10) usleep(1000);
 			if (len < 0)  break;
 		}
 		return len;
