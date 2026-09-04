@@ -24,8 +24,8 @@ public:
     DMSender();
     bool init(string ip, string userid, string password, bool isTcpMode, bool isSecureMode);
     virtual ~DMSender();
-    bool doSend(string line, bool isNoSpace, int addTimestamp, bool &waitFlg, double times);
-    bool sendIs(string schema_name, vector<string> msg, bool doCompress, int addTimestamp, int delay);
+    bool doSend(string line, bool isNoSpace, int timestampCol, bool &waitFlg, double times);
+    bool sendIs(string schema_name, vector<string> msg, bool doCompress, int timestampCol, int delay, int adjustmentTime);
     void sendThread(string _schema_name, std::vector<Tuple> tuples, bool doCompress);
     vector<string> parse1DArray(const string& str);
     vector<vector<string>> parse2DArray(const string& str);

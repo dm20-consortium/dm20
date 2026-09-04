@@ -116,14 +116,13 @@ namespace CS{
 		// ToDo: IPv6で動作確認
 		//hints.ai_family = AF_UNSPEC; //IPv4/IPv6両方対応
 		hints.ai_socktype = SOCK_DGRAM; //UDP送信
-		sock_res = getaddrinfo(dst_ip.c_str(), port_no.c_str(), &hints, &res);
-			if(sock_res != 0){
-			std::cout << "FILE:" << __FILE__ <<  ", LINE:" << __LINE__ << " " << "getaddrinfo fail." << std::endl;
-			perror("getaddrinfo");
+		int ret = getaddrinfo(dst_ip.c_str(), port_no.c_str(), &hints, &res);
+			if (ret != 0) {
+			std::cerr << "FILE:" << __FILE__ <<  ", LINE:" << __LINE__ << " getaddrinfo failed: " << ret << " " << gai_strerror(ret) << std::endl;
 			exit(EXIT_FAILURE);
 		}
 		sockd = CreateSocket(res->ai_family, res->ai_socktype);
-		if(sockd < 0){
+		if (sockd < 0) {
 			close(sockd);
 			freeaddrinfo(res);
 			std::cout << "FILE:" << __FILE__ <<  ", LINE:" << __LINE__ << " " << "CreateSocket fail." << std::endl;
@@ -152,9 +151,9 @@ namespace CS{
 		std::string src_ip;
 		Socket dm2socket;
 		src_ip = dm2socket.GetIPifaddrs_v6(if_name);
-		if(src_ip.find(":") != std::string::npos){
+		if (src_ip.find(":") != std::string::npos) {
 			//std::cout  << "LINE:" << __LINE__ << " in UdpNwClient.cpp " << "送信元IPアドレスを一意に設定完了。" << std::endl;
-		}else{
+		} else {
 			std::cout  << "LINE:" << __LINE__ << " in UdpNwClient.cpp " << "送信元IPアドレスが不定。dm2.confのインタフェース名の指定を確認してください。" << std::endl;
 		}
 		int sockopt_res=0;		
@@ -168,8 +167,8 @@ namespace CS{
 		memset(&ipi, 0, sizeof(ipi));
 		ipi.ipi6_ifindex = iface_id;
 
-		sock_res = getaddrinfo(dst_ip.c_str(), port_no.c_str(), &hints, &res);
-		if(sock_res != 0){
+		int ret = getaddrinfo(dst_ip.c_str(), port_no.c_str(), &hints, &res);
+		if (ret != 0) {
 			freeaddrinfo(res);
 			std::cout << "FILE:" << __FILE__ <<  ", LINE:" << __LINE__ << " " << "getaddrinfo fail." << std::endl;
 			perror("getaddrinfo");
@@ -177,11 +176,10 @@ namespace CS{
 		}
 
 		sockd = CreateSocket(res->ai_family, res->ai_socktype);
-		if(sockd < 0){
+		if (sockd < 0) {
 			close(sockd);
 			freeaddrinfo(res);
-			std::cout << "FILE:" << __FILE__ <<  ", LINE:" << __LINE__ << " " << "CreateSocket fail." << std::endl;
-			perror("CreateSocket");
+			std::cerr << "FILE:" << __FILE__ <<  ", LINE:" << __LINE__ << " getaddrinfo failed: " << ret << " " << gai_strerror(ret) << std::endl;
 			exit(EXIT_FAILURE);
 		}
 		
@@ -189,7 +187,7 @@ namespace CS{
 		memcpy(&ipi.ipi6_addr, src_ip.c_str(), sizeof(struct in6_addr));
 		
 		sockopt_res = setsockopt(sockd, IPPROTO_IPV6, IPV6_PKTINFO, &ipi, sizeof(ipi));
-		if(sockopt_res != 0){
+		if (sockopt_res != 0) {
 			std::cout << "FILE:" << __FILE__ <<  ", LINE:" << __LINE__ << " " << "setsockopt fail." << std::endl;
 			perror("setsockopt");
 			exit(EXIT_FAILURE);

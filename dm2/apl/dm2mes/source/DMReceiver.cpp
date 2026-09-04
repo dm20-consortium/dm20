@@ -193,7 +193,7 @@ void DMReceiver::SendIs(string ord_s) {
 				}
 			} else {
 				if ((int)v_line.size() > 0) {
-					if (dms.sendIs(schema_name, v_line, false, addTimestamp, delay) == false) break;
+					if (dms.sendIs(schema_name, v_line, false, addTimestamp, delay, 0) == false) break;
 					v_line.clear();
 				}
 				if (addTimestamp != 0 && waitFlg == false) {
@@ -207,7 +207,7 @@ void DMReceiver::SendIs(string ord_s) {
 		bool waitFlg = true;
 		while (waitFlg) {
 			if (dms.doSend(v_line[0], isNoSpace, addTimestamp, waitFlg, times) == false) {
-				if (dms.sendIs(schema_name, v_line, false, addTimestamp, delay) == false) break;
+				if (dms.sendIs(schema_name, v_line, false, addTimestamp, delay, 0) == false) break;
 			}
 		}
 	}

@@ -139,7 +139,7 @@ bool DatagramSocket::sendStreamData(const string &streamName, const vector<Tuple
 		cerr << "[sendStreamData] Serialization failure using protobuf" << endl;
 		return false;
 	}
-	cout << "[sendDataList] sendDataList_size: " << sendDataList.size() << endl;
+	//cout << "[sendDataList] sendDataList_size: " << sendDataList.size() << endl;
 #if MEASURE_MODE == 1
 	now = DmUtil::getTimeMicrosec();
 	msec = (now - procTime) / 1000.0;

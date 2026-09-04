@@ -13,6 +13,7 @@ CFLAGS  =  -std=$(CPLUS_VER) -shared -fPIC
 LIBS           =  -I../../../tupleLib/include
 
 all:
+	g++ $(CFLAGS) -o UF_GET_OBJECT_WITH_LOW_TTC.so UF_GET_OBJECT_WITH_LOW_TTC.cpp $(LIBS) 
 	g++ $(CFLAGS) -c GridMap.cpp $(LIBS)
 	g++ $(CFLAGS) -c UF_DATA_FUSION.cpp $(LIBS)
 	g++ $(CFLAGS) -o UF_DATA_FUSION.so UF_DATA_FUSION.o GridMap.o $(LIBS)

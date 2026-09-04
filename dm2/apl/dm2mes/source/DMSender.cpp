@@ -38,7 +38,7 @@ bool DMSender::init(string ip, string userid, string password, bool isTcpMode, b
 	}
 	return true;
 }
-bool DMSender::doSend(string line, bool isNoSpace, int addTimestamp, bool &waitFlg, double times) {
+bool DMSender::doSend(string line, bool isNoSpace, int timestampCol, bool &waitFlg, double times) {
 	string s = line;
 	bool doSend  = false;
     long timestamp_column = 0;
@@ -51,19 +51,19 @@ bool DMSender::doSend(string line, bool isNoSpace, int addTimestamp, bool &waitF
 			return false;
 		}
 	}
-	if (addTimestamp != 0) {
+	if (timestampCol != 0) {
 		vector<string> col = split(s, ',');
 		string timestamp_column_str;
-		if (addTimestamp < 0) {
+		if (timestampCol < 0) {
 			auto ts_column = col.end();
-			for (; addTimestamp != 0; addTimestamp++) {
+			for (; timestampCol != 0; timestampCol++) {
 				--ts_column;
 			}
 			timestamp_column_str = *ts_column;
 		} else {
 			auto ts_column = col.begin();
-			addTimestamp--;
-			for (; addTimestamp != 0; addTimestamp--) {
+			timestampCol--;
+			for (; timestampCol != 0; timestampCol--) {
 				++ts_column;
 			}
 			timestamp_column_str = *ts_column;
@@ -72,12 +72,12 @@ bool DMSender::doSend(string line, bool isNoSpace, int addTimestamp, bool &waitF
 			timestamp_column = std::atol(timestamp_column_str.c_str());
 			if (timestamp_column == 0) {
 				waitFlg = false;
-				cerr << "Column Index " << addTimestamp << " is not Timestamp. Value:" << timestamp_column << endl;
+				cerr << "Column Index " << timestampCol << " is not Timestamp. Value:" << timestamp_column << endl;
 				return false;
 			}
 		} catch (...) {
 			waitFlg = false;
-			cerr << "Column Index " << addTimestamp << "is not Timestamp. Value:" << timestamp_column << endl;
+			cerr << "Column Index " << timestampCol << "is not Timestamp. Value:" << timestamp_column << endl;
 			return false;
 		}
 		if (base_file_ts == 0) {
@@ -144,7 +144,7 @@ vector<vector<string>> DMSender::parse2DArray(const string& str) {
     }
     return result;
 }
-bool DMSender::sendIs(string schema_name, vector<string> v_line, bool doCompress, int addTimestamp, int delay) {
+bool DMSender::sendIs(string schema_name, vector<string> v_line, bool doCompress, int timestampCol, int delay, int adjustmentTime) {
 	string _schema_name = "message_info";
 	if (schema_name != "") {
 		_schema_name = schema_name;
@@ -164,10 +164,10 @@ bool DMSender::sendIs(string schema_name, vector<string> v_line, bool doCompress
 		for (string line : v_line) {
 			vector<string> col = split(line, ',');
 			vector<string> col2 = split2(line, ',');
-			if (addTimestamp == -1) {
+			if (timestampCol == -1) {
 				col.pop_back();
 				col2.pop_back();
-				if (addTimestamp == -2) {
+				if (timestampCol == -2) {
 					col.pop_back();
 					col2.pop_back();
 				}
@@ -230,7 +230,13 @@ bool DMSender::sendIs(string schema_name, vector<string> v_line, bool doCompress
 					}
 				} else {
 					// 可変長配列以外のケース
-					tuple.setValue(idx, *itr, ts);
+					if (timestampCol > 0 && timestampCol == idx) {
+						int value = stoi(*itr);
+						value += adjustmentTime;
+						tuple.setValue(idx, to_string(value), ts);
+					} else {
+						tuple.setValue(idx, *itr, ts);
+					}
 					idx++;
 				}
 			}

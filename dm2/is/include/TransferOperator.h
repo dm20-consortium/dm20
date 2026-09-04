@@ -59,6 +59,7 @@ namespace IS {
 		double totalProcessTimeSlowest = 0;
 		double totalProcessTimeEarliest = 0;
 
+		void initialize();
 	public:
 		TransferOperator(unsigned int mngId, unsigned long long dstSID, string streamName, int retry, int lifeTime);
 		TransferOperator(unsigned int mngId, unsigned long long dstSID, unsigned long long reqDestId, unsigned int requestedMngId, int retry, int lifeTime);

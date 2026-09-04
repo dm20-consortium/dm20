@@ -60,6 +60,10 @@ namespace IS {
 		// Selectionは1つのtuplesetを使用
 		TupleSet& tupleset = ts.at(0);
 
+		if (tupleset.size() == 0) {
+			logger->debug("[" + this->type + "] tuple empty");
+			return true;
+		}
 		// DEBUG 与えられたタプル情報の出力
 		printInputInfo(tupleset, this->argument);
 

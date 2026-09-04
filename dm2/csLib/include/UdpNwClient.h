@@ -25,8 +25,6 @@ namespace CS{
 		struct addrinfo *res;
 		/** @brief	*res_src */
 		struct addrinfo *res_src;
-		/** @brief	Socket関連関数の戻り値 */
-		int sock_res;
 	
 		std::string port_no_;
 	public:
@@ -41,7 +39,6 @@ namespace CS{
 		 */
 		UdpNwClient():SocketUdp(){
 			sockd = 0;
-			sock_res = 0;
 			hints = {0};
 			res = {0};
 			res_src = {0};

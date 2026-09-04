@@ -31,7 +31,7 @@ namespace IS {
 		this->argument.append(" DST_ID:" + to_string(dstSID));
 		this->argument.append(" STREAM_NAME:" + streamName);
 		this->argument.append(" RETRY:" + (retry == 0 ? "OFF" : "ON LIFE_TIME:" + to_string(lifeTime)));
-		this->fdDirPath = settings.getFDDirectory();
+		initialize();
 	}
 
    /**
@@ -62,7 +62,7 @@ namespace IS {
 		this->argument.append(" OWN_ID:" + to_string(reqDstSID));
 		this->argument.append(" REQMNGID_ID:" + to_string(requestedMngId));
 		this->argument.append(" RETRY:" + (retry == 0 ? "OFF" : "ON LIFE_TIME:" + to_string(lifeTime)));
-		this->fdDirPath = settings.getFDDirectory();
+		initialize();
 	}
 
 	/**
@@ -96,7 +96,7 @@ namespace IS {
 		this->argument.append(" REQMNGID_ID:" + to_string(requestedMngId));
 		this->argument.append(" RETRY:" + (retry == 0 ? "OFF" : "ON LIFE_TIME:" + to_string(lifeTime)));
 		this->argument.append(" ERR_CODE:" + to_string((int)code));
-		this->fdDirPath = settings.getFDDirectory();
+		initialize();
 	}
 
 	/**
@@ -119,7 +119,7 @@ namespace IS {
 		this->argument.append(" DST_ID:" + to_string(dstSID));
 		this->argument.append(" REQMNGID_ID:" + to_string(requestedMngId));
 		this->argument.append(" RETRY:" + (retry == 0 ? "OFF" : "ON LIFE_TIME:" + to_string(lifeTime)));
-		this->fdDirPath = settings.getFDDirectory();
+		initialize();
 	}
 	/**
 	 * デストラクタ
@@ -127,13 +127,25 @@ namespace IS {
 	 * @author	Nagoya University
 	 * @date	2018/03/14
 	 */
-
 	TransferOperator::~TransferOperator()
 	{
 		if (processNum != 0) {
 			logger->debug("[PERFORMANCE_STAT][" + getType() + "] TotalProcAvgTime(NoRes) :" + to_string(totalProcessNoResTimeAVG) + "[ms] Fastest:" + to_string(totalProcessNoResTimeEarliest) + "[ms] Slowest:" + to_string(totalProcessNoResTimeSlowest) + "[ms] noResponseNum:" + to_string(processNum - notifiedNum));
 			logger->debug("[PERFORMANCE_STAT][" + getType() + "] TotalProcAvgTime(Notify):" + to_string(totalProcessTimeAVG) + "[ms] Fastest:" + to_string(totalProcessTimeEarliest) + "[ms] Slowest:" + to_string(totalProcessTimeSlowest) + "[ms] notifiedNum:" + to_string(notifiedNum));
 		}
+	}
+	/**
+	 * 初期化処理
+	 *
+	 * @author	Nagoya University
+	 * @date	2018/03/14
+	 */
+	void TransferOperator::initialize()
+	{
+		this->fdDirPath = settings.getFDDirectory();
+		string cs_ip = settings.getParameter("CS_IP_ADDRESS");
+		string cs_port = settings.getParameter("CS_PORT_NUMBER");
+		Init(this->fdDirPath + FD_IStoCS, cs_port, cs_ip);
 	}
 
 	/**
