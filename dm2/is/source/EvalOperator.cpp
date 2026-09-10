@@ -252,7 +252,12 @@ namespace IS {
 	{
 		if (retList.size() <= 0) {
 			tupleset.resize(0);
-			logger->warn("[" + this->type + "] Data was not returned. parameter:" + parameter);
+			if (doWarnLog) {
+				logger->warn("[" + this->type + "] Data was not returned. parameter:" + parameter);
+				doWarnLog = false;
+			} else {
+				logger->debug("[" + this->type + "] Data was not returned. parameter:" + parameter);
+			}
 			return;
 		}
 		if (retList.size() == (unsigned int)tupleset.size() && retsName.size() == 1) {

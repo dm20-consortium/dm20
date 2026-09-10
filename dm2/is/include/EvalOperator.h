@@ -54,6 +54,7 @@ namespace IS {
 		void* evalHandle = NULL;
 		multiFunc evalFunc = NULL;
 		bool evalLibLoaded = false;
+		bool doWarnLog = true;
 		void initializeEval(TupleSet& tupleset);
 		long createArgList(TupleSet& tupleset, vector<vector<string>>& argList);
 		void appendReturnValue(TupleSet& tupleset, const vector<vector<string>>& retList, const long &time);
