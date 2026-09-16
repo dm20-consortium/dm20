@@ -22,7 +22,7 @@ namespace IS {
 	ResponseOperator::ResponseOperator(unsigned int mngId, const RecvData &data)
 	{
 		this->type = MyName + "_MNGID:" + std::to_string(mngId);
-		this->sock = data.sock;
+		this->tcpSock_ = data.sock;
 		this->addr = data.client;
 		this->ssl = data.ssl;
 		if (this->ssl == NULL) {
@@ -52,7 +52,7 @@ namespace IS {
 	ResponseOperator::ResponseOperator(unsigned int mngId, const RecvData &data, const int &tcpPort)
 	{
 		this->type = MyName + "_MNGID:" + std::to_string(mngId);
-		this->sock = data.sock;
+		this->tcpSock_ = data.sock;
 		this->addr = data.client;
 		this->ssl = data.ssl;
 		if (this->ssl == NULL) {
@@ -88,7 +88,7 @@ namespace IS {
 	ResponseOperator::ResponseOperator(unsigned int mngId, const RecvData &data, IS::ErrorCode code, const string &msg)
 	{
 		this->type = MyName + "_MNGID:" + std::to_string(mngId);
-		this->sock = data.sock;
+		this->tcpSock_ = data.sock;
 		this->addr = data.client;
 		this->ssl = data.ssl;
 		if (this->ssl == NULL) {
@@ -134,7 +134,7 @@ namespace IS {
 			replyForConQueryByTcp = true;
 		}
 		if (replyForConQueryByTcp) {
-			this->sock = data.sock2;
+			this->tcpSock_ = data.sock2;
 			this->ssl = data.ssl2;
 			this->sslForRegisterQuery = data.ssl;
 			if (this->ssl != NULL) {
@@ -169,7 +169,7 @@ namespace IS {
 	ResponseOperator::ResponseOperator(const RecvData &data)
 	{
 		this->type = MyName;
-		this->sock = data.sock;
+		this->tcpSock_ = data.sock;
 		this->addr = data.client;
 		this->ssl = data.ssl;
 		if (this->ssl == NULL) {
@@ -194,11 +194,53 @@ namespace IS {
 
 	ResponseOperator::~ResponseOperator()
 	{
+		if (udpSock_ >= 0) {
+			close(udpSock_);
+			udpSock_ = -1;
+		}
 		if (processNum != 0) {
 			logger->debug("[PERFORMANCE_STAT][" + getType() + "] TotalProcAvgTime(NoRes) :" + to_string(totalProcessNoResTimeAVG) + "[ms] Fastest:" + to_string(totalProcessNoResTimeEarliest) + "[ms] Slowest:" + to_string(totalProcessNoResTimeSlowest) + "[ms] noResponseNum:" + to_string(processNum- notifiedNum));
 			logger->debug("[PERFORMANCE_STAT][" + getType() + "] TotalProcAvgTime(Notify):" + to_string(totalProcessTimeAVG) + "[ms] Fastest:" + to_string(totalProcessTimeEarliest) + "[ms] Slowest:" + to_string(totalProcessTimeSlowest) + "[ms] notifiedNum:" + to_string(notifiedNum));
 		}
 	}
+	/**
+	* UDPソケット生成
+	*
+	* @author	Nagoya University
+	* @date	2026/09/15
+	*
+	* @return	生成結果
+	*/
+	bool ResponseOperator::initUdpSocket()
+	{
+		if (udpSock_ >= 0) {
+			return true;
+		}
+
+		udpSock_ = socket(AF_INET, SOCK_DGRAM, 0);
+		if (udpSock_ < 0) {
+			logger->error("Failed to create UDP socket: "
+				+ string(std::strerror(errno)));
+			return false;
+		}
+
+		memset(&udpAddr_, 0, sizeof(udpAddr_));
+		udpAddr_.sin_family = AF_INET;
+		udpAddr_.sin_port = htons(this->udpPort);
+		udpAddr_.sin_addr = addr.sin_addr;
+
+		udpSockInitialized_ = true;
+
+		return true;
+	}
+	/**
+	* DTLSソケット生成
+	*
+	* @author	Nagoya University
+	* @date	2018/03/13
+	*
+	* @return	生成結果
+	*/
 	bool ResponseOperator::setDTLSsocket()
 	{
 		struct sockaddr_in udpAddr;
@@ -209,13 +251,13 @@ namespace IS {
 		this->ctx = SSL_CTX_new(DTLSv1_2_client_method());
 		this->ssl = SSL_new(ctx);
 
-		sock = socket(AF_INET, SOCK_DGRAM, 0);
+		this->dtlsSock_ = socket(AF_INET, SOCK_DGRAM, 0);
 		udpAddr.sin_family = AF_INET;
 		udpAddr.sin_port = htons(this->udpPort);
 		udpAddr.sin_addr.s_addr = inet_addr(inet_ntoa(addr.sin_addr));
 
-		bio = BIO_new_dgram(sock, BIO_CLOSE);
-		connect(sock, (struct sockaddr *) &udpAddr, sizeof(udpAddr));
+		bio = BIO_new_dgram(this->dtlsSock_, BIO_CLOSE);
+		connect(this->dtlsSock_, (struct sockaddr *) &udpAddr, sizeof(udpAddr));
 		BIO_ctrl(bio, BIO_CTRL_DGRAM_SET_CONNECTED, 0, &udpAddr);
 		SSL_set_bio(ssl, bio, bio);
 
@@ -229,12 +271,20 @@ namespace IS {
 		BIO_ctrl(bio, BIO_CTRL_DGRAM_SET_RECV_TIMEOUT, 0, &timeout);
 		return true;
 	}
-	void ResponseOperator::process_close()
+	/**
+	* DTLSソケットのリセット
+	*
+	* @author	Nagoya University
+	* @date	2018/03/13
+	*
+	* @return	生成結果
+	*/
+	void ResponseOperator::resetDTLSsocket()
 	{
 		if (this->ssl != NULL && replyForConQueryByTcp == false) {
 			logger->warn("[ResponseOperator] SSL close");
 			SSL_shutdown(ssl);
-			close(sock);
+			close(this->dtlsSock_);
 			SSL_free(ssl);
 			ERR_remove_state(0);
 		}
@@ -398,13 +448,13 @@ namespace IS {
 			errMsg = "SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER";
 			break;
 		case SSL_ERROR_SYSCALL:
-			process_close();
+			resetDTLSsocket();
 			if(setDTLSsocket()) {
 				errMsg = "Reset DTLS Socket and Continue";
 				rtn = true;
 			} else {
 				errMsg = "ERROR_SYSCALL";
-				process_close();
+				resetDTLSsocket();
 			}
 			break;
 		default:
@@ -431,8 +481,6 @@ namespace IS {
 	*/
 	void ResponseOperator::sendStreamResponse(const vector<string>& retProtoList)
 	{
-		struct sockaddr_in udpAddr;
-		int udpSock = -1;
 		int ret = 0;
 		unsigned int sendSumLen = 0;
 		
@@ -440,11 +488,11 @@ namespace IS {
 			// ストリームデータをTCPで返すケース
 			for (unsigned int i = 0; i < retProtoList.size(); i++) {
 				Bytef outbuf[this->TcpSendSize];
-				logger->debug("[ResponseOperator]send_sock:" + to_string(this->sock));
+				logger->debug("[ResponseOperator]send_sock:" + to_string(this->tcpSock_));
 				bool doCompress = stringUtil.compress(retProtoList.at(i), outbuf);
 				if (doCompress) {
 					if (ssl == NULL) {
-						ret = send(this->sock, outbuf, this->TcpSendSize, 0);
+						ret = send(this->tcpSock_, outbuf, this->TcpSendSize, 0);
 					} else {
 						if (isSslShutdown(ssl)) break;
 						ret = SSL_write(ssl, outbuf, this->TcpSendSize);
@@ -458,18 +506,19 @@ namespace IS {
 					string errMsg = string(std::strerror(errno));
 					string errIp = inet_ntoa(addr.sin_addr);
 					logger->error("[" + this->type + "] Failed to send TCP errmsg: " + errMsg + ",ip:" + errIp);
-					//コネクションが切れた後に、再送しようとすると、プロセスが終了するため、キャンセルされるまでprocess関数内では何もしない。
-					send_err_flag = true;
+					if (ssl != NULL) {
+						//TLSコネクションが切れた後に、再送しようとすると、プロセスが終了するため、キャンセルされるまでprocess関数内では何もしない。
+						send_err_flag = true;
+					}
 					break;
 				}
 			}
 		} else {
 			// ストリームデータをUDPで返すケース
 			if (ssl == NULL) {
-				udpSock = socket(AF_INET, SOCK_DGRAM, 0);
-				udpAddr.sin_family = AF_INET;
-				udpAddr.sin_port = htons(this->udpPort);
-				udpAddr.sin_addr.s_addr = inet_addr(inet_ntoa(addr.sin_addr));
+				if (!initUdpSocket()) {
+					return;
+				}
 			}
 			for (unsigned int i = 0; i < retProtoList.size(); i++) {
 				//cout << retProtoList.at(i) << endl;
@@ -489,7 +538,7 @@ namespace IS {
 					sendSize = s.size();
 				}
 				if (ssl == NULL) {
-					ret = sendto(udpSock, sendPtr, sendSize, 0, (struct sockaddr *)&udpAddr, sizeof(udpAddr));
+					ret = sendto(udpSock_, sendPtr, sendSize, 0, (struct sockaddr *)&udpAddr_, sizeof(udpAddr_));
 				} else {
 					if (isSslShutdown(ssl)) break;
 					ret = SSL_write(ssl, sendPtr, sendSize);
@@ -499,12 +548,12 @@ namespace IS {
 					sendSumLen = sendSumLen + ret;
 				} else {
 					string errMsg = string(std::strerror(errno));
-					string errIp = inet_ntoa(udpAddr.sin_addr);
+					string errIp = inet_ntoa(udpAddr_.sin_addr);
 					logger->error("[" + this->type + "] Failed to sendto. retry.... split.length:" + std::to_string(retProtoList.at(i).length()));
 					logger->error("[" + this->type + "] Failed to send UDP errmsg: " + errMsg + ",ip:" + errIp);
-					//コネクションが切れた後に、再送しようとすると、プロセスが終了するため、キャンセルされるまでprocess関数内では何もしない。
-					send_err_flag = true;
 					if (ssl != NULL) {
+						//DTLSコネクションが切れた後に、再送しようとすると、プロセスが終了するため、キャンセルされるまでprocess関数内では何もしない。
+						send_err_flag = true;
 						bool checkSSL = checkSSLReturn(ret);
 						if (!checkSSL)  break;
 					}
@@ -520,9 +569,6 @@ namespace IS {
 			//logger->debug("[" + this->type + "] MNGID:" + std::to_string(mngId) + " sendto error: " + string(inet_ntoa(addr.sin_addr)) + ":" + std::to_string(this->udpPort) + " XMLListSize : " + std::to_string(retProtoList.length()) + " byte");
 			//logger->debug("[" + this->type + "] Failed to send. errmsg: " + string(std::strerror(errno)));
 		}
-		if (!replyForConQueryByTcp) {
-			close(udpSock);
-		}
 
 	}
 	/**
@@ -537,7 +583,7 @@ namespace IS {
 	*/
 	bool ResponseOperator::process(vector<IS::TupleSet>& ts)
 	{
-		logger->debug("[" + this->type + "] ========== Response START ========== sock:" + to_string(this->sock) + ",isTCP:" + to_string(isTCP) + ",tsize:" + to_string(ts.at(0).size()));
+		logger->debug("[" + this->type + "] ========== Response START ========== tcpSock:" + to_string(this->tcpSock_) + ",isTCP:" + to_string(isTCP) + ",tsize:" + to_string(ts.at(0).size()));
 
 		// Selectionは1つのtuplesetを使用
 		TupleSet& tupleset = ts.at(0);
@@ -588,7 +634,7 @@ namespace IS {
 		// TCPにてレスポンス返却
 		int ret;
 		if (ssl == NULL) {
-			ret = sendto(sock, body.c_str(), body.length(), 0, (struct sockaddr*)&addr, sizeof(addr));
+			ret = sendto(this->tcpSock_, body.c_str(), body.length(), 0, (struct sockaddr*)&addr, sizeof(addr));
 		}
 		else {
 			ret = SSL_write(ssl, body.c_str(), body.length());

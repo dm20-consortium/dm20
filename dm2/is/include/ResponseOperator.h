@@ -31,7 +31,12 @@ namespace IS {
 		LoggerPtr logger = Logger::getLogger("ResponseOperator");
 		StringUtil stringUtil;
 		IS::Settings &settings = IS::Settings::get_instance();
-		int sock = 0;
+		int tcpSock_ = 0;
+		int dtlsSock_ = 0;
+		int udpSock_ = -1;
+		bool udpSockInitialized_ = false;
+		struct sockaddr_in udpAddr_;
+
 		struct sockaddr_in addr;
 		SSL *ssl = NULL;
 		SSL *sslForRegisterQuery = NULL;
@@ -71,6 +76,10 @@ namespace IS {
 		bool createResponse(TupleSet& tupleset, string& retXML, vector<string>& retXMLList);
 		void sendStreamResponse(const vector<string>& retXMLList);
 		bool checkSSLReturn(const int ret_arg);
+
+		bool initUdpSocket();
+		bool setDTLSsocket();
+		void resetDTLSsocket();
 	public:
 		// 返信種別
 		enum responseType {
@@ -93,10 +102,8 @@ namespace IS {
 		virtual ~ResponseOperator();
 
 		double getTotalProcessTimeAVG();
-		bool setDTLSsocket();
 		// 処理
 		virtual bool process(vector<IS::TupleSet>& ts);
-		virtual void process_close();
 
 		int sendSystemResponse(const string &body);
 		void checkTerminate();

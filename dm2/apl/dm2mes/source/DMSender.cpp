@@ -144,7 +144,7 @@ vector<vector<string>> DMSender::parse2DArray(const string& str) {
     }
     return result;
 }
-bool DMSender::sendIs(string schema_name, vector<string> v_line, bool doCompress, int timestampCol, int delay, int adjustmentTime) {
+bool DMSender::sendIs(string schema_name, vector<string> v_line, bool doCompress, const int &timestampCol, const int &delay, const long &adjustmentTime, const bool &doAdjust) {
 	string _schema_name = "message_info";
 	if (schema_name != "") {
 		_schema_name = schema_name;
@@ -230,10 +230,14 @@ bool DMSender::sendIs(string schema_name, vector<string> v_line, bool doCompress
 					}
 				} else {
 					// 可変長配列以外のケース
-					if (timestampCol > 0 && timestampCol == idx) {
-						int value = stoi(*itr);
-						value += adjustmentTime;
-						tuple.setValue(idx, to_string(value), ts);
+					if (timestampCol > 0 && timestampCol - 1 == idx) {
+						if (doAdjust) {
+							long value = ts;
+							value += adjustmentTime;
+							tuple.setValue(idx, to_string(value), ts);
+						} else {
+							tuple.setValue(idx, *itr, ts);
+						}
 					} else {
 						tuple.setValue(idx, *itr, ts);
 					}

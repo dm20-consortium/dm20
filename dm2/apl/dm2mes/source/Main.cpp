@@ -27,7 +27,8 @@ int main(int argc, char *argv[])
 	bool allowDuplication = false;
 	bool isQuietMode = false;
 	int timestampCol = 0;
-	int adjustmentTime = 0;
+	long adjustmentTime = 0;
+	bool doAdjust = false;
 	string ip = "";
 	string userid = "";
 	string password = "";
@@ -51,59 +52,52 @@ int main(int argc, char *argv[])
 	unsigned long long execSID = 0;
 	unsigned int mngId = 0;
 	bool doDestQuery = false;
-	string minus_str = "-";
 	// 引数処理(Todo: 長形式への対応｛getopt_long関数への移行｝)
-	while ((ch = getopt(argc, argv, "0123456789a:A::B:c:C:d:D:E:f:F:i:I::m:Mno::O:p:P:qr::R:sS:tT:u:w:W:zh")) != -1) {
+	while ((ch = getopt(argc, argv, "a::A::B:c:C:d:D:E:f:F:i:I::m:Mno::O:p:P:qr::R:sS:tT:u:w:W:zh")) != -1) {
 		switch (ch) {
-		case '0': minus_str += "0"; break;
-		case '1': minus_str += "1"; break;
-		case '2': minus_str += "2"; break;
-		case '3': minus_str += "3"; break;
-		case '4': minus_str += "4"; break;
-		case '5': minus_str += "5"; break;
-		case '6': minus_str += "6"; break;
-		case '7': minus_str += "7"; break;
-		case '8': minus_str += "8"; break;
-		case '9': minus_str += "9"; break;
 		case 'a':
+			doAdjust = true;
 			if (optind < argc) {
 				string opt = argv[optind];
-				if (opt.substr(0,1) != "-") {
-					try {
-						adjustmentTime = stoi(opt);
+				try {
+					size_t pos;
+					long value = stol(opt, &pos);
+					// 文字列全体が整数なら -A の引数とする
+					if (pos == opt.size()) {
+						adjustmentTime = value;
+						++optind;
 					}
-					catch (std::invalid_argument const&) {
-						fprintf(stderr, "failed to parse times-value: %s\n", opt.c_str());
-						usage(argv[0]);
-						exit(1);
-					}
-					catch (std::out_of_range const&) {
-						fprintf(stderr, "failed to parse times-value: %s\n", opt.c_str());
-						usage(argv[0]);
-						exit(1);
-					}
+				}
+				catch (const std::invalid_argument&) {
+					// -M など、数値でないオプションなら何もしない
+				}
+				catch (const std::out_of_range&) {
+					fprintf(stderr, "failed to parse times-value: %s\n", opt.c_str());
+					usage(argv[0]);
+					exit(1);
 				}
 			}
 			break;
 		case 'A':
-			// dm2mes -r -A で記録した時のcreate_tsの位置をデフォルト値とする
 			timestampCol = -2;
 			if (optind < argc) {
 				string opt = argv[optind];
-				if (opt.substr(0,1) != "-") {
-					try {
-						timestampCol = stoi(opt);
+				try {
+					size_t pos;
+					int value = stoi(opt, &pos);
+					// 文字列全体が整数なら -A の引数とする
+					if (pos == opt.size()) {
+						timestampCol = value;
+						++optind;
 					}
-					catch (std::invalid_argument const&) {
-						fprintf(stderr, "failed to parse times-value: %s\n", opt.c_str());
-						usage(argv[0]);
-						exit(1);
-					}
-					catch (std::out_of_range const&) {
-						fprintf(stderr, "failed to parse times-value: %s\n", opt.c_str());
-						usage(argv[0]);
-						exit(1);
-					}
+				}
+				catch (const std::invalid_argument&) {
+					// -M など、数値でないオプションなら何もしない
+				}
+				catch (const std::out_of_range&) {
+					fprintf(stderr, "failed to parse times-value: %s\n", opt.c_str());
+					usage(argv[0]);
+					exit(1);
 				}
 			}
 			break;
@@ -149,16 +143,7 @@ int main(int argc, char *argv[])
 			doDestQuery = true;
 			break;
 		case 'f':
-			{
-				string opt = optarg;
-				if (opt.substr(0,1) != "-") {
-					input_file = opt;
-				}
-			}
-			if (input_file == "") {
-		    	usage(argv[0]);
-		        exit(1);
-			}
+			input_file = optarg;
 			break;
 		case 'F':
 		    if (sscanf(optarg, "%lf", &times) != 1) {
@@ -172,11 +157,6 @@ int main(int argc, char *argv[])
 			break;
 		case 'm':
 			master_schema = optarg;
-			if (master_schema == "" || master_schema.substr(0,1) == "-") {
-		        fprintf(stderr, "failed to parse master_schema: %s\n", optarg);
-		    	usage(argv[0]);
-		        exit(1);
-		    }
 			break;
 		case 'M':
 			allowDuplication = true;
@@ -189,6 +169,7 @@ int main(int argc, char *argv[])
 				string opt = argv[optind];
 				if (opt.substr(0,1) != "-") {
 					query = opt;
+					++optind;
 				}
 			}
 			isOneShot = true;
@@ -213,11 +194,6 @@ int main(int argc, char *argv[])
 			break;
 		case 'P':
 			paritition_keys = optarg;
-		    if (paritition_keys == "" || plus_schema_name.substr(0,1) == "-") {
-		        fprintf(stderr, "failed to parse paritition_keys: %s\n", optarg);
-		    	usage(argv[0]);
-		        exit(1);
-		    }
 			break;
 		case 'r':
 			doRecv = true;
@@ -234,27 +210,18 @@ int main(int argc, char *argv[])
 				        exit(1);
 				    }
 					query = opt;
+					++optind;
 				}
 			}
 			break;
 		case 'R':
 			send_list = optarg;
-		    if (send_list == "" || schema_name.substr(0,1) == "-") {
-		        fprintf(stderr, "failed to parse send_list: %s\n", optarg);
-		    	usage(argv[0]);
-		        exit(1);
-		    }
 			break;
 		case 's':
 			isSecureMode = true;
 			break;
 		case 'S':
 			schema_name = optarg;
-		    if (schema_name == "" || schema_name.substr(0,1) == "-") {
-		        fprintf(stderr, "failed to parse schema_name: %s\n", optarg);
-		    	usage(argv[0]);
-		        exit(1);
-		    }
 			break;
 		case 't':
 			isTcpMode = true;
@@ -271,6 +238,7 @@ int main(int argc, char *argv[])
 						} else {
 							timeout = stoi(opt) * 1000;
 						}
+						++optind;
 					} catch (...) {
 						fprintf(stderr, "failed to parse timeout-value: %s\n", optarg);
 						usage(argv[0]);
@@ -300,15 +268,11 @@ int main(int argc, char *argv[])
 			break;
 		case 'W':
 			where = optarg;
-		    if (where == "" || plus_schema_name.substr(0,1) == "-") {
-		        fprintf(stderr, "failed to parse where: %s\n", optarg);
-		    	usage(argv[0]);
-		        exit(1);
-		    }
 			break;
 		case 'z':
 			doCompress = true;
 			break;
+		case '?':
 		default:
 			usage(argv[0]);
 		    exit(1);
@@ -327,9 +291,6 @@ int main(int argc, char *argv[])
 	if (send_list != "") {
 		RegisterSendList(send_list, input_file);
 		return 0;
-	}
-	if (timestampCol != 0 && minus_str != "-") {
-		timestampCol = stoi(minus_str);
 	}
 	if (isSecureMode) {
 		DmManager::initEncryptionSettings(DEFAULT_CA_CERT, DEFAULT_CA_KEY, DEFAULT_CA_PASS);
@@ -414,7 +375,7 @@ int main(int argc, char *argv[])
 						}
 					} else {
 						if ((int)v_line.size() > 0) {
-							if (dms.sendIs(schema_name, v_line, doCompress, timestampCol, delay, adjustmentTime) == false) break;
+							if (dms.sendIs(schema_name, v_line, doCompress, timestampCol, delay, adjustmentTime, doAdjust) == false) break;
 							v_line.clear();
 						}
 						if (timestampCol != 0 && waitFlg == false) {
@@ -432,7 +393,7 @@ int main(int argc, char *argv[])
 		bool waitFlg = true;
 		while (waitFlg) {
 			if (dms.doSend(v_line[0], isNoSpace, timestampCol, waitFlg, times) == false) {
-				if (dms.sendIs(schema_name, v_line, doCompress, timestampCol, delay, adjustmentTime) == false) break;
+				if (dms.sendIs(schema_name, v_line, doCompress, timestampCol, delay, adjustmentTime, doAdjust) == false) break;
 			}
 		}
 	}
@@ -632,13 +593,14 @@ static void usage(const char *cmd)
 		"\n"
 		"Options: [] => Required arg. {} => Any arg. \n"
 		"  -A {timestamp-column-idx} [Recveive Mode] Add Create-Ts And Recv-Ts in Last 2-Columns.  \n"
-		"                            [Send Mode]     Sync with Timestamp. \n"
+		"                            [Send Mode]     Synchronize time offsets for past logs. \n"
 		"                                            timestamp-column-idx: Starting From 1. Minus OK \n"
 		"                                             ex.) column-name (id,time, ... ,create_ts,recv_ts) \n"
 		"                                               1:id, 2:time, ... , -2:create_ts, -1:recv_ts \n"
 		"                                               Default: -2:create_ts \n"
-		"  -a {time}                 [Send Mode]     -A Mode Only. \n"
-		"                                            Adjustment time (msec) by Sync with Timestamp. \n"
+		"  -a {adjustment time}      [Send Mode]     -A Mode Only. \n"
+		"                                            Set the current time to match the time offset of the past logs.\n"
+		"                                            If time adjustment is required, set the adjustment time. \n"
 		"  -B <schema>               Both-mode (receive-mode and send-mode). \n"
 		"                            ex.) dm2mes -r -S original_schema -w 100 -B copy_schema \n"
 		"                              Similar to \"dm2mes -r -S original_schema -w 100 | dm2mes -S copy_schema\". \n"

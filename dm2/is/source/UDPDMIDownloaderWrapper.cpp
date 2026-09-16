@@ -115,9 +115,9 @@ namespace IS {
         if (_readErr) return;
         /*FIXME: Implicit cast to unsigned int.*/
         IS::QueryManager &QM = IS::QueryManager::get_instance();
-        for (auto& table : senderList) {
+        //for (auto& table : senderList) {
             //(*destroy)(instanceMap[table]);
-        }
+        //}
         for (auto& mngId : this->_mngIdVector) {
             QM.cancelQuery(mngId);
         }

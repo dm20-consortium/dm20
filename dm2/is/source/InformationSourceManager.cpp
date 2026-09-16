@@ -494,7 +494,7 @@ namespace IS {
 			//Conn.disconnect();
 		}
 		catch (const exception &e) {
-			//cerr << e.what() << endl;
+			cerr << e.what() << endl;
 			throw;
 		}
 	}

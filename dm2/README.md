@@ -52,8 +52,9 @@ function dm2mes () {
 
 ## 手動インストール
 
-Dockerを使用せずにホスト上で動くモジュールをビルドしたい場合は、以下の手順に従って下さい。
-Ubuntu LTS環境で、依存ライブラリをインストールした上で、makeを使用してビルドを行います。
+- Dockerを使用せずにホスト上で動くモジュールをビルドしたい場合は、以下の手順に従って下さい。
+- Ubuntu LTS環境で、依存ライブラリをインストールした上で、makeを使用してビルドを行います。
+- dm2とROS2を合わせて利用する方は、[事前に知っておくべき事](ros2_install.md)を参照下さい。
 
 ## 依存ライブラリ
 
@@ -192,29 +193,13 @@ sudo make install
 sudo ldconfig
 ```
 
-### RDBの設定
+## RDBの設定
 
 - RDB (postgreSQL) にDM2.0 Platform専用のデータベースを設定します。[init.sh](rdb/init.sh)内部で、IDに`dm2sampleuser`、パスワードに`dm2samplepassword`を設定しています。
 
 ```bash
 sudo -u postgres bash rdb/init.sh 
 ```
-
-### Ubuntu 22.04でROS2 HumbleとDM2.0 Platformを連携する場合
-
-dm2をビルドする前に、[ROS2 Humble](https://docs.ros.org/en/humble/Installation/Ubuntu-Install-Debs.html) をインストールしておく必要があります。
-
-ROS2 Humbleおよびcolcon buildではC++17が使用されるため、dm2およびdmiもC++17でビルドする必要があります。
-
-dm2のmakefileやdmiのCMakeLists.txtにて、ROSのディストリビューションを検出し、C++17ビルドに切り替えるように設定しています。
-そのため、setup.bashを読み込んでからのビルドをお願いします。
-
-```bash
-source /opt/ros/humble/setup.bash
-```
-上記後に[ビルド](#ビルド)
-
-- もし既にROS2をビルドする前にdm2をビルドしている場合は、C++14で作られたdm2のビルド資源を`make clean`でクリーンした後、改めて、/opt/ros/humble/setup.bashを読み込み、dm2をビルドする流れになります。
 
 ## 例
 [一般的な使用例は、こちら](../example/README.md)

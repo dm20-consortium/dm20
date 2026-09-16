@@ -39,7 +39,7 @@ $(OBJDIR)/%.pb.o: $(SRCDIR)/%.pb.cc | $(OBJDIR)
 	$(COMPILER) $(CXXFLAGS) -I$(INCDIR) $(DEPEND_INCLUDE) -c $< -o $@
 
 $(TARGET): $(PB_CC) $(PB_H) $(OBJS) | $(LIBDIR)
-	$(COMPILER) -shared $(OBJS) -o $@ $(PROTOBUF_LIBS)
+	$(COMPILER) -shared $(OBJS) -o $@ $(PROTOBUF_LIBS_SO)
 
 # install
 install: $(TARGET) $(DEPEND_PROTO)
