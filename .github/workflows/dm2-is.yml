@@ -84,7 +84,7 @@ jobs:
           docker build \
             -f proto/Dockerfile.proto \
             --build-arg IMAGE_TAG=20.04 \
-            -t dm2/proto-base:20.04 \
+            -t dm2/protoc:20.04 \
             proto/
 
       - name: Build proto
