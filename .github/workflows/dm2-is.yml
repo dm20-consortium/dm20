@@ -102,7 +102,7 @@ jobs:
         run: |
           docker build \
             -f Dockerfile \
-            -t dmi/ros2:20.04 \
+            -t dm2/ros2dmi:20.04 \
             .
 
       - name: Build udptcp
@@ -110,7 +110,7 @@ jobs:
         run: |
           docker build \
             -f Dockerfile \
-            -t dmi/udptcp:20.04 \
+            -t dm2/udptcpdmi:20.04 \
             .
 
       - name: Build protobuf
@@ -118,7 +118,7 @@ jobs:
         run: |
           docker build \
             -f Dockerfile \
-            -t dmi/protobuf:20.04 \
+            -t dm2/protobufdmi:20.04 \
             .
 
       # final image
