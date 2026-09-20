@@ -34,6 +34,7 @@ jobs:
 
       - name: Build secLib
         run: |
+          cd dm2
           docker build \
             --build-arg IMAGE_TAG=20.04 \
             -t dm2/seclib:20.04 \
@@ -41,6 +42,7 @@ jobs:
 
       - name: Build csLib
         run: |
+          cd dm2
           docker build \
             --build-arg IMAGE_TAG=20.04 \
             -t dm2/cslib:20.04 \
@@ -48,6 +50,7 @@ jobs:
 
       - name: Build dm2-cs
         run: |
+          cd dm2
           docker build \
             --build-arg IMAGE_TAG=20.04 \
             -t ghcr.io/dm20-consortium/dm2-cs:${{ inputs.version }} \
