@@ -1,0 +1,50 @@
+name: Build and Push dm2-rdb
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Docker image version
+        required: true
+        type: choice
+        options:
+          - v1.1.0
+        default: v1.1.0
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.version }}
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Docker metadata
+        id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ghcr.io/dm20-consortium/dm2-rdb
+          tags: |
+            type=raw,value=${{ inputs.version }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v7
+        with:
+          context: ./dm2/rdb
+          file: ./dm2/rdb/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
