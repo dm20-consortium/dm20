@@ -1,0 +1,15 @@
+
+CREATE TABLE api_key (
+    key text NOT NULL,
+    os_type text,
+    PRIMARY KEY(key)
+);
+
+CREATE TABLE user_access (
+    user_id text,
+    user_entry boolean,
+    user_access timestamp(6) without time zone
+);
+
+INSERT INTO api_key VALUES ('test','Android'),('ios_test','iOS');
+

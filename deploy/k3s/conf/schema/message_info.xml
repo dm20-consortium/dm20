@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<schema>
+	<tablename>message_info</tablename>
+	<access_privileges>public=ar</access_privileges>
+	<column>
+		<name>message</name>
+		<type>string</type>
+	</column>
+</schema>

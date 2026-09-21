@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<schema>
+	<tablename>parking_lot_info</tablename>
+	<access_privileges>public=ar</access_privileges>
+	<column>
+		<name>ts</name>
+		<type>long</type>
+	</column>
+	<column>
+		<name>parking_lot_id</name>
+		<type>int</type>
+	</column>
+	<column>
+		<name>lot_type</name>
+		<type>int</type>
+	</column>
+	<column>
+		<name>occupied_num</name>
+		<type>int</type>
+	</column>
+	<column>
+		<name>empty_num</name>
+		<type>int</type>
+	</column>
+</schema>

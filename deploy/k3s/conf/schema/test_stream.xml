@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<schema>
+	<tablename>test_stream</tablename>
+	<access_privileges>public=ar</access_privileges>
+	<column>
+		<name>i</name>
+		<type>int</type>
+	</column>
+	<column>
+		<name>l</name>
+		<type>long</type>
+	</column>
+	<column>
+		<name>d</name>
+		<type>double</type>
+	</column>
+	<column>
+		<name>s</name>
+		<type>string</type>
+	</column>
+	<column>
+		<name>s2</name>
+		<type>string</type>
+	</column>
+	<column>
+		<name>vd</name>
+		<type>vector(double)</type>
+	</column>
+	<column>
+		<name>vs</name>
+		<type>vector(string)</type>
+	</column>
+	<column>
+		<name>ui</name>
+		<type>uint</type>
+	</column>
+	<column>
+		<name>ul</name>
+		<type>ulong</type>
+	</column>
+</schema>
