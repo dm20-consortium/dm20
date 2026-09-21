@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<query>
+	<body>CREATE STREAM sysTimer1000msec (time long) TIMER_FIX [1000]</body>
+</query>
+
+

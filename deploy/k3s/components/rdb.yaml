@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rdb
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rdb
+  template:
+    metadata:
+      labels:
+        app: rdb
+    spec:
+      containers:
+        - name: rdb
+          image: ghcr.io/dm20-consortium/dm2-rdb:v1.1.0
+          ports:
+            - containerPort: 5432
+              protocol: TCP
+          env:
+            - name: POSTGRES_USER
+              value: postgres
+            - name: POSTGRES_PASSWORD
+              value: postgres
+            - name: POSTGRES_DB
+              value: postgres
+          volumeMounts:
+            - name: postgres-data
+              mountPath: /var/lib/postgresql/data
+      volumes:
+        - name: postgres-data
+          emptyDir: {}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rdb-service
+spec:
+  selector:
+    app: rdb
+  ports:
+    - protocol: TCP
+      port: 5432
+      targetPort: 5432
+  type: ClusterIP

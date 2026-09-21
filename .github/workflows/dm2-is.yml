@@ -1,0 +1,136 @@
+name: Build and Push dm2-is
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Docker image version
+        required: true
+        type: choice
+        options:
+          - v1.1.0
+        default: v1.1.0
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.version }}
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # dm2 libraries
+      - name: Build secLib
+        working-directory: dm2
+        run: |
+          docker build \
+            -f secLib/Dockerfile \
+            --build-arg IMAGE_TAG=20.04 \
+            -t dm2/seclib:20.04 \
+            secLib/
+
+      - name: Build csLib
+        working-directory: dm2
+        run: |
+          docker build \
+            -f csLib/Dockerfile \
+            --build-arg IMAGE_TAG=20.04 \
+            -t dm2/cslib:20.04 \
+            csLib/
+
+      - name: Build commonLib
+        working-directory: dm2
+        run: |
+          docker build \
+            -f commonLib/Dockerfile \
+            --build-arg IMAGE_TAG=20.04 \
+            -t dm2/commonlib:20.04 \
+            commonLib/
+
+      - name: Build tupleLib
+        working-directory: dm2
+        run: |
+          docker build \
+            -f tupleLib/Dockerfile \
+            --build-arg IMAGE_TAG=20.04 \
+            -t dm2/tuplelib:20.04 \
+            tupleLib/
+
+      - name: Build dmClientLib
+        working-directory: dm2
+        run: |
+          docker build \
+            -f dmClientLib/Dockerfile \
+            --build-arg IMAGE_TAG=20.04 \
+            -t dm2/dmclientlib:20.04 \
+            dmClientLib/
+
+      - name: Build proto intermediate image
+        working-directory: dm2
+        run: |
+          docker build \
+            -f proto/Dockerfile.proto \
+            --build-arg IMAGE_TAG=20.04 \
+            -t dm2/protoc:20.04 \
+            proto/
+
+      - name: Build proto
+        working-directory: dm2
+        run: |
+          docker build \
+            -f proto/Dockerfile \
+            --build-arg IMAGE_TAG=20.04 \
+            -t dm2/proto:20.04 \
+            proto/
+
+      # dmi
+      - name: Build ros2
+        working-directory: dmi/ros2
+        run: |
+          docker build \
+            -f Dockerfile \
+            -t dm2/ros2dmi:20.04 \
+            .
+
+      - name: Build udptcp
+        working-directory: dmi/udptcp
+        run: |
+          docker build \
+            -f Dockerfile \
+            -t dm2/udptcpdmi:20.04 \
+            .
+
+      - name: Build protobuf
+        working-directory: dmi/protobuf
+        run: |
+          docker build \
+            -f Dockerfile \
+            -t dm2/protobufdmi:20.04 \
+            .
+
+      # final image
+      - name: Build dm2-is
+        working-directory: dm2
+        run: |
+          docker build \
+            -f is/Dockerfile \
+            --build-arg IMAGE_TAG=20.04 \
+            -t ghcr.io/dm20-consortium/dm2-is:${{ inputs.version }} \
+            is/
+
+      - name: Push dm2-is
+        run: |
+          docker push ghcr.io/dm20-consortium/dm2-is:${{ inputs.version }}

@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: is
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: is
+  template:
+    metadata:
+      labels:
+        app: is
+    spec:
+      containers:
+        - name: is
+          image: ghcr.io/dm20-consortium/dm2-is:v1.1.0
+          ports:
+            - name: tcp-9001
+              containerPort: 9001
+              protocol: TCP
+            - name: udp-9002
+              containerPort: 9002
+              protocol: UDP
+          command:
+            - dm2is
+            - -d
+            - /dm20/deploy/k3s/conf
+          volumeMounts:
+            - name: is-conf
+              mountPath: /dm20/deploy/k3s/conf
+              readOnly: true
+      volumes:
+        - name: is-conf
+          hostPath:
+            path: /home/dm2/git/dm20/deploy/k3s/conf
+            type: Directory
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: is-service
+spec:
+  selector:
+    app: is
+  ports:
+    - name: tcp-9001
+      protocol: TCP
+      port: 9001
+      targetPort: 9001
+    - name: udp-9002
+      protocol: UDP
+      port: 9002
+      targetPort: 9002
+  type: ClusterIP
