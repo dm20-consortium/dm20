@@ -1,0 +1,52 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+import os
+from pathlib import Path
+
+
+class Context:
+    """
+    テスト実行中の共有情報
+    """
+
+    def __init__(self):
+
+        # YAML全体
+        self.config = {}
+
+        # YAMLファイル名
+        self.yaml_file = ""
+
+        # カレントディレクトリ
+        self.workdir = Path.cwd()
+
+        # 起動中プロセス
+        # {"dm2is": subprocess.Popen}
+        self.processes = {}
+
+        # ログファイル
+        # {"dm2is": open()}
+        self.logfiles = {}
+
+        self.step_results = {}
+        
+        self.env = os.environ.copy()
+        
+    def add_process(self, name, process):
+        self.processes[name] = process
+
+    def get_process(self, name):
+        return self.processes.get(name)
+
+    def add_logfile(self, name, logfile):
+        self.logfiles[name] = logfile
+
+    def get_logfile(self, name):
+        return self.logfiles.get(name)
+    
+    def add_step_result(self, step_id, result):
+        self.step_results[step_id] = result
+
+    def get_step_result(self, step_id):
+        return self.step_results.get(step_id)

@@ -1,0 +1,35 @@
+id: T002
+
+name: Two tuples send/receive
+
+description: |
+  dm2isを経由して、2タプルのメッセージを送受信できることを確認する。
+
+services:
+  - name: dm2is
+    description: IS (DBシステム) を起動する
+    command: dm2is -d conf
+
+  - name: receiver
+    description: ISからのメッセージ受信を最大2件待つ
+    command: dm2mes -r -w 2
+
+steps:
+  - wait: 2
+
+  - run:
+      description: ISへメッセージを2件送信する
+      command: echo -e "a,b\nc,d" | dm2mes -w 2
+
+  - wait: 2
+
+expect:
+  receiver_log:
+    description: ログに下記が出力されること
+    contains:
+      - c,d
+
+cleanup:
+  stop:
+    - dm2is
+    - receiver

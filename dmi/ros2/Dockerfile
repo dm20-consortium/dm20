@@ -1,4 +1,7 @@
-from dm2/dmclientlib:20.04 as dmclient-image
+arg IMAGE_TAG=20.04
+
+from dm2/proto:${IMAGE_TAG} as proto-image
+from dm2/dmclientlib:${IMAGE_TAG} as dmclient-image
 from ros:foxy
 
 arg ROS_APT_SOURCE_VERSION=1.1.0
@@ -24,6 +27,12 @@ run apt-get update && \
     libgeos++-dev
 
 env RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+
+copy --from=proto-image /usr/local/bin/protoc /usr/local/bin/protoc
+copy --from=proto-image /usr/local/lib/libdm2proto* /usr/local/lib/
+copy --from=proto-image /usr/local/lib/libprotobuf* /usr/local/lib/
+copy --from=proto-image /usr/local/include/is /usr/local/include/is
+copy --from=proto-image /usr/local/include/google /usr/local/include/google
 
 workdir /opt/ws
 run ldconfig

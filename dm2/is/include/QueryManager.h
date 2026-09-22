@@ -95,9 +95,10 @@ namespace IS {
 		}
 		string parseQuery(const string &query);
 		int getMngId();
-		void addQuery(const string &user, const RecvData &data);
-		void addQuery(const int &mngId, const string &user, const RecvData &data, const bool &returnMngId);
+		void addQuery(const string &user, const RecvData &data, const query_header &query_header_);
+		void addQuery(const int &mngId, const string &user, const RecvData &data, const bool &returnMngId, const query_header &query_header_);
 		void addQuery(const string &query);
+		void addQuery(const int &mngId, const string &user, const string &query, const string &dmiName);
 		void addOperatorTree(const string &user, const RecvData &data);
 		//void addRequest(const unsigned int mngId, const unsigned int destSID, PosMng::MngInfo mngInfo, const string &edgeSIDListStr);
 		void addRequest(const unsigned int mngId, const unsigned long long destSID, PosMng::MngInfo mngInfo, const string &edgeSIDListStr);
@@ -117,9 +118,8 @@ namespace IS {
 		void removeRequestOp(const unsigned int mngId, const unsigned long long destSID);
 		bool isOneShot(const unsigned int mngId);
 		int  getRegisterQueryNum();
-		void changeid(const string &message);
 		vector<QueryStatus>  getQueryStatus();
-		int registerPresetQueryUsingPath(const string &path);
+		int registerPresetQueryUsingPath(const string &path, const bool &continuous);
 		void registerPresetQueryUsingSchema(const string &schema, const string &window);
 		void init();       // impl
 		void start();      // impl

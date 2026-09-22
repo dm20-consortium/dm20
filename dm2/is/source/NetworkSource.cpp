@@ -117,7 +117,8 @@ namespace IS {
 
 			int len = recvUsingHeader(sockfd, buf, NULL, false, false);
 			//int len = recvfrom(sockfd, buf, sizeof(buf), 0, (struct sockaddr *)&from, &addrlen);
-
+			//if (len >0) cout << len << endl;
+			//continue;
 			if (len < 0)
 			{
 				// timeout. so continue
@@ -194,6 +195,13 @@ namespace IS {
 		if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)) < 0) {
 			logger->error("[setUDPconfig] setsockopt Error");
 		}
+		// UDPあふれが起きる場合、下記で受信バッファサイズを拡張できているか確認
+		// int rcvbuf = 64 * 1024 * 1024;
+		// setsockopt(sockfd, SOL_SOCKET, SO_RCVBUF, &rcvbuf, sizeof(rcvbuf));
+		// int rcvbuf2 = 0;
+		// socklen_t optlen = sizeof(rcvbuf2);
+		// getsockopt(sockfd, SOL_SOCKET, SO_RCVBUF, &rcvbuf2, &optlen);
+		// cout << "[UDP] SO_RCVBUF = " << rcvbuf2 << endl;
 
 		// socketへのバインド
 		if (bind(sockfd, (struct sockaddr *)&server, sizeof(server)) < 0)
@@ -537,28 +545,33 @@ namespace IS {
 
 	inline void NetworkSource::dataIntegration(string &buf, std::unordered_map<string, vector<string>> &recvDataMap, string &result)
 	{
-		int flagment = 0, flagmentMax = 0;
+		int fragment = 0, fragmentMax = 0;
 		string key;
-
-		// ヘッダ情報を取得する
-		stringUtil.getHeaderInfo(buf, key, flagment, flagmentMax);
-		if (flagmentMax == 0) {
+		IS::ProtobufParser &pp = IS::ProtobufParser::get_instance();
+		struct ProtobufHeaderInfo headerInfo;
+		pp.getProtobufHeaderInfo(buf, headerInfo);
+		// protobufヘッダでない場合
+		if (headerInfo.headerSize == 0)
+		{
 			logger->warn("[dataIntegration] Received invalied header, So continue...");
 			return;
 		}
-#if DEBUG == 1
-		cout << "UDP recv headerInfo  key:" << key << " flagment:" << flagment << " max:" << flagmentMax << endl;
-#endif
+		else {
+			key = headerInfo.header.key;
+			fragment = headerInfo.header.fragment_index;
+			fragmentMax = headerInfo.header.total_fragments;
+		}
+
 		// resultMapに受信途中がないかチェック
 		auto itr = recvDataMap.find(key);
 		if (itr != recvDataMap.end()) {
 			// 受信途中が存在する
-			recvDataMap[key].at(flagment) = buf;
+			recvDataMap[key].at(fragment) = buf.substr(headerInfo.headerSize);
 		}
 		else {
 			// 新規に受信
-			vector<string> data(flagmentMax);
-			data.at(flagment) = buf;
+			vector<string> data(fragmentMax);
+			data.at(fragment) = buf;
 			recvDataMap[key] = data;
 		}
 
@@ -571,10 +584,11 @@ namespace IS {
 		if (recvFinish) {
 			// 全てのデータを受信出来たらデータを繋ぎ合わせてMapは削除
 			for (string str : recvDataMap[key]) {
-				result.append(str);
+				result += str;
 			}
 			recvDataMap.erase(key);
 		}
+		//cout << "[NetworkSource] fragment Id:" << fragment << ", Count:" << fragmentMax << ", Length:" << buf.length() << ", TotalLength:" << result.length() << endl;
 	}
 
 	/**
@@ -911,7 +925,7 @@ namespace IS {
 		timeout.tv_sec = 0;
 		timeout.tv_usec = 0;
 		if (setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)) < 0) {
-			logger->error("[sockProcess] setsockopt error.");
+			logger->error("[checkTCPSocket] setsockopt error.");
 		}
 		while (true) {
 			int result = recv(sock, buf, BUF_MAX, 0);
@@ -960,10 +974,12 @@ namespace IS {
 			if (sock > 0) {
 				string ip = inet_ntoa(client.sin_addr);
 				logger->debug("[receiveTCPdata] sock:" + to_string(sock) + " sock2:" + to_string(sock2) + " ip:" + ip);
+				/*
 				if (stringUtil.contain(settings.getParameter("HISTORY_RECORD_CLASS"), stringUtil.getClassName(typeid(*this)))) {
 					thread createThread(&NetworkSource::createRecvHistory, this, "TCP", client, client2, sock, sock2, "accept", 0, 0, "", "");
 					createThread.detach();
 				}
+				*/
 			}
 			if (exit_flag) {
 				break;
@@ -1010,7 +1026,7 @@ namespace IS {
 		
 		while (1)
 		{
-			logger->debug("[sockProcess] recv START...");
+			logger->debug("[sockProcess] recv START. sock:" + to_string(sock));
 			query = "";
 			sumLen = 0;
 			bool isClose;
@@ -1022,7 +1038,7 @@ namespace IS {
 				string state = "recv";
 				memset(buf, 0, sizeof(buf));
 				int result = recv(sock, buf, BUF_MAX, 0);
-				int result2 = 0;
+				//cout << "[sockProcess] sock: " << sock << ", exit_flag: " << exit_flag << ", result:" << result << endl;
 				if (exit_flag) {
 					close(sock);
 					isExit = true;
@@ -1049,10 +1065,6 @@ namespace IS {
 				}
 				else {
 					bufStr = string(buf, result);
-					if (query.length() == 0) {
-						bufSize = stringUtil.getXMLSize(bufStr);
-						mes = "[sockProcess] recv from sock: " + std::to_string(sock) + ", bufSize: " + std::to_string(bufSize);
-					}
 					query.append(bufStr);
 					sumLen = sumLen + result;
 					bufStr.clear();
@@ -1060,11 +1072,8 @@ namespace IS {
 						isBreak = true;
 					}
 				}
+				//cout << "[sockProcess] isBreak: " << isBreak << ", isExit:" << isExit << ", isClose:" << isClose << endl;
 				if (isBreak) {
-					if (stringUtil.contain(settings.getParameter("HISTORY_RECORD_CLASS"), stringUtil.getClassName(typeid(*this)))) {
-						thread createThread(&NetworkSource::createRecvHistory, this, "TCP", client, client2, sock, sock2, state, result, result2, query, mes);
-						createThread.detach();
-					}
 					break;
 				}
 			}
@@ -1085,7 +1094,7 @@ namespace IS {
 			logger->info("[sockProcess] receive complete NowMicroSec:" + to_string(DmUtil::getTimeMicrosec()));
 #endif
 			logger->debug("[TCP] " + sourcename + " received data from " + ip + ":" + std::to_string(ntohs(client.sin_port)) + " Size : " + std::to_string(sumLen) + " byte");
-			logger->debug("[TCP] " + query);
+			logger->debug("[TCP] query: " + query);
 
 			RecvData data;
 			data.sock = sock;
@@ -1318,10 +1327,12 @@ namespace IS {
 					}
 				}
 				if (isAccept) {
+					/*
 					if (stringUtil.contain(settings.getParameter("HISTORY_RECORD_CLASS"), stringUtil.getClassName(typeid(*this)))) {
 						thread createThread(&NetworkSource::createRecvHistory, this, "SSL", client, client2, sock, sock2, "accept", 0, 0, "", "");
 						createThread.detach();
 					}
+						*/
 					// ソケット処理は別スレッドに委譲
 					thread queuingThread(&NetworkSource::sockSSLProcess, this, sock, sock2, client, client2, ssl, ssl2);
 					queuingThread.detach();
@@ -1379,7 +1390,6 @@ namespace IS {
 				string state = "recv";
 				memset(buf, 0, sizeof(buf));
 				int result = SSL_read(ssl, buf, sizeof(buf));
-				int result2 = 0;
 
 				if (result < 0) {
 					state = "close";
@@ -1418,10 +1428,6 @@ namespace IS {
 				}
 				else {
 					bufStr = string(buf, result);
-					if (query.length() == 0) {
-						bufSize = stringUtil.getXMLSize(bufStr);
-						mes = "[sockProcess] recv from sock: " + std::to_string(sock) + ", bufSize: " + std::to_string(bufSize);
-					}
 					query.append(bufStr);
 					sumLen = sumLen + result;
 					bufStr.clear();
@@ -1430,10 +1436,6 @@ namespace IS {
 					}
 				}
 				if (isBreak) {
-					if (stringUtil.contain(settings.getParameter("HISTORY_RECORD_CLASS"), stringUtil.getClassName(typeid(*this)))) {
-						thread createThread(&NetworkSource::createRecvHistory, this, "SSL", client, client2, sock, sock2, state, result, result2, query, mes);
-						createThread.detach();
-					}
 					break;
 				}
 			}
@@ -1490,7 +1492,7 @@ namespace IS {
 		pthread_mutex_lock(&createMtx);
 		try {
 			// DB接続
-			connection Conn(("dbname=" + settings.getParameter("DATABASE_IS_NAME") + " user=" + settings.getParameter("USER_NAME") + " password=" + settings.getParameter("DB_PASS") + " hostaddr=" + settings.getParameter("DATABASE_ADDR") + " port=" + settings.getParameter("DATABASE_PORT")));
+			connection Conn(("dbname=" + settings.getParameter("DATABASE_IS_NAME") + " user=" + settings.getParameter("USER_NAME") + " password=" + settings.getParameter("DB_PASS") + " host=" + settings.getParameter("DATABASE_ADDR") + " port=" + settings.getParameter("DATABASE_PORT")));
 			// 受信履歴を登録
 			work T(Conn);
 			Conn.prepare("insert_recv_history", "INSERT INTO recv_history VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14);");
@@ -1554,6 +1556,7 @@ namespace IS {
 					now_len = SSL_read(ssl, bufTmp, sizeof(bufTmp));
 				} else {
 					now_len = recvfrom(sock, bufTmp, sizeof(bufTmp), 0, (struct sockaddr *)&from, &addrlen);
+					//cout << now_len << endl;
 					if (addrlen == 0 || now_len <= 0) {
 						return -1;		// undefined address
 					}
@@ -1565,6 +1568,10 @@ namespace IS {
 						if (headerInfo.header.compressFlg != '1' && headerInfo.header.compressFlg != '2') {
 							if (headerInfo.header.compressFlg == '0') {
 								memcpy(outBuf, bufTmp_p, now_len);
+							} else if (headerInfo.header.compressFlg == '3') {
+								// protobufヘッダを含んだデータを渡す
+								now_len += headerInfo.headerSize;
+								memcpy(outBuf, bufTmp, now_len);
 							} else {
 								memcpy(outBuf, bufTmp, now_len);
 							}

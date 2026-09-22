@@ -1,0 +1,41 @@
+id: E001
+
+name: Invalid CSV column count
+
+description: |
+  列数が正しくないデータをスキップし、正しいデータのみ受信できることを確認する。
+
+cases:
+  - schema: object_info_0_8_1
+    csv: ../example/command/test_data/object_info_0_8_1/rows3.csv
+  - schema: object_info_0_8_1
+    csv: ../example/command/test_data/object_info_0_8_1/rows3.csv
+
+services:
+  - name: dm2is
+    description: IS (DBシステム) を起動する
+    command: dm2is -d conf
+
+  - name: receiver
+    description: ISからのメッセージ受信を待つ。quiet modeを指定することで、件数のみが表示される[-q]。最大3件としている[-w 3]。
+    command: dm2mes -r -S ${schema} -q -w 3
+
+steps:
+  - wait: 2
+
+  - run:
+      description: awkコマンドを使って、CSVの1行目の列数を不足させて送信する。
+      command: awk -F, 'BEGIN{OFS=","} NR==1 {NF--} {print}' ${csv} | dm2mes -S ${schema} -w 3
+
+  - wait: 2
+
+expect:
+  receiver_log:
+    description: 不正なレコードは送信されず、 残り2件のみ正常に受信されることを確認する。
+    contains:
+      - 2
+
+cleanup:
+  stop:
+    - dm2is
+    - receiver

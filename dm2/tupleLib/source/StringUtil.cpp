@@ -478,11 +478,11 @@ namespace IS {
 	* @param [in,out]	flagment	フラグメント値
 	* @param [in,out]	flagmentMax	フラグメント最大値
 	*/
-
 	void StringUtil::getHeaderInfo(string &target, string &key, int &flagment, int &flagmentMax)
 	{
 		vector<string> rows, data, number;
-		string mngId, ct;
+		string mngId = "";
+		string ct = "";
 		bool isFirst = false;
 		split(target, "\n", rows);
 		string line1;
@@ -720,16 +720,6 @@ namespace IS {
 			else if (typeInfo == typeid(void))
 			{
 				valStr = "(null)";
-			}
-			else if (typeInfo == typeid(vector<any>))
-			{
-				vector<any> list = any_cast<vector<any>>(val);
-				valStr.append("[");
-				for (unsigned int i = 0; i < list.size(); i++) {
-					if (i != 0) valStr.append(",");
-					valStr.append(getAnyString(list.at(i)));
-				}
-				valStr.append("]");
 			}
 			else if (typeInfo == typeid(vector<any>))
 			{
@@ -1148,9 +1138,10 @@ namespace IS {
 						val = std::stol(str.c_str());
 					}
 					break;
+				// unsigned long long 型
 				case ULONG:
 					if (isNull) {
-						val = (unsigned long)NULL;
+						val = (unsigned long long)NULL;
 					} else {
 						val = std::stoull(str.c_str());
 					}
@@ -1216,7 +1207,7 @@ namespace IS {
 				val = getVectorAny(str, arrayType, isNull);
 			}
 			else {
-				cerr << "Not defined Type. So Can't convert value. type:" << type << endl;
+				cerr << "[getAnyValFromString] Not defined Type. So Can't convert value. type:" << type << endl;
 			}
 		}
 		catch (const exception &e) {
@@ -1259,7 +1250,7 @@ namespace IS {
 			return checkSupportDataType(arrayType);
 		}
 		else {
-			cerr << "Not defined Type. So Can't convert value. type:" << type << endl;
+			cerr << "[checkSupportDataType] Not defined Type. So Can't convert value. type:" << type << endl;
 			return false;
 		}
 
@@ -1308,7 +1299,7 @@ namespace IS {
 		}
 		else {
 			if (isOutputErr) {
-				cerr << "Not defined Type or No matches data type. Please confirm data type. type1:" << type1 << " type2:" << type2 << endl;
+				cerr << "[checkDataTypeMatches] Not defined Type or No matches data type. Please confirm data type. type1:" << type1 << " type2:" << type2 << endl;
 			}
 			return false;
 		}
@@ -1363,7 +1354,7 @@ namespace IS {
 			prefix = "[";
 			suffix = "]";
 		} else {
-			cerr << "Not defined Array Type Str. str:" << str << endl;
+			cerr << "[get2VectorAny] Not defined Array Type Str. str:" << str << endl;
 			return ret;
 		}
 		if (str.length() <= 4) return ret;
@@ -1402,7 +1393,7 @@ namespace IS {
 			return true;
 		}
 		else {
-			cerr << "Not defined bool Type Str. So Can't convert str -> bool. str:" << str << endl;
+			cerr << "[convertBool] Not defined bool Type Str. So Can't convert str -> bool. str:" << str << endl;
 			return false;
 		}
 	}
@@ -1545,6 +1536,48 @@ namespace IS {
 		return sendSize;
 	}
 	/**
+	* ヘッダー付き圧縮バッファー生成処理
+	*
+	* @author	Shinichi Kusayama
+	* @date	2022/03/01
+	*
+	* @param	inStr	圧縮前データ
+	* @param	compressFlg	ヘッダの圧縮フラグ
+	* @param	key	ヘッダのキー情報
+	*
+	* @return	圧縮後ヘッダ付きデータ
+	*/
+	vector<char> StringUtil::setCompressedBufWithHeader(string inStr, char compressFlg, long key)
+	{
+		vector<char> compBuf;
+		if (compressFlg == '1') {
+			compBuf = compress(inStr.c_str());
+		} else if (compressFlg == '2') {
+			compBuf = compressUsingZstd(inStr, inStr.length());
+			}
+		if (compBuf.empty()) return {};
+	
+		vector<char> sendBuf;
+		int length = compBuf.size();
+		int seq = 0;
+		// ヘッダ：圧縮フラグ<char>、長さ<int>、キー情報<long>、シーケンス番号<int>
+		int headerSize = sizeof(compressFlg) + sizeof(length) + sizeof(key) + sizeof(seq);
+		sendBuf.resize(headerSize + length);
+		
+		char* buf = sendBuf.data();
+		memcpy(buf, &compressFlg, sizeof(compressFlg));
+		buf += sizeof(compressFlg);
+		memcpy(buf, &length, sizeof(length));
+		buf += sizeof(length);
+		memcpy(buf, &key, sizeof(key));
+		buf += sizeof(key);
+		memcpy(buf, &seq, sizeof(seq));
+		buf += sizeof(seq);
+		memcpy(buf, compBuf.data(), length);
+		
+		return sendBuf;
+	}
+	/**
 	* ヘッダー設定処理
 	*
 	* @author	Shinichi Kusayama
@@ -1624,6 +1657,46 @@ namespace IS {
 		return rtn;
 	}
 	/**
+	* 圧縮処理
+	*
+	* @author	Shinichi Kusayama
+	* @date	2022/03/01
+	*
+	* @param	inStr	圧縮前データ
+	*
+	* @return	圧縮後データ
+	*/
+	vector<char> StringUtil::compress(string inStr)
+	{
+		vector<char> outBuf;
+		outBuf.resize(compressBound(inStr.size()));
+		
+		z_stream z{};
+		z.zalloc = Z_NULL;
+		z.zfree = Z_NULL;
+		z.opaque = Z_NULL;
+		if (deflateInit(&z, Z_BEST_COMPRESSION) != Z_OK) {
+			cerr << "[compress] deflateInit Error." << endl;
+			return {};
+		}
+		z.next_in = (Bytef*)inStr.data();
+		z.avail_in = inStr.size();
+		z.next_out = (Bytef*)outBuf.data();
+		z.avail_out = outBuf.size();
+
+		int status = deflate(&z, Z_FINISH);
+		if (status != Z_STREAM_END) {
+			deflateEnd(&z);
+			return {};
+		}
+		outBuf.resize(z.total_out);
+		if (deflateEnd(&z) != Z_OK) {
+			cerr << "[compress] deflateEnd Error." << endl;
+			return {};
+		}
+		return outBuf;
+	}
+	/**
 	* 展開処理
 	*
 	* @author	Shinichi Kusayama
@@ -1667,6 +1740,59 @@ namespace IS {
 		return len;
 	}
 	/**
+	* 展開処理
+	*
+	* @author	Shinichi Kusayama
+	* @date	2022/05/10
+	*
+	* @param	inBuf	展開前データ
+	* @param	outBuf	展開後データ
+	*
+	* @return	展開結果
+	*/
+	bool StringUtil::decompress(const char *inBuf, size_t inSize, std::string& outBuf)
+	{
+		z_stream z;
+		memset(&z, 0, sizeof(z));
+
+		if (inflateInit(&z) != Z_OK) {
+			cerr << "[decompress] inflateInit Error." << endl;
+			return false;
+		}
+		// 64KB読みながら展開していく
+		std::vector<char> buffer(64 * 1024);
+
+		z.next_in = (Bytef *)inBuf;
+		z.avail_in = static_cast<uInt>(inSize);
+
+		outBuf.clear();
+
+		int status = Z_OK;
+
+		while (status == Z_OK) {
+			z.next_out = (Bytef *)buffer.data();
+			z.avail_out = buffer.size();
+
+			status = inflate(&z, Z_NO_FLUSH);
+
+			size_t produced = buffer.size() - z.avail_out;
+
+			if (produced > 0) {
+				outBuf.append(buffer.data(), produced);
+			}
+		}
+
+		inflateEnd(&z);
+
+		if (status != Z_STREAM_END) {
+			cerr << "[decompress] inflate Error." << endl;
+			outBuf.clear();
+			return false;
+		}
+
+		return true;
+	}
+	/**
 	* 圧縮処理 (Zstandard)
 	*
 	* @author	Shinichi Kusayama
@@ -1694,6 +1820,33 @@ namespace IS {
 		}
 		*outSize = cSize;
 		return rtn;
+	}
+	/**
+	* 圧縮処理 (Zstandard)
+	*
+	* @author	Shinichi Kusayama
+	* @date	2023/10/12
+	*
+	* @param	inStr	圧縮前データ
+	* @param	inSize	圧縮前データサイズ
+	* @param	outBuf	圧縮後データ
+	* @param	outSize	圧縮後データサイズ
+	*
+	* @return	圧縮後データ
+	*/
+	vector<char> StringUtil::compressUsingZstd(string inStr, int inSize)
+	{
+		vector<char> outBuf;
+		size_t maxSize = ZSTD_compressBound(inStr.size());
+		outBuf.resize(maxSize);
+		const int compressionLevel = 3;		// Level: 1 - 22
+		size_t const cSize = ZSTD_compress(outBuf.data(), maxSize, inStr.data(), inStr.size(), compressionLevel);
+		if (ZSTD_isError(cSize)) {
+			cerr << "[compressUsingZstd] Compress Error." << ZSTD_getErrorName(cSize) << endl;
+			outBuf.clear();
+		}
+		outBuf.resize(cSize);
+		return outBuf;
 	}
 	/**
 	* 展開処理 (Zstandard)
@@ -1726,6 +1879,49 @@ namespace IS {
 			rtn = false;
 		}
 		return rtn;
+	}
+	/**
+	* 展開処理 (Zstandard)
+	*
+	* @author	Shinichi Kusayama
+	* @date	2022/03/01
+	*
+	* @param	inStr	展開前データ
+	* @param	outBuf	展開後データ
+	* @param	inSize	展開前データサイズ
+	* @param	outSize	展開後データサイズ
+	*
+	* @return	正常にデータ処理を実施できた場合はtrue
+	*/
+	bool StringUtil::decompressUsingZstd(const char *inBuf, size_t inSize, std::string& outBuf)
+	{
+		unsigned long long rSize = ZSTD_getFrameContentSize(inBuf, inSize);
+
+		if (rSize == ZSTD_CONTENTSIZE_ERROR) {
+			cerr << "[decompressUsingZstd] Invalid compressed data."
+				<< endl;
+			return false;
+		}
+
+		if (rSize == ZSTD_CONTENTSIZE_UNKNOWN) {
+			cerr << "[decompressUsingZstd] Unknown decompressed size."
+				<< endl;
+			return false;
+		}
+
+		outBuf.resize(static_cast<size_t>(rSize));
+
+		size_t dSize = ZSTD_decompress(&outBuf[0], rSize, inBuf, inSize);
+
+		if (ZSTD_isError(dSize)) {
+			cerr << "[decompressUsingZstd] Decompress Error. " << ZSTD_getErrorName(dSize) << endl;
+			outBuf.clear();
+			return false;
+		}
+
+		outBuf.resize(dSize);
+
+		return true;
 	}
 	/**
 	* XML文字列から指定されたタグの中身を取得する

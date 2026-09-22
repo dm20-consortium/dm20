@@ -1,0 +1,35 @@
+id: T001
+
+name: Basic send/receive
+
+description: |
+  dm2isを経由してメッセージを送受信できることを確認する。
+
+services:
+  - name: dm2is
+    description: IS (DBシステム) を起動する
+    command: dm2is -d conf
+
+  - name: receiver
+    description: ISからのメッセージ受信を待つ
+    command: dm2mes -r
+
+steps:
+  - wait: 2
+
+  - run:
+      description: ISへメッセージを送信する
+      command: echo "hello,dm2" | dm2mes
+
+  - wait: 2
+
+expect:
+  receiver_log:
+    description: ログに下記が出力されること
+    contains:
+      - hello,dm2
+
+cleanup:
+  stop:
+    - dm2is
+    - receiver

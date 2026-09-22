@@ -13,7 +13,7 @@
 
 bool DMRecv(string ip, string userid, string password, string master_schema, string schema_name, bool isTransportMode,
 		string query, string window, long timeout, int addTimestamp, int delay, bool isSecureMode, 
-		string columns, string plus_schema_name, bool allowDuplication, string paritition_keys, string where);
+		string columns, string plus_schema_name, bool allowDuplication, string paritition_keys, string where, bool isQuietMode);
 bool DMSetDestQuery(string ip, string userid, string password, string master_schema, string schema_name,
 		bool isTransportMode, string query, string window, int addTimestamp, bool isSecureMode, 
 		unsigned long long destSID, unsigned long long execSID, string columns, string paritition_keys, string where);

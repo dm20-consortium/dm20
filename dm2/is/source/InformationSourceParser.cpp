@@ -3184,6 +3184,7 @@ namespace IS {
 			logger->error("<column></column> is not defined");
 			return;
 		}
+		std::map<string, string> attr_map;
 		for (unsigned int i = 0; i<root->getElementsByTagName(tempStr)->getLength(); i++)
 		{
 			IS::Attribute attr;
@@ -3192,6 +3193,18 @@ namespace IS {
 			getChildText(nameList->item(0), attr.name);
 			DOMNodeList* typeList = getElementByCharTagName(dynamic_cast<DOMElement*>(columnNode), (char*)"type");
 			getChildText(typeList->item(0), attr.type);
+			
+			if (attr_map.find(attr.name) == attr_map.end()) {
+				attr_map[attr.name] = attr.name;
+			} else {
+				schema->addErrMsg("Duplicated name:" + attr.name + ", ");
+			}
+			stringUtil.toLower(attr.type);
+			if (!stringUtil.checkSupportDataType(attr.type)) {
+				schema->addErrMsg("Unsupported type:" + attr.type + ", ");
+			}
+			//cout << attr.name << "," << attr.type << endl;
+
 			schema->append(attr);
 		}
 

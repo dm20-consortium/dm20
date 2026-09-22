@@ -1,0 +1,37 @@
+4110	Road Element
+4115	Pathway
+4120	Junction
+4140	Road
+4145	Intersection
+7210	Signpost
+7220	Traffic Sign
+7230	Traffic Light
+7240	Pedestrian Crossing
+7245	Complex Pedestrian Crossing
+7251	Environmental Equipment
+7252	Lighting
+7254	Road Markings
+8110	Lane
+8120	Lane Area
+8130	Lane Line
+8140	Extended Pedestrian
+8145	Extended Pedestrian Crossing
+8150	Pedestrian Area
+8160	Pedestrian Line
+8170	Intersection Area Shape
+8210	Pole
+8220	Extended Traffic Sign
+8230	Extended Traffic Light
+8231	Traffic Light Lamp
+8240	Extended Lighting
+8241	Lighting Lamp
+8250	Extended Road markings
+8251	Road Markings Shape
+8252	Pedestrian Crossing Markings Shape
+8260	Stop Line
+8310	Road Edge
+8311	Curb
+8312	Gutter
+8313	Guard Rail
+8314	Zebra zone
+8410	Shape Description point

@@ -224,6 +224,7 @@ namespace IS {
 
 	void Schema::appendAdminColumn()
 	{
+		adminColumnStartIdx = attributes.size();
 		for (int i = 0; i < adminColumnNameList.size(); i++) {
 			Attribute attr;
 			attr.name = adminColumnNameList[i];
@@ -249,7 +250,8 @@ namespace IS {
 		attributes.clear();
 		colNameIdxMap.clear();
 		attributes = schema.getAttributes();
-		
+		adminColumnStartIdx = schema.getAdminColumnStartIdx();
+
 		for (unsigned int i = 0; i < attributes.size(); i++) {
 			colNameIdxMap[attributes.at(i).name] = i;
 		}
@@ -434,6 +436,32 @@ namespace IS {
 
     }
 
+    /**
+     * エラーメッセージを取得する
+     *
+     * @author	Shinichi Kusayama
+     * @date	2026/07/01
+     *
+     * @return	エラーメッセージ
+     */
+
+    string Schema::getErrMsg()
+	{
+		return errMsg;
+	}
+    /**
+     * エラーメッセージを設定する
+     *
+     * @author	Shinichi Kusayama
+     * @date	2026/07/01
+     *
+     * @param	エラーメッセージ
+     */
+
+    void Schema::addErrMsg(string _errMsg)
+	{
+		errMsg += _errMsg;
+	}
     /**
      * 列情報リストを取得する
      *
@@ -909,7 +937,6 @@ namespace IS {
 	* @param	index	カラム番号
 	* @return	削除成功可否
 	*/
-
 	bool Schema::deleteAttribute(int index)
 	{
 		attributes.erase(attributes.begin() + index);
@@ -920,6 +947,18 @@ namespace IS {
 		return true;
 	}
 
+	/**
+	* 管理者列の開始インデックスを得る
+	*
+	* @author	Shinichi Kusayama
+	* @date	2026/08/03
+	*
+	* @return	index	カラム番号
+	*/
+	int Schema::getAdminColumnStartIdx() const
+	{
+		return adminColumnStartIdx;
+	}
     /**
      * targetの属性を自身の属性の後に追加したSchemaを返す（未使用）
      *

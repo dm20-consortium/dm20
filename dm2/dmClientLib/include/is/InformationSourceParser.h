@@ -115,7 +115,6 @@ namespace IS {
 		InformationSourceParser();
 		~InformationSourceParser();
 
-		void createChangeidXML(const string &query, const int receptionPort, const string &key, string &result, const bool &getTcpSession);
 		void createQueryXML(const string &query, const int receptionPort, const string &key, string &result, const bool &getTcpSession);
 		void createQueryXML(const string &query, const string &key, string &result, const unsigned long long destSID, const unsigned long long executerSID);
 		void createStreamXML(const string &senderId, const string &destinationId, const string &streamName, const vector<Tuple> &tuples, const string &key, string &result);

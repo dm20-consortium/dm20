@@ -25,7 +25,10 @@ int main(int argc, char *argv[])
 	bool isOneShot = false;
 	bool doCompress = false;
 	bool allowDuplication = false;
-	int addTimestamp = 0;
+	bool isQuietMode = false;
+	int timestampCol = 0;
+	long adjustmentTime = 0;
+	bool doAdjust = false;
 	string ip = "";
 	string userid = "";
 	string password = "";
@@ -49,39 +52,52 @@ int main(int argc, char *argv[])
 	unsigned long long execSID = 0;
 	unsigned int mngId = 0;
 	bool doDestQuery = false;
-	string minus_str = "-";
 	// 引数処理(Todo: 長形式への対応｛getopt_long関数への移行｝)
-	while ((ch = getopt(argc, argv, "0123456789A::B:c:C:d:D:E:f:F:i:I::m:Mno::O:p:P:r::R:sS:tT:u:w:W:zh")) != -1) {
+	while ((ch = getopt(argc, argv, "a::A::B:c:C:d:D:E:f:F:i:I::m:Mno::O:p:P:qr::R:sS:tT:u:w:W:zh")) != -1) {
 		switch (ch) {
-		case '0': minus_str += "0"; break;
-		case '1': minus_str += "1"; break;
-		case '2': minus_str += "2"; break;
-		case '3': minus_str += "3"; break;
-		case '4': minus_str += "4"; break;
-		case '5': minus_str += "5"; break;
-		case '6': minus_str += "6"; break;
-		case '7': minus_str += "7"; break;
-		case '8': minus_str += "8"; break;
-		case '9': minus_str += "9"; break;
-		case 'A':
-			// dm2mes -r -A で記録した時のcreate_tsの位置をデフォルト値とする
-			addTimestamp = -2;
+		case 'a':
+			doAdjust = true;
 			if (optind < argc) {
 				string opt = argv[optind];
-				if (opt.substr(0,1) != "-") {
-					try {
-						addTimestamp = stoi(opt);
+				try {
+					size_t pos;
+					long value = stol(opt, &pos);
+					// 文字列全体が整数なら -A の引数とする
+					if (pos == opt.size()) {
+						adjustmentTime = value;
+						++optind;
 					}
-					catch (std::invalid_argument const&) {
-						fprintf(stderr, "failed to parse times-value: %s\n", opt.c_str());
-						usage(argv[0]);
-						exit(1);
+				}
+				catch (const std::invalid_argument&) {
+					// -M など、数値でないオプションなら何もしない
+				}
+				catch (const std::out_of_range&) {
+					fprintf(stderr, "failed to parse times-value: %s\n", opt.c_str());
+					usage(argv[0]);
+					exit(1);
+				}
+			}
+			break;
+		case 'A':
+			timestampCol = -2;
+			if (optind < argc) {
+				string opt = argv[optind];
+				try {
+					size_t pos;
+					int value = stoi(opt, &pos);
+					// 文字列全体が整数なら -A の引数とする
+					if (pos == opt.size()) {
+						timestampCol = value;
+						++optind;
 					}
-					catch (std::out_of_range const&) {
-						fprintf(stderr, "failed to parse times-value: %s\n", opt.c_str());
-						usage(argv[0]);
-						exit(1);
-					}
+				}
+				catch (const std::invalid_argument&) {
+					// -M など、数値でないオプションなら何もしない
+				}
+				catch (const std::out_of_range&) {
+					fprintf(stderr, "failed to parse times-value: %s\n", opt.c_str());
+					usage(argv[0]);
+					exit(1);
 				}
 			}
 			break;
@@ -127,16 +143,7 @@ int main(int argc, char *argv[])
 			doDestQuery = true;
 			break;
 		case 'f':
-			{
-				string opt = optarg;
-				if (opt.substr(0,1) != "-") {
-					input_file = opt;
-				}
-			}
-			if (input_file == "") {
-		    	usage(argv[0]);
-		        exit(1);
-			}
+			input_file = optarg;
 			break;
 		case 'F':
 		    if (sscanf(optarg, "%lf", &times) != 1) {
@@ -150,11 +157,6 @@ int main(int argc, char *argv[])
 			break;
 		case 'm':
 			master_schema = optarg;
-			if (master_schema == "" || master_schema.substr(0,1) == "-") {
-		        fprintf(stderr, "failed to parse master_schema: %s\n", optarg);
-		    	usage(argv[0]);
-		        exit(1);
-		    }
 			break;
 		case 'M':
 			allowDuplication = true;
@@ -167,6 +169,7 @@ int main(int argc, char *argv[])
 				string opt = argv[optind];
 				if (opt.substr(0,1) != "-") {
 					query = opt;
+					++optind;
 				}
 			}
 			isOneShot = true;
@@ -186,13 +189,11 @@ int main(int argc, char *argv[])
 		case 'p':
 			password = optarg;
 			break;
+		case 'q':
+			isQuietMode = true;
+			break;
 		case 'P':
 			paritition_keys = optarg;
-		    if (paritition_keys == "" || plus_schema_name.substr(0,1) == "-") {
-		        fprintf(stderr, "failed to parse paritition_keys: %s\n", optarg);
-		    	usage(argv[0]);
-		        exit(1);
-		    }
 			break;
 		case 'r':
 			doRecv = true;
@@ -209,27 +210,18 @@ int main(int argc, char *argv[])
 				        exit(1);
 				    }
 					query = opt;
+					++optind;
 				}
 			}
 			break;
 		case 'R':
 			send_list = optarg;
-		    if (send_list == "" || schema_name.substr(0,1) == "-") {
-		        fprintf(stderr, "failed to parse send_list: %s\n", optarg);
-		    	usage(argv[0]);
-		        exit(1);
-		    }
 			break;
 		case 's':
 			isSecureMode = true;
 			break;
 		case 'S':
 			schema_name = optarg;
-		    if (schema_name == "" || schema_name.substr(0,1) == "-") {
-		        fprintf(stderr, "failed to parse schema_name: %s\n", optarg);
-		    	usage(argv[0]);
-		        exit(1);
-		    }
 			break;
 		case 't':
 			isTcpMode = true;
@@ -246,6 +238,7 @@ int main(int argc, char *argv[])
 						} else {
 							timeout = stoi(opt) * 1000;
 						}
+						++optind;
 					} catch (...) {
 						fprintf(stderr, "failed to parse timeout-value: %s\n", optarg);
 						usage(argv[0]);
@@ -275,31 +268,29 @@ int main(int argc, char *argv[])
 			break;
 		case 'W':
 			where = optarg;
-		    if (where == "" || plus_schema_name.substr(0,1) == "-") {
-		        fprintf(stderr, "failed to parse where: %s\n", optarg);
-		    	usage(argv[0]);
-		        exit(1);
-		    }
 			break;
 		case 'z':
 			doCompress = true;
 			break;
+		case '?':
 		default:
 			usage(argv[0]);
 		    exit(1);
 		}
 	}
 	if (!doDestQuery && execSID != 0) {
-		fprintf(stderr, "If 'executer SID' is specified, 'destination SID' is required.\n");
+		fprintf(stderr, "When -a is specified, -A must also be specified.\n");
+		usage(argv[0]);
+		exit(1);
+	}
+	if (adjustmentTime > 0 && timestampCol == 0) {
+		fprintf(stderr, "-a and -A .\n");
 		usage(argv[0]);
 		exit(1);
 	}
 	if (send_list != "") {
 		RegisterSendList(send_list, input_file);
 		return 0;
-	}
-	if (addTimestamp != 0 && minus_str != "-") {
-		addTimestamp = stoi(minus_str);
 	}
 	if (isSecureMode) {
 		DmManager::initEncryptionSettings(DEFAULT_CA_CERT, DEFAULT_CA_KEY, DEFAULT_CA_PASS);
@@ -320,9 +311,9 @@ int main(int argc, char *argv[])
 			deleteNl(query);
 		}
 		if (doDestQuery) {
-			ret = DMSetDestQuery(ip, userid, password, master_schema, schema_name, isTcpMode, query, window, addTimestamp, isSecureMode, destSID, execSID, columns, paritition_keys, where);
+			ret = DMSetDestQuery(ip, userid, password, master_schema, schema_name, isTcpMode, query, window, timestampCol, isSecureMode, destSID, execSID, columns, paritition_keys, where);
 		} else {
-			ret = DMRecv(ip, userid, password, master_schema, schema_name, isTcpMode, query, window, timeout, addTimestamp, delay, isSecureMode, columns, plus_schema_name, allowDuplication, paritition_keys, where);
+			ret = DMRecv(ip, userid, password, master_schema, schema_name, isTcpMode, query, window, timeout, timestampCol, delay, isSecureMode, columns, plus_schema_name, allowDuplication, paritition_keys, where, isQuietMode);
 		}
 		return ret;
 	}
@@ -364,26 +355,30 @@ int main(int argc, char *argv[])
 		}
 		if (doGetLine)
 		{
+			// 行末のCRを削除
+			if (!line.empty() && line.back() == '\r') {
+				line.pop_back();
+			}
 			if (isOneShot) {
 				if (DMOneshot(ip, userid, password, schema_name, isTcpMode, line, isSecureMode, 0) == false) break;
 			} else {
 				bool waitFlg = true;
-				if (addTimestamp == 0) {
+				if (timestampCol == 0) {
 					v_line.push_back(line);
 					if ((int)v_line.size() < window_rows) continue;
 				}
 				while (waitFlg) {
 					// 入力があった場合はDMへの送信処理を行う。
-					if (dms.doSend(line, isNoSpace, addTimestamp, waitFlg, times) == false) {
-						if (addTimestamp != 0) {
+					if (dms.doSend(line, isNoSpace, timestampCol, waitFlg, times) == false) {
+						if (timestampCol != 0) {
 							v_line.push_back(line);
 						}
 					} else {
 						if ((int)v_line.size() > 0) {
-							if (dms.sendIs(schema_name, v_line, doCompress, addTimestamp, delay) == false) break;
+							if (dms.sendIs(schema_name, v_line, doCompress, timestampCol, delay, adjustmentTime, doAdjust) == false) break;
 							v_line.clear();
 						}
-						if (addTimestamp != 0 && waitFlg == false) {
+						if (timestampCol != 0 && waitFlg == false) {
 							v_line.push_back(line);
 						}
 					}
@@ -394,11 +389,11 @@ int main(int argc, char *argv[])
 		}
 	}
 	// 同期ありの場合、時間外のまま残るケースあり
-	if (addTimestamp != 0 && (int)v_line.size() > 0) {
+	if (timestampCol != 0 && (int)v_line.size() > 0) {
 		bool waitFlg = true;
 		while (waitFlg) {
-			if (dms.doSend(v_line[0], isNoSpace, addTimestamp, waitFlg, times) == false) {
-				if (dms.sendIs(schema_name, v_line, doCompress, addTimestamp, delay) == false) break;
+			if (dms.doSend(v_line[0], isNoSpace, timestampCol, waitFlg, times) == false) {
+				if (dms.sendIs(schema_name, v_line, doCompress, timestampCol, delay, adjustmentTime, doAdjust) == false) break;
 			}
 		}
 	}
@@ -452,8 +447,8 @@ void RegisterSendList(string send_list, string input_file) {
 
 }
 bool DMRecv(string ip, string userid, string password, string master_schema, string schema_name,
-		bool isTransportMode, string query, string window, long timeout, int addTimestamp, int delay, bool isSecureMode, 
-		string columns, string plus_schema_name, bool allowDuplication, string paritition_keys, string where) {
+		bool isTransportMode, string query, string window, long timeout, int timestampCol, int delay, bool isSecureMode, 
+		string columns, string plus_schema_name, bool allowDuplication, string paritition_keys, string where, bool isQuietMode) {
 	if (signal(SIGINT, handler) == SIG_ERR) {
 		cerr << "Signal Error" << endl;
 		return -1;
@@ -461,7 +456,7 @@ bool DMRecv(string ip, string userid, string password, string master_schema, str
 	DMReceiver dmr;
 	if (!dmr.DMConnect(ip, userid, password, isTransportMode, isSecureMode)) return -1;
 	
-	if (!dmr.continuousQuery(master_schema, schema_name, query, window, addTimestamp, columns, plus_schema_name, allowDuplication, paritition_keys, where)) {
+	if (!dmr.continuousQuery(master_schema, schema_name, query, window, timestampCol, columns, plus_schema_name, allowDuplication, paritition_keys, where, isQuietMode)) {
 		dmr.DMDisconnect();
 		return -1;
 	}
@@ -485,7 +480,7 @@ bool DMRecv(string ip, string userid, string password, string master_schema, str
 	return 0;
 }
 bool DMSetDestQuery(string ip, string userid, string password, string master_schema, string schema_name,
-		bool isTransportMode, string query, string window, int addTimestamp, bool isSecureMode, 
+		bool isTransportMode, string query, string window, int timestampCol, bool isSecureMode, 
 		unsigned long long destSID, unsigned long long execSID, string columns, string paritition_keys, string where) {
 	DMReceiver dmr;
 	if (!dmr.DMConnect(ip, userid, password, isTransportMode, isSecureMode)) return -1;
@@ -598,11 +593,14 @@ static void usage(const char *cmd)
 		"\n"
 		"Options: [] => Required arg. {} => Any arg. \n"
 		"  -A {timestamp-column-idx} [Recveive Mode] Add Create-Ts And Recv-Ts in Last 2-Columns.  \n"
-		"                            [Send Mode]     Sync with Timestamp. \n"
+		"                            [Send Mode]     Synchronize time offsets for past logs. \n"
 		"                                            timestamp-column-idx: Starting From 1. Minus OK \n"
 		"                                             ex.) column-name (id,time, ... ,create_ts,recv_ts) \n"
 		"                                               1:id, 2:time, ... , -2:create_ts, -1:recv_ts \n"
 		"                                               Default: -2:create_ts \n"
+		"  -a {adjustment time}      [Send Mode]     -A Mode Only. \n"
+		"                                            Set the current time to match the time offset of the past logs.\n"
+		"                                            If time adjustment is required, set the adjustment time. \n"
 		"  -B <schema>               Both-mode (receive-mode and send-mode). \n"
 		"                            ex.) dm2mes -r -S original_schema -w 100 -B copy_schema \n"
 		"                              Similar to \"dm2mes -r -S original_schema -w 100 | dm2mes -S copy_schema\". \n"
@@ -637,6 +635,7 @@ static void usage(const char *cmd)
 		"  -P <partition-keys>       Partition-By. \n"
 		"                            ex.) dm2mes -r -S signal_info -P crp_id,id \n"
 		"                              => dm2mes -r \"master signal_info select * from signal_info [partition by crp_id,id rows 1]\" \n"
+		"  -q                        Quiet Mode (Count Only) \n"
 		"  -r {query}                Receive Mode. default: Send Mode \n"
 		"                            Free to set Full-Query.  \n"
 		"                              default: MASTER message_info SELECT * \n"

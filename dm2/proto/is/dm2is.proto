@@ -55,10 +55,39 @@ message Sensor_info_0_8_1_dm2is {
 }
 
 message Is_tuple_info {
-	// DBシステムがタプル毎に付与する属性
+	// DBシステムがタプル毎に付与する属性。dm2_create_tsは列の属性として保持。他は管理者情報の列として保持
 	optional sint64 dm2_create_ts = 1;
 	optional string dm2_creator_id = 4;
 	optional string dm2_ip_addr = 5;
 	uint64 dm2_hash = 2;
 	repeated uint64 dm2_ts_group = 3;
+}
+
+message System_request {
+	// DBシステムへ要求する時の電文
+	string type = 1;
+	string key = 2;
+	string body = 3;
+	optional fixed64 sender = 4;
+	optional fixed64 destination = 5;
+	optional sint32 port = 6;
+	optional bool tcp_session = 7;
+	optional sint32 pid = 8;
+	optional bool continuous = 9;
+}
+
+message System_response {
+	// DBシステムから応答する時の電文
+	string type = 1;
+	string  value = 2;
+	optional string error = 3;
+	optional sint32 port = 4;
+}
+
+message System_request_dm2is {
+	System_request system_request = 1;
+}
+
+message System_response_dm2is {
+	System_response system_response = 1;
 }

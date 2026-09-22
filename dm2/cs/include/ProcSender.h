@@ -22,7 +22,7 @@ namespace CS
         ProcSender(NwRcvSettings &tmp_settings);
         ~ProcSender();
 
-        std::thread* Run(CS::Queue<CS::clientdata> *queue);
+        std::thread* Run(CS::Queue<CS::send_message_vector> *queue);
 
     private:
         Util dm2util;                       // utility
@@ -30,7 +30,7 @@ namespace CS
         NwRcvSettings settings;
 
         std::thread* pthread;                    // Proc送信用スレッド
-        Queue<clientdata> *p_queue;
+        Queue<send_message_vector> *p_queue;
 
         UnorderedMap<string, time_t> sid_sq_id_received_time_map;
         std::thread* pthread_duplicate_manage;
@@ -44,7 +44,7 @@ namespace CS
 
         static void sender(const ProcSender *param, UnorderedMap<string, time_t> &duplicate_check_map, const string &confDirPath);
         // 重複受信チェック
-        static int duplicate_receive_check(const ProcSender* param, clientdata &cdata, UnorderedMap<string, time_t> &duplicate_check_map);
+        static int duplicate_receive_check(const ProcSender* param, send_message_vector &cdata, UnorderedMap<string, time_t> &duplicate_check_map);
         static void clean_duplicate_map(const ProcSender* param, UnorderedMap<string, time_t>& sid_sq_id_received_time_map);
     };
 }

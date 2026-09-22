@@ -71,14 +71,11 @@ namespace IS {
 
         /* mapからquery抽出 */
         std::vector<std::string> queryVector;
-        std::vector<RecvData> queryRcvVector;
         for (auto& subMap : configMap) {
             queryVector.push_back(subMap.second["query"]);
         }
-        /* query→XML変換 */
-        queryRcvVector = prepareQuery(queryVector);
         /* 継続query登録処理 */
-        registerQuery(queryRcvVector);
+        registerQuery(queryVector);
 
         /* publisher */
         publisher = (*create_publisher)(configMap);
@@ -137,63 +134,14 @@ namespace IS {
         }
     }
 
-    std::vector<RecvData> ROS2DMIDownloaderWrapper::prepareQuery(std::vector<std::string>& queryList)
-    {
-        RecvData info;
-        std::vector<RecvData> infoVector;
-        struct sockaddr_in addr;
-        std::string queryXML = "";
-        std::string dmiName = "ros";
-
-        IS::InformationSourceParser &isp = IS::InformationSourceParser::get_instance();
-		isp.init();
-        
-        for (const std::string& query : queryList) {
-            /* query→XML変換 */
-            isp.createQueryXML(query, -1, "0", dmiName, queryXML);
-            info.sock = -1;
-            info.client = addr;
-            info.payload = queryXML;
-            info.isClose = false;
-            infoVector.push_back(info);
-        }
-        isp.finalize();
-
-        return infoVector;
-    }
-
-    void ROS2DMIDownloaderWrapper::registerQuery(std::vector<RecvData> &dataVector)
+    void ROS2DMIDownloaderWrapper::registerQuery(std::vector<std::string>& queryList)
 	{
-        for (const RecvData& data : dataVector) { 
+        const std::string dmiName = "ros";
+        for (const std::string& query : queryList) {
             IS::QueryManager &QM = IS::QueryManager::get_instance();
-            if (data.isClose) {
-                // 継続クエリのキャンセル要求
-                QM.cancelQuery(data);
-                return;
-            }
-            IS::InformationSourceParser &isp = IS::InformationSourceParser::get_instance();
-            isp.init();
-            // XMLの種別を取得
-            std::string rootTagName;
-            if (!isp.getRootTagName(data.payload, rootTagName)) {
-                isp.finalize();
-                return;
-            }
-
-            if ("query" == rootTagName) {
-                int mngId = QM.getMngId();
-                _mngId = mngId;
-                QM.addQuery(mngId, this->userYaml, data, true);
-            }
-            else if ("cancel" == rootTagName) {
-                // 継続クエリのキャンセル要求
-                QM.cancelQuery(this->userYaml, data, isp.getAttrValueFromRootTag("id", data.payload));
-            }
-            else
-            {
-                //logger->error("[ERROR] Not Define RootTagName. : " + rootTagName);
-            }
-            isp.finalize();
+            const int mngId = QM.getMngId();
+            _mngId = mngId;
+            QM.addQuery(mngId, this->userYaml, query, dmiName);
         }
 	}
 };

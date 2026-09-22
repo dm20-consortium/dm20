@@ -38,7 +38,7 @@ namespace IS {
 		CsReceiver();
 		virtual ~CsReceiver();
 		void start();
-		void notify(send_message_upper buffer);
+		void notify(send_message_vector buffer);
 
 		void workerProc(BufferQueue& q);
 

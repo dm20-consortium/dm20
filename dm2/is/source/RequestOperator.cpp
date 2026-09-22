@@ -134,36 +134,36 @@ namespace IS {
 		stringUtil.replaceAll(this->operatorTreeXML, "own", mySid);
 
 		UdpSendInterface udpsendinterface;
-		sockaddr_un server_addr = udpsendinterface.Init(fdDirPath + FD_IStoCS);
+		udpsendinterface.Init(fdDirPath + FD_IStoCS);
 		struct send_message buf;
 
 		try {
-			//buf.src_station_id = stoi(mySid);
-			buf.src_station_id = stoull(mySid);
+			//buf.header.src_station_id = stoi(mySid);
+			buf.header.src_station_id = stoull(mySid);
 		}
 		catch (const std::invalid_argument& ) {
 			logger->error("[" + this->type + "] LINE:" + std::to_string(__LINE__) + " stoi エラー");
 		}
-		buf.dst_station_id = dstSID;
+		buf.header.dst_station_id = dstSID;
 
 		// 自身が車両のDBである場合はレーンIDを付与する
 		if (settings.getSIDType() == Settings::SID_TYPE::CAR) {
 			// レーンIDの付与
 			int retryNum = 0;
 			while (retryNum < 3) {
-				buf.lane_id = LM.getLaneId();
-				if (buf.lane_id != 0) break;
+				buf.header.lane_id = LM.getLaneId();
+				if (buf.header.lane_id != 0) break;
 				usleep(1 * 1000 * 1000);
 				retryNum++;
 			}
-			if (buf.lane_id == 0) {
+			if (buf.header.lane_id == 0) {
 				logger->error("[" + this->type + "][process] Can't request by cs, because lane_id is unknown.");
 				return false;
 			}
 		}
 		else {
 			// 車両DB以外はレーンIDを参照しないため、ダミーのレーンIDを代入する
-			buf.lane_id = 0;
+			buf.header.lane_id = 0;
 		}
 		
 #if MEASURE_MODE == 1
@@ -198,35 +198,22 @@ namespace IS {
 		procTime = now;
 #endif
 
-#if MEASURE_MODE == 1
-		startTime = DmUtil::getTimeMicrosec();
-#endif
 		char compressFlg = settings.getParameter("COMPRESS_FLG")[0];
+		vector<char> sendBuf;
 		if (compressFlg == '1' || compressFlg == '2') {
-			char outbuf[IPv4_UDP_MAX_BYTE * 10];
 			long key = DmUtil::getTimeMicrosec();
-			int sendSize = stringUtil.setCompressedBufWithHeader(retXML, outbuf, compressFlg, key);
-			if (sendSize > 0) {
-				udpsendinterface.IsStreamSendtoCs(server_addr, buf.lane_id, buf.src_station_id, buf.dst_station_id, 1, 60, outbuf, sendSize, fdDirPath);
-			} else {
+			sendBuf = stringUtil.setCompressedBufWithHeader(retXML, compressFlg, key);
+			if (sendBuf.empty()) {
 				logger->warn("[" + this->type + "] CompressProc is Failed. Retry by Uncompressed Data");
-				string s = "0" + retXML;
-				udpsendinterface.IsStreamSendtoCs(server_addr, buf.lane_id, buf.src_station_id, buf.dst_station_id, 1, 60, retXML, fdDirPath);
 			}
-		} else {
-			string s = compressFlg + retXML;
-			udpsendinterface.IsStreamSendtoCs(server_addr, buf.lane_id, buf.src_station_id, buf.dst_station_id, 1, 60, retXML, fdDirPath);
 		}
-		logger->debug("[" + this->type + "] Request by UDP(CS). sendto(dstId):" + std::to_string(buf.dst_station_id) + " srcId:" + std::to_string(buf.src_station_id) + " laneId:" + std::to_string(buf.lane_id) + " size:" + std::to_string(retXML.length()));
+		if (sendBuf.empty()) {
+			sendBuf.assign(retXML.begin(), retXML.end());
+		}
+		udpsendinterface.IsStreamSendtoCs(buf.header.lane_id, buf.header.src_station_id, buf.header.dst_station_id, 1, 60, std::move(sendBuf));
+		
+		logger->debug("[" + this->type + "] Request by UDP(CS). sendto(dstId):" + std::to_string(buf.header.dst_station_id) + " srcId:" + std::to_string(buf.header.src_station_id) + " laneId:" + std::to_string(buf.header.lane_id) + " size:" + std::to_string(retXML.length()));
 		logger->debug("[" + this->type + "] Send payload:" + retXML);
-
-#if MEASURE_MODE == 1
-		now = DmUtil::getTimeMicrosec();
-		msec = (now - procTime) / 1000.0;
-		logger->info("[" + this->type + "] STAT_STEP" + to_string(step++) + " sendto(by CS) processing time: " + to_string(msec) + "[ms]");
-		msec = (now - startTime) / 1000.0;
-		logger->info("[" + this->type + "] STAT_STEP" + to_string(step++) + " total processing time: " + to_string(msec) + "[ms]");
-#endif
 
 		logger->debug("[" + this->type + "] ========== Request  END  ========== ");
 		return true;

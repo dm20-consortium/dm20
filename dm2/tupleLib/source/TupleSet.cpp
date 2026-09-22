@@ -355,4 +355,19 @@ namespace IS {
 			std::cout << tuples.at(i).getStringValueByIdx(0) << "," << tuples.at(i).getCost() << std::endl;
 		}
 	}
+	/**
+	 * 全ての情報をダンプする
+	 *
+	 * @author	Nagoya University
+	 * @date	2026/07/23
+	 *
+	 */
+
+	void TupleSet::dump()
+	{
+		for (unsigned int i = 0; i < tuples.size(); i++) {
+			tuples.at(i).dump();
+		}
+	}
+
 }

@@ -1040,6 +1040,55 @@ vector<vector<bool>> ResultSet::get2VectorBool(const int columnIndex)
 {
 	return get2VectorBool(_metaData.getColumnName(columnIndex));
 }
+std::string ResultSet::getBytes(const std::string& key)
+{
+    return _results.at(_index)[key];
+}
+std::string ResultSet::getBytes(const int columnIndex)
+{
+	return getBytes(_metaData.getColumnName(columnIndex));
+}
+std::string ResultSet::getBytesHex(const int columnIndex)
+{
+	return getBytesHex(_metaData.getColumnName(columnIndex));
+}
+std::string ResultSet::getBytesHex(const std::string& key)
+{
+    const size_t MAX_HEX_DUMP = 32;
+	return getBytesHex(key, MAX_HEX_DUMP);
+}
+std::string ResultSet::getBytesHex(const std::string& key, const size_t maxSize)
+{
+    auto it = _results.at(_index).find(key);
+    if (it == _results.at(_index).end()) {
+        return "";
+    }
+
+    const std::string& data = it->second;
+
+    std::ostringstream oss;
+
+    size_t len = std::min(maxSize, data.size());
+
+    for (size_t i = 0; i < len; ++i) {
+        oss << std::uppercase
+            << std::hex
+            << std::setw(2)
+            << std::setfill('0')
+            << static_cast<unsigned int>(
+                   static_cast<unsigned char>(data[i]));
+
+        if (i + 1 != len)
+            oss << " ";
+    }
+
+    if (data.size() > maxSize) {
+        oss << " ... (" << data.size() << " bytes)";
+    }
+
+    return oss.str();
+}
+
 /**
  * 列名指定でタイムスタンプデータを取得する
  *

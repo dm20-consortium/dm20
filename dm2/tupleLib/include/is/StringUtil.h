@@ -10,6 +10,7 @@
 #include <cstring>
 #include <map>
 #include <cxxabi.h>
+#include <arpa/inet.h>
 
 #if __cplusplus < 201703L || defined(USE_EXP_ANY)
 	#include <experimental/any>
@@ -45,6 +46,21 @@ struct IsDigit {
 	int operator()(int c) { return isdigit(c); }
 };
 
+struct FragmentHeader
+{
+    char        protobufFlag;
+    std::string tableName;
+
+    uint32_t payloadSize;
+    uint32_t managerId;
+
+    uint8_t fragmentIndex;
+    uint8_t totalFragments;
+
+    std::string sessionKey;
+
+    size_t headerSize;
+};
 namespace IS {
 
 	/**
@@ -91,7 +107,9 @@ namespace IS {
 			{ "varchar", STRING },
 			{ "geometry", STRING },
 			{ "geography", STRING },
-			{ "bool", BOOL}
+			{ "bool", BOOL},
+			// 以下、Tuple.hで定義したクラス
+			{ "bytes", STRING}
 		};
 
 	public:
@@ -131,15 +149,21 @@ namespace IS {
 		bool isNumber(const string &input);
 		bool isString(const string &input);
 		string getClassName(const type_info& id);
+
 		bool compress(string inStr, Bytef *outBuf);
-		int decompress(char *inBuf, char *outBuf);
+		vector<char> compress(string inStr);
+		vector<char> compressUsingZstd(string inStr, int inSize);
 		bool compressUsingZstd(string inStr, int inSize, void *outBuf, int *outSize);
+		
+		int decompress(char *inBuf, char *outBuf);
+		bool decompress(const char *inBuf, size_t inSize, std::string& outBuf);
 		bool decompressUsingZstd(char *inBuf, char *outBuf, int inSize, int *outSize);
+		bool decompressUsingZstd(const char *inBuf, size_t inSize, std::string& outBuf);
+
 		void getIsHeader(char *buf, IsHeaderInfo &info);
 		int setCompressedBufWithHeader(string inStr, char *outBuf, char compressFlg, long key);
+		vector<char> setCompressedBufWithHeader(string inStr, char compressFlg, long key);
 		string getValueByXMLTag(string target, string key);
-
-
 	};
 
     /**

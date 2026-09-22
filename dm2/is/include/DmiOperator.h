@@ -40,7 +40,7 @@ namespace IS {
 		IS::ProtobufDmiController pbdmiCtrl;
 
 	public:
-		DmiOperator(const string &user, unsigned int mngId, const RecvData &data, const string& dmi);
+		DmiOperator(const string &user, unsigned int mngId, const string& dmi);
 		~DmiOperator();
 
 		// 処理

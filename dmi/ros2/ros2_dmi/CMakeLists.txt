@@ -25,6 +25,7 @@ find_package(dm_sensor_info_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
 
 find_package(islib REQUIRED)
+find_package(Dm2Proto REQUIRED)
 
 include_directories(
   include
@@ -38,6 +39,7 @@ include_directories(
   ${dm_sensor_info_msgs_INCLUDE_DIRS}
   ${std_msgs_INCLUDE_DIRS}
   ${islib_INCLUDE_DIR}
+  ${dm2proto_INCLUDE_DIR}
 )
 
 # コンポーネントのビルド
@@ -61,6 +63,7 @@ target_link_libraries(${PROJECT_NAME}
   ${XercesC_LIBRARIES}
   ${Boost_LIBRARIES}
   ${islib_LIBRARIES}
+  ${dm2proto_LIBRARIES}
 )
 ament_target_dependencies(${PROJECT_NAME}
   rclcpp

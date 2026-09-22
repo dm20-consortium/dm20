@@ -6,6 +6,7 @@
 
 #include "InformationSource.h"
 #include "InformationSourceParser.h"
+#include "is/ProtobufParser.h"
 #include "is/Schema.h"
 #include "is/TupleSet.h"
 
@@ -50,6 +51,13 @@ namespace IS {
 		SSL *ssl2 = NULL;
 		string schema_name;
 		string cs_ip_address;
+	};
+	struct query_header
+	{
+		unsigned long long dstSID;
+		int port;
+		bool continuous;
+		string dmiName;
 	};
 	struct pass_info {
 		union {

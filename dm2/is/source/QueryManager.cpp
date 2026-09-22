@@ -145,28 +145,35 @@ namespace IS {
 	}
 
 	/**
-	 * クエリを追加する
+	 * クエリを追加する（Case1: アプリからの要求, Case2: CSからクエリ形式での要求, Case3: 別のaddQueryからの要求）
 	 *
 	 * @author	Nagoya University
 	 * @date	2018/03/13
 	 *
-	 * @param	user	ユーザ名
-	 * @param	data	受信データ
+	 * @param	mngId			管理ID
+	 * @param	user			ユーザ名
+	 * @param	data			受信データ
+	 * @param	returnMngId		管理IDを返却するか判定するフラグ
+	 * @param	query_header_	クエリのヘッダ情報
 	 */
 
-	void QueryManager::addQuery(const int &mngId, const string &user, const RecvData &data, const bool &returnMngId)
+	void QueryManager::addQuery(const int &mngId, const string &user, const RecvData &data, const bool &returnMngId, const query_header &query_header_)
 	{
+		bool startUpMode = false;
+		if (user == "public") {
+			string s = data.payload;
+			stringUtil.toUpper(s);
+			if (stringUtil.contain(s, "CREATE TIMER")) startUpMode = true;
+		}
 		// QueryExecuterに処理を委譲
-		QueryExecuter *QE = new QueryExecuter(user, mngId, data, returnMngId);
+		QueryExecuter *QE = new QueryExecuter(user, mngId, data, returnMngId, query_header_, startUpMode);
 		QE->start();
-		bool isContinuousQuery = false;
-		if (data.payload.find("master ") != std::string::npos || data.payload.find("MASTER ") != std::string::npos) isContinuousQuery = true;
 		// QEオブジェクトの管理
-		QueryInfo info(mngId, data.sock, data.client, data.payload, QE, isContinuousQuery);
+		QueryInfo info(mngId, data.sock, data.client, data.payload, QE, query_header_.continuous);
 		pthread_mutex_lock(&QImapMtx);
 		mp.insert(std::pair<unsigned int, IS::QueryInfo>(mngId, info));
 		pthread_mutex_unlock(&QImapMtx);
-		if (isContinuousQuery) {
+		if (query_header_.continuous) {
 			pthread_mutex_lock(&sockMtx);
 			vector<unsigned int> mngIdList;
 			auto itr = sockmng.find(data.sock);
@@ -178,10 +185,6 @@ namespace IS {
 			pthread_mutex_unlock(&sockMtx);
 		}
 		logger->debug("MNGID:" + std::to_string(mngId) + " QE MAP ADD");
-		if (stringUtil.contain(settings.getParameter("HISTORY_RECORD_CLASS"), stringUtil.getClassName(typeid(*this)))) {
-			thread createThread(&QueryManager::createQueryHistory, this, "add", mngId, data.sock, data.payload, "", user);
-			createThread.detach();
-		}
 		return;
 	}
 	/**
@@ -193,14 +196,40 @@ namespace IS {
 	 * @param	user	ユーザ名
 	 * @param	data	受信データ
 	 */
-
-	void QueryManager::addQuery(const string &user, const RecvData &data)
+	void QueryManager::addQuery(const string &user, const RecvData &data, const query_header &query_header_)
 	{
 		int mngId = getMngId();
-		addQuery(mngId, user, data, true);
+		addQuery(mngId, user, data, true, query_header_);
 		presetQueryList.insert(std::pair<unsigned int, string>(mngId, user));
 	}
+	/**
+	 * クエリを追加する (DMIからの登録用)
+	 *
+	 * @author	Shinichi Kusayama
+	 * @date	2026/04/08
+	 *
+	 * @param	mngId			管理ID
+	 * @param	user			ユーザ名
+	 * @param	query			クエリ文字列
+	 * @param	dmiName			DMIの名称
+	 */
+	void QueryManager::addQuery(const int &mngId, const string &user, const string &query, const string &dmiName)
+	{
+        RecvData info;
+		info.sock = -1;
+        struct sockaddr_in addr;
+		bzero( &addr, sizeof(addr) );
+		info.client = addr;
+		info.payload = query;
+		info.isClose = false;
 
+		query_header query_header_;
+		query_header_.dstSID = 0;
+		query_header_.port = -1;
+		query_header_.continuous = true;
+		query_header_.dmiName = dmiName;
+        addQuery(mngId, user, info, true, query_header_);
+	}
 	/**
 	* オペレーターツリーからクエリを追加する
 	*
@@ -219,7 +248,7 @@ namespace IS {
 		pthread_mutex_unlock(&mngIdMtx);
 
 		// QueryExecuterに処理を委譲
-		QueryExecuter *QE = new QueryExecuter(user, mngId, data, true);
+		QueryExecuter *QE = new QueryExecuter(user, mngId, data);
 		QE->isOperatorTreeXML = true;
 		QE->start();
 
@@ -237,7 +266,7 @@ namespace IS {
 	}
 
 	/**
-	* CSから受信したクエリを追加する
+	* CSからオペレータツリー形式でのクエリを受信時に追加する
 	*
 	* @author	Nagoya University
 	* @date	2018/08/27
@@ -259,6 +288,7 @@ namespace IS {
 
 		// QEオブジェクトの管理
 		struct sockaddr_in addr;
+		bzero( &addr, sizeof(addr) );
 		QueryInfo info(mngId, 0, addr, query, QE, true);
 		pthread_mutex_lock(&QImapMtx);
 		mp.insert(std::pair<unsigned int, IS::QueryInfo>(mngId, info));
@@ -369,6 +399,7 @@ namespace IS {
 
 	void QueryManager::cancelQuery(const string &user, const RecvData &data, const unsigned int mngId)
 	{
+		logger->debug("user:" + user + ", mngId" + to_string(mngId)); 
 		bool ret = false;
 		try {
 			pthread_mutex_lock(&QImapMtx);
@@ -388,6 +419,8 @@ namespace IS {
 				string errMsg = "Query(MNGID:" + to_string(mngId) + ") is not registered by you(user:" + user + "). So couldn't execute cancel request due to permision error.";
 				logger->warn(errMsg);
 				IS::ResponseOperator		*opX = new IS::ResponseOperator(mngId, data, IS::ErrorCode::AUTHORITY_ERR, errMsg);
+				// クエリキャンセル応答フラグを設定
+				opX->currentResponseType = IS::ResponseOperator::responseType::RESPONSE_CANCEL;
 				TupleSet tupleset;
 				vector<TupleSet> ts;
 				ts.push_back(tupleset);
@@ -409,6 +442,8 @@ namespace IS {
 			string errMsg = "Query(MNGID:" + to_string(mngId) + ") is not found";
 			opX = new IS::ResponseOperator(mngId, data, IS::ErrorCode::AUTHORITY_ERR, errMsg);
 		}
+		// クエリキャンセル応答フラグを設定
+		opX->currentResponseType = IS::ResponseOperator::responseType::RESPONSE_CANCEL;
 		TupleSet tupleset;
 		vector<TupleSet> ts;
 		ts.push_back(tupleset);
@@ -442,6 +477,7 @@ namespace IS {
 	 */
 	bool QueryManager::cancelQuery(const unsigned int mngId, const string &user)
 	{
+		logger->debug("[cancelQuery] user:" + user + ", mngId:" + to_string(mngId)); 
 		bool isContinuousQuery;
 		try {
 			pthread_mutex_lock(&QImapMtx);
@@ -449,6 +485,7 @@ namespace IS {
 			isContinuousQuery = QI.isContinuousQuery;
 			if (isContinuousQuery) {
 				while (true) {
+					logger->debug("[cancelQuery] isExitRun: " + to_string(QI.QE->isExitRun));
 					if (QI.QE->isExitRun == false) {
 						usleep(100 * 1000);
 					} else {
@@ -468,14 +505,8 @@ namespace IS {
 			logger->warn("[cancelQuery] Not Found QueryExecuter. MngId : " + std::to_string(mngId));
 			return false;
 		}
-		if (isContinuousQuery) {
-			if (stringUtil.contain(settings.getParameter("HISTORY_RECORD_CLASS"), stringUtil.getClassName(typeid(*this)))) {
-				createQueryHistory("cancel", mngId, 0, "", "", user);
-			}
-		}
 		return true;
 	}
-
 	/**
 	* クエリをキャンセル（終了）する (IS連携。ユーザチェックなし)
 	*
@@ -642,7 +673,7 @@ namespace IS {
 	 *
 	 */
 
-	int QueryManager::registerPresetQueryUsingPath(const string &path)
+	int QueryManager::registerPresetQueryUsingPath(const string &path, const bool &continuous)
 	{
 		int i, dirElements;
 		string search_path;
@@ -679,13 +710,19 @@ namespace IS {
 						}
 						//ファイルだった場合の処理
 						else if(stringUtil.ends_with(search_path, ".xml")){
-							string queryXML;
+							string queryXML, query;
 							isp.parseXmlFileToString(search_path, queryXML);
 							if (queryXML.length() != 0) {
+								isp.getQueryString(queryXML, query);
 								RecvData info;
 								info.sock = -1;
-								info.payload = queryXML;
-								addQuery("public", info);
+								info.payload = query;
+								query_header query_header_;
+								query_header_.dstSID = isp.getDestinationSID(queryXML);
+								query_header_.port = -1;
+								query_header_.continuous = continuous;
+								query_header_.dmiName = "";
+								addQuery("public", info, query_header_);
 								logger->debug("Register Preset Query : " + queryXML + ", Path: " + search_path);
 								registeredCnt++;
 							}
@@ -724,7 +761,12 @@ namespace IS {
 		RecvData info;
 		info.sock = -1;
 		info.payload = preset_query;
-		addQuery("public", info);
+		query_header query_header_;
+		query_header_.dstSID = 90000000;
+		query_header_.port = -1;
+		query_header_.continuous = true;
+		query_header_.dmiName = "";
+		addQuery("public", info, query_header_);
 		return;
 	}
 
@@ -758,19 +800,9 @@ namespace IS {
 			QueryStatus qs = i->second.QE->getQueryStatus();
 			qsList.push_back(qs);
 
-			//cout << "mngId:" << qs.mngId << endl;
-			//cout << "query:" << qs.query << endl;
-			//cout << "user:" << qs.user << endl;
-			//cout << "operatorTreeXML:" << qs.operatorTreeXML << endl;
-			//cout << "operatorNum:" << qs.operatorNum << endl;
-			//cout << "notifiedIntervalAVG:" << qs.notifiedIntervalAVG << endl;
-			//cout << "totalProcessTimeAVG:" << qs.totalProcessTimeAVG << endl;
-			//cout << "unprocessedDataNum:" << qs.unprocessedDataNum << endl;
-			//cout << "latestOperatorName:" << qs.latestOperatorName << endl;
-			//cout << "latestOpeProcAVG:" << qs.latestOpeProcAVG << endl;
-			//cout << "inputStreamTupleNumPerSec:" << qs.inputStreamTupleNumPerSec << endl;
-			//cout << "inputRelationTupleNumPerSec:" << qs.inputRelationTupleNumPerSec << endl;
-			//cout << "outputTupleNumPerSec:" << qs.outputTupleNumPerSec << endl;
+			//cout << "mngId:" << qs.mngId << ",query:" << qs.query << ",user:" << qs.user << ",operatorTreeXML:" << qs.operatorTreeXML << ",operatorNum:" << qs.operatorNum << ",notifiedIntervalAVG:" << qs.notifiedIntervalAVG << endl;
+			//cout << "totalProcessTimeAVG:" << qs.totalProcessTimeAVG << ",unprocessedDataNum:" << qs.unprocessedDataNum << ",latestOperatorName:" << qs.latestOperatorName << ",latestOpeProcAVG:" << qs.latestOpeProcAVG << endl;
+			//cout << "inputStreamTupleNumPerSec:" << qs.inputStreamTupleNumPerSec << ",inputRelationTupleNumPerSec:" << qs.inputRelationTupleNumPerSec << ",outputTupleNumPerSec:" << qs.outputTupleNumPerSec << endl;
 		}
 		return qsList;
 	}
@@ -795,7 +827,7 @@ namespace IS {
 		pthread_mutex_lock(&createMtx);
 		try {
 			// DB接続
-			connection Conn(("dbname=" + settings.getParameter("DATABASE_IS_NAME") + " user=" + settings.getParameter("USER_NAME") + " password=" + settings.getParameter("DB_PASS") + " hostaddr=" + settings.getParameter("DATABASE_ADDR") + " port=" + settings.getParameter("DATABASE_PORT")));
+			connection Conn(("dbname=" + settings.getParameter("DATABASE_IS_NAME") + " user=" + settings.getParameter("USER_NAME") + " password=" + settings.getParameter("DB_PASS") + " host=" + settings.getParameter("DATABASE_ADDR") + " port=" + settings.getParameter("DATABASE_PORT")));
 			// クエリ登録履歴を登録
 			work T(Conn);
 			Conn.prepare("insert_query_history", "INSERT INTO query_history VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9);");
@@ -811,19 +843,4 @@ namespace IS {
 		pthread_mutex_unlock(&createMtx);
 
 	}
-
-	void QueryManager::changeid(const string &message)
-	{
-		logger->warn("[changeid] : " + message);
-		logger->warn("[changeid] :before my_sid " + settings.getParameter("MY_STATION_ID"));
-		std::vector<std::string> parts;
-		std::stringstream ss(message);
-		std::string part;
-		while (std::getline(ss, part, ' ')) {
-			parts.push_back(part);
-		}
-		settings.setMyStationID(parts[1]);
-		logger->warn("[changeid] :after my_sid " + settings.getParameter("MY_STATION_ID"));
-	}
-
 }

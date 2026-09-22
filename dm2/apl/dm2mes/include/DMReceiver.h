@@ -23,6 +23,7 @@ private:
 	string getValue(string input, int colSize);
 	void callbackForStream(ResultSet rs);
 	void callbackForStreamPlusSendIs(ResultSet rs);
+	void callbackForStreamInQuietMode(ResultSet rs);
 	string makeQuery(string master_schema, string schema_name, string window, string columns, string paritition_keys, string where);
  	void SendIs(string ord_s);
 
@@ -31,7 +32,7 @@ public:
 	virtual ~DMReceiver();
 
 	bool continuousQuery(string master_schema, string schema_name, string query, string window, int addTimestamp, 
-		string columns, string plus_schema_name, bool duplication, string paritition_keys, string where);
+		string columns, string plus_schema_name, bool duplication, string paritition_keys, string where, bool isQuietMode);
 	bool destQuery(string master_schema, string schema_name, string query, string window, unsigned long long destSID, 
 		unsigned long long execSID, string columns, string paritition_keys, string where);
 	bool cancelQueryForStream(void);

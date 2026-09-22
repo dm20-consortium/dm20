@@ -67,7 +67,7 @@ function (BuildProto PROTO_FILES_DIR OTHER_PROTO_PATH)
     FILES
       ${PROTO_HEADERS}
     DESTINATION
-      include/is/proto
+      include/is
   )
   install(
     TARGETS

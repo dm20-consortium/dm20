@@ -75,6 +75,7 @@ namespace IS {
 		string readConfigFile(const char* key, const string &filename);
 		string readConfigFile(const char* key, const string &filename, bool doLogError);
 		string getParameter(const string &key);
+		void setParameter(const string &key, const string &value);
 		SID_TYPE getSIDType();
 		bool getQueryStr(const string &fname, string &queryStr);
 		string getConfigDirectory();

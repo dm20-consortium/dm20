@@ -1,41 +1,51 @@
-#include "Cs.h"
+#include "Util.h"
 #include <sys/types.h>
 #include <sys/stat.h>
 
 namespace CS{
 	std::string Util::PrintSend_message(send_message &sm){
 		std::string res_str = "";
-		res_str = "src_station_id:" + std::to_string(sm.src_station_id) 
-		        + ", dst_station_id:" + std::to_string(sm.dst_station_id)
-				+ ", src_station_type:" + std::to_string(sm.src_station_type) 
-				+ ", dst_station_type:" + std::to_string(sm.dst_station_type)
-				+ ", transmission_flag:" + std::to_string(sm.transmission_flag) 
-				+ ", duplication_check_id:" + std::to_string(sm.duplication_check_id) 
-				+ ", lane_id:" + std::to_string(sm.lane_id) 
-				+ ", retry_level:" + std::to_string(sm.retry_level) 
-				+ ", retry_data_id:" + std::to_string(sm.retry_data_id) 
-				+ ", retry_lifetime:" + std::to_string(sm.retry_lifetime) 
-				+ ", msg_type:" + std::to_string(sm.msg_type) 
-				+ ", cs_message_detail:" + std::to_string(sm.cs_message_detail) 
-				+ ", fd_name:" + std::string(sm.fd_name, 40) 
-				+ ", flagment_duplication_check_id:" + std::to_string(sm.flagment_duplication_check_id) 
-				+ ", flagment_sum" + std::to_string(sm.flagment_sum) 
-				+ ", flagment_offset:" + std::to_string(sm.flagment_offset) 
-				+ ", priority_level:" + std::to_string(sm.priority_level);
-		#if LID_PRIORITY == 1
-		res_str = res_str + ", policing_time:" + std::to_string(sm.policing_time); 
-		#endif
+		res_str = "src_station_id:" + std::to_string(sm.header.src_station_id) 
+		        + ", dst_station_id:" + std::to_string(sm.header.dst_station_id)
+				+ ", src_station_type:" + std::to_string(sm.header.src_station_type) 
+				+ ", dst_station_type:" + std::to_string(sm.header.dst_station_type)
+				+ ", transmission_flag:" + std::to_string(sm.header.transmission_flag) 
+				+ ", duplication_check_id:" + std::to_string(sm.header.duplication_check_id) 
+				+ ", lane_id:" + std::to_string(sm.header.lane_id) 
+				+ ", retry_level:" + std::to_string(sm.header.retry_level) 
+				+ ", retry_data_id:" + std::to_string(sm.header.retry_data_id) 
+				+ ", retry_lifetime:" + std::to_string(sm.header.retry_lifetime) 
+				+ ", msg_type:" + std::to_string(sm.header.msg_type) 
+				+ ", cs_message_detail:" + std::to_string(sm.header.cs_message_detail) 
+				+ ", fd_name:" + std::string(sm.header.fd_name, 40) 
+				+ ", flagment_duplication_check_id:" + std::to_string(sm.header.flagment_duplication_check_id) 
+				+ ", flagment_sum" + std::to_string(sm.header.flagment_sum) 
+				+ ", flagment_offset:" + std::to_string(sm.header.flagment_offset) 
+				+ ", priority_level:" + std::to_string(sm.header.priority_level);
 		res_str = res_str + ", dm2_payload:" + std::string(sm.dm2_payload, MSGSIZE); 
 		return res_str;
 	}
-	std::string Util::PrintClient_data(clientdata &cd){
+	std::string Util::PrintClient_data(send_message_vector &sm){
 		std::string res_str = "";
-		res_str = PrintSend_message(cd.msg);
-		std::string from_ip = cd.from_ip;
-		res_str += ",w_cdata.from_ip:" + from_ip;
+		res_str = "src_station_id:" + std::to_string(sm.header.src_station_id) 
+		        + ", dst_station_id:" + std::to_string(sm.header.dst_station_id)
+				+ ", src_station_type:" + std::to_string(sm.header.src_station_type) 
+				+ ", dst_station_type:" + std::to_string(sm.header.dst_station_type)
+				+ ", transmission_flag:" + std::to_string(sm.header.transmission_flag) 
+				+ ", duplication_check_id:" + std::to_string(sm.header.duplication_check_id) 
+				+ ", lane_id:" + std::to_string(sm.header.lane_id) 
+				+ ", retry_level:" + std::to_string(sm.header.retry_level) 
+				+ ", retry_data_id:" + std::to_string(sm.header.retry_data_id) 
+				+ ", retry_lifetime:" + std::to_string(sm.header.retry_lifetime) 
+				+ ", msg_type:" + std::to_string(sm.header.msg_type) 
+				+ ", cs_message_detail:" + std::to_string(sm.header.cs_message_detail) 
+				+ ", fd_name:" + std::string(sm.header.fd_name, 40) 
+				+ ", flagment_duplication_check_id:" + std::to_string(sm.header.flagment_duplication_check_id) 
+				+ ", flagment_sum" + std::to_string(sm.header.flagment_sum) 
+				+ ", flagment_offset:" + std::to_string(sm.header.flagment_offset) 
+				+ ", priority_level:" + std::to_string(sm.header.priority_level);
 		return res_str;
 	}
-
 	/**
 	 * @fn	std::string Util::ReadConfigPath(const char* key, const std::string &pathname_str)
 	 *
@@ -225,9 +235,7 @@ namespace CS{
 				value = std::to_string(value_map);
 			}
 		}
-		if (doWarnLog) {
-			std::cout << log << std::endl;
-		}
+		std::cout << log << std::endl;
 
 		return true;
 	}
@@ -430,135 +438,6 @@ namespace CS{
 			target++;
 		}
 		return returnstr;
-	}
-
-	float Util::GetRadwinStatus(std::string radwin_vehicle_antena_ip_address){
-		
-		FILE *fp;
-		std::string snmp_get_res;
-		std::string hex_rx_chain1;
-		std::string hex_rx_chain2;
-		std::string hex_rx_chain3;
-		int chain1;
-		int chain2;
-		int chain3;
-		int max_chain_rx = 0;
-		std::string command_str = "snmpget -v 1 -c public " + radwin_vehicle_antena_ip_address + " .1.3.6.1.4.1.4458.1000.1.5.9.6.0";
-		char const *cmdline = command_str.c_str();
-		// char const *cmdline = "snmpget -v 1 -c public 192.168.0.110 .1.3.6.1.4.1.4458.1000.1.5.9.6.0";
-		if((fp = popen(cmdline, "r")) == NULL){
-			exit(EXIT_FAILURE);
-		}
-		
-		__gnu_cxx::stdio_filebuf<char> *p_fb = new __gnu_cxx::stdio_filebuf<char>(fp, std::ios_base::in);
-		std::istream input(static_cast<std::streambuf *>(p_fb));
-
-		while(getline(input, snmp_get_res)){
-			snmp_get_res = snmp_get_res.substr(snmp_get_res.find(": ") + 2);
-			//3つのアンテナのうち最大値を取得
-			hex_rx_chain1 = Util::SplitSpace(snmp_get_res, 1);
-			hex_rx_chain2 = Util::SplitSpace(snmp_get_res, 2);
-			hex_rx_chain3 = Util::SplitSpace(snmp_get_res, 3);
-			std::cout << "chain1 = " <<  hex_rx_chain1 << ", chain2 = " <<  hex_rx_chain2 << ", chain3 = " <<  hex_rx_chain3 << std::endl;
-			chain1 = std::stoi(hex_rx_chain1, nullptr, 16);
-			chain2 = std::stoi(hex_rx_chain2, nullptr, 16);
-			chain3 = std::stoi(hex_rx_chain3, nullptr, 16);
-			std::cout << "chain1 = " <<  chain1 << ", chain2 = " <<  chain2 << ", chain3 = " <<  chain3 << std::endl;
-			max_chain_rx = chain1;
-			if( chain2 > max_chain_rx)
-				max_chain_rx = chain2;
-			if( chain3 > max_chain_rx)
-				max_chain_rx = chain3;
-			std::cout << "max_chain_rx = " << max_chain_rx << std::endl;
-			
-		}
-		delete p_fb;
-		pclose(fp);
-
-		std::cout << "max_chain_rx = " << max_chain_rx << std::endl;
-		return max_chain_rx;
-	}
-
-	_iwconfig_status Util::GetWifiStatus(std::string _if_name){
-		struct _iwconfig_status _res = {0};
-		struct iwreq iwr;
-		struct iw_statistics stat;
-		struct iw_range range;
-		char essid[IW_ESSID_MAX_SIZE + 1];
-
-		memset(&iwr, 0, sizeof(iwr));
-		memset(&stat, 0, sizeof(stat));
-		memset(&range, 0, sizeof(range));
-		memset(essid, '\0', sizeof(essid));
-
-		int sk = socket(AF_INET, SOCK_DGRAM, 0);
-		strncpy(iwr.ifr_name, _if_name.c_str(), IFNAMSIZ);
-
-		if(ioctl(sk, SIOCGIWAP, &iwr) < 0){
-			close(sk);
-			return _res;
-		}
-		const struct ether_addr *ether_wap = (const struct ether_addr *)iwr.u.ap_addr.sa_data;
-
-		sprintf(_res.mac_address, "%02X:%02X:%02X:%02X:%02X:%02X",
-		ether_wap->ether_addr_octet[0],
-		ether_wap->ether_addr_octet[1],
-		ether_wap->ether_addr_octet[2],
-		ether_wap->ether_addr_octet[3],
-		ether_wap->ether_addr_octet[4],
-		ether_wap->ether_addr_octet[5]);
-		std::cout << "AP address: " << _res.mac_address << std::endl;
-
-
-		iwr.u.essid.pointer = (caddr_t) _res.essid;
-		iwr.u.essid.length = IW_ESSID_MAX_SIZE + 1;
-		iwr.u.essid.flags = 0;
-		if(ioctl(sk, SIOCGIWESSID, &iwr) < 0){
-			std::cout << "ioctl(sk, SIOCGIWESSID, &iwr) < 0" << std::endl;
-			close(sk);
-			return _res;
-		}
-		std::cout << "ESSID:" << _res.essid << std::endl;
-
-		iwr.u.data.pointer = &stat;
-		iwr.u.data.length = sizeof(stat);
-		if(ioctl(sk, SIOCGIWSTATS, &iwr) < 0){
-			std::cout << "ioctl(sk, SIOCGIWSTATS, &iwr) < 0" << std::endl;
-			close(sk);
-			return _res;
-		}
-		_res.qual = (int)stat.qual.qual;
-		std::cout << "Link quality: " << _res.qual << std::endl;
-
-		iwr.u.data.pointer = &range;
-		iwr.u.data.length = sizeof(range);
-		if(ioctl(sk, SIOCGIWRANGE, &iwr) < 0){
-			std::cout << "ioctl(sk, SIOCGIWRANGE, &iwr) < 0" << std::endl;
-			close(sk);
-			return _res;
-		}
-		_res.max_qual = (int)range.max_qual.qual;
-		std::cout << "Link Max quality: " << _res.max_qual << std::endl;
-
-		close(sk);
-		return _res;
-
-	}
-
-	std::vector<lid_wave_quality> Util::GetLidWaveQualityVector(std::string dm2_payload_str)
-	{
-		struct lid_wave_quality st_lwq_;
-		std::vector<lid_wave_quality> vec_lwq_;
-		int comma_num = std::count(begin(dm2_payload_str), end(dm2_payload_str), ',');
-		for(int i = 2; i <= (comma_num + 1); i++){
-			if(i % 2 == 0){
-				st_lwq_.lid = stoi(Util::Split(dm2_payload_str, i));
-			}else{
-				st_lwq_.wave_quality = stof(Util::Split(dm2_payload_str, i));
-				vec_lwq_.push_back(st_lwq_);
-			}
-		}
-		return vec_lwq_;
 	}
 
 	int Util::MakeSharedId(const std::string file_path, int ipc_key_id, int shared_memory_size)

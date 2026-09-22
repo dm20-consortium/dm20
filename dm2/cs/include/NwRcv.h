@@ -27,6 +27,8 @@ namespace CS {
 		//int my_sid; 								// 自身のStation ID
 		unsigned long long my_sid; 					// 自身のStation ID
 		int network_num;							// ネットワーク数
+		string is_ip_address;						// ISのIPアドレス（送信用）
+		string is_port_number;						// ISのポート番号（送信用）
 		vector<string> interface_names;				// インタフェース名(複数)
 		vector<int> interface_ip_vers;			// IPバージョン(複数)
 		vector<string> udp_port_numbers;							// ポート番号
@@ -47,9 +49,6 @@ namespace CS {
 		//--- vehicle & edge ---
 		// 重複確認用非順序型MAPオブジェクト生成。key値：車両SID＋シーケンス番号, value値：受信時刻
 		UnorderedMap<string, time_t> vehicle_sid_sq_id_received_time_map;
-
-		//--- vehicle & cloud ---
-		//Queue<clientdata> rcv_q(MAX_QUEUE_SIZE);	// キューオブジェクト生成
 
 	private:
 		log4cxx::LoggerPtr logger;		// log

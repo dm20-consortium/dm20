@@ -38,21 +38,24 @@ namespace CS{
 	 * @return	ソケットID
 	 */
 	int DtlsNwServer::InitServer(std::string interface_name, int ip_ver, std::string port_no, std::string _anycast_address, const std::string &confDirPath){
-		hints = {0};
+		memset(&hints, 0, sizeof(hints));
 		hints.ai_family = AF_UNSPEC; //IPv4/IPv6両方対応
 		hints.ai_socktype = SOCK_DGRAM; //UDP送信
 		hints.ai_flags = AI_PASSIVE;
 		std::string local_address;
-		while (true) {
-			local_address = GetIPifaddrs(interface_name, "", ip_ver);
-			if (local_address == "") {
-				sleep(10);
-			}else {
-				break;
+		if (interface_name.empty()) {
+			sock_res = getaddrinfo(nullptr, port_no.c_str(), &hints, &res);
+		} else {
+			while (true) {
+				local_address = GetIPifaddrs(interface_name, "", ip_ver);
+				if (local_address == "") {
+					sleep(10);
+				} else {
+					break;
+				}
 			}
+			sock_res = getaddrinfo(local_address.c_str(), port_no.c_str(), &hints, &res);
 		}
-		sock_res = getaddrinfo(local_address.c_str(), port_no.c_str(), &hints, &res);
-
 		if(sock_res != 0){
 			std::cout << "FILE:" << __FILE__ <<  ", LINE:" << __LINE__ << " " << "getaddrinfo fail." << std::endl;
 			perror("getaddrinfo");

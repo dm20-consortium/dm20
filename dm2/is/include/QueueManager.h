@@ -17,7 +17,7 @@
 #include "InformationSourceManager.h"
 #include "NetworkSource.h"
 #include "Settings.h"
-#include "ProtobufParser.h"
+#include "is/ProtobufParser.h"
 
 using namespace std;
 using namespace log4cxx;
@@ -77,7 +77,8 @@ namespace IS {
 		vector<string> getTupleHash(const string &xmlTuples);
 		vector<string> getTupleHash(const vector<Tuple> &tuples);
 		void complementTuples(const string &tableName, const Schema &schema, vector<Tuple> &tuples, const string &user, const string &ip_addr, const vector<string> &tupleHashes, const bool callDmi);
-		void recvDataToTuples(const RecvData &data, vector<Tuple> &tuples, Schema &schema, string &tableName);
+		void recvDataToTuples(const RecvData &data, vector<Tuple> &tuples, Schema &schema, string &tableName, const bool &fromApl);
+		void recvDataToTuples(const string &schema_name, const string &payload, vector<Tuple> &tuples, Schema &schema, string &tableName, const bool &payloadCheck);
 	public:
 		QueueManager(const QueueManager&) = delete;
 		QueueManager& operator=(const QueueManager&) = delete;

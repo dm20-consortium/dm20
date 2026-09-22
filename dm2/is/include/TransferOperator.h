@@ -10,7 +10,7 @@
 #include "LocationManager.h"
 #include "UdpSendInterface.h"
 #include "InformationSourceParser.h"
-#include "ProtobufParser.h"
+#include "is/ProtobufParser.h"
 #include "Settings.h"
 
 using namespace CS;
@@ -59,6 +59,7 @@ namespace IS {
 		double totalProcessTimeSlowest = 0;
 		double totalProcessTimeEarliest = 0;
 
+		void initialize();
 	public:
 		TransferOperator(unsigned int mngId, unsigned long long dstSID, string streamName, int retry, int lifeTime);
 		TransferOperator(unsigned int mngId, unsigned long long dstSID, unsigned long long reqDestId, unsigned int requestedMngId, int retry, int lifeTime);
@@ -68,7 +69,6 @@ namespace IS {
 
 		// 処理
 		virtual bool process(vector<IS::TupleSet>& ts);
-		bool process(string queryXML);
 
 		//int getLaneId(TupleSet &ts);
 		unsigned long long getLaneId(TupleSet &ts);

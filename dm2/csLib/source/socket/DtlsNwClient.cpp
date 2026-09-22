@@ -52,7 +52,7 @@ namespace CS{
 	* @return	addrinfo構造体
 	*/
 	addrinfo DtlsNwClient::InitServer(std::string port_no, std::string dst_ip){
-		hints = {0};
+		memset(&hints, 0, sizeof(hints));
 		hints.ai_socktype = SOCK_DGRAM; //UDP送信
 		sock_res = getaddrinfo(dst_ip.c_str(), port_no.c_str(), &hints, &res);
 			if(sock_res != 0){
@@ -86,7 +86,7 @@ namespace CS{
 	* @return	addrinfo構造体
 	*/
 	addrinfo DtlsNwClient::InitServer(std::string port_no, std::string dst_ip, std::string src_ip, const std::string &confDirPath, bool &exit_flg_){
-		hints = {0};
+		memset(&hints, 0, sizeof(hints));
 		hints.ai_family = AF_UNSPEC; //IPv4/IPv6両方対応
 		hints.ai_socktype = SOCK_DGRAM; //UDP送信
 

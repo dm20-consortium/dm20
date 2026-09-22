@@ -1,0 +1,46 @@
+name: Basic CI
+
+on:
+  push:
+    branches:
+      - main
+      - feature/k3s-distributed-support
+  pull_request:
+
+jobs:
+  basic-test:
+
+    runs-on: ubuntu-24.04
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          chmod +x .github/scripts/install.sh
+          ./.github/scripts/install.sh
+
+      - name: Build DM2
+        run: |
+          chmod +x .github/scripts/build.sh
+          ./.github/scripts/build.sh
+
+      - name: Run test scenario
+        working-directory: dm2
+        run: |
+          python3 tests/runner.py tests/scenarios/implemented
+
+      - name: Upload logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-logs
+          path: |
+            dm2/*.log
+            dm2/logs/**

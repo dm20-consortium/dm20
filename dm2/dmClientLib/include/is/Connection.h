@@ -50,7 +50,6 @@ private:
 	int port2;
 	int sock2 = -1;
 	bool isTransportMode = false;
-	struct sockaddr_in addr;
 	string key;
 	SSL *ssl = NULL;
 	SSL *ssl2 = NULL;
@@ -98,13 +97,12 @@ private:
 	int acceptDTLS(struct pass_info* info);
 	unsigned int registerQuery(const string &query, FUNC_CALLBACK func_c, std::function<void(ResultSet)> func_c_plus, const string &reference);
 public:
-	Connection(const string &ip, const int port, const int sock, const struct sockaddr_in addr, const string &key, const int tcpSslTimeoutSec, const bool isTransportMode);
-	Connection(const string &ip, const int port, const int sock, const struct sockaddr_in addr, const string &key,
+	Connection(const string &ip, const int port, const int sock, const string &key, const int tcpSslTimeoutSec, const bool isTransportMode);
+	Connection(const string &ip, const int port, const int sock, const string &key,
 		SSL *ssl, SSL_CTX *ctx, const string &certFilePath, const string &privateKeyFilePath, const string &inPemPass,
 		const int tcpSslTimeoutSec, const int dtlsTimeoutSec, const bool isTransportMode);
 	~Connection();
 
-	ResultSet changeid(const string &query);
 	ResultSet execute(const string &query);
 	void disconnect();
 	void disconnect(bool doClear);

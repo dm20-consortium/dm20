@@ -59,6 +59,8 @@ namespace IS {
 		map<string, int> evalMinIdxMap;
 		map<string, int> evalMaxIdxMap;
 		bool checkAccessMap(const string &user, const string &op);
+		string errMsg = "";
+		int adminColumnStartIdx = 0;
 
     public:
 		// table_type
@@ -87,6 +89,8 @@ namespace IS {
 		void setRelationTableList(const vector<string> &list);
         bool renameTableName(const string &from, const string &to);
         bool renameColumnName(const string &from, const string &to);
+		string getErrMsg();
+		void addErrMsg(string _errMsg);
 
         std::vector<Attribute> getAttributes() const;
         Attribute getAttribute(int index) const;
@@ -110,6 +114,7 @@ namespace IS {
         int getAttributeSize() const;
         int getAdminAttributeSize() const;
 		bool deleteAttribute(int index);
+		int getAdminColumnStartIdx() const;
         Schema concat(Schema target); // 未使用
         Schema subset(std::vector<string> attrNameList); //未使用
 

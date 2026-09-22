@@ -1,4 +1,4 @@
-#include "Cs.h"
+#include "Queue.h"
 
 namespace CS{
 	/******************************************
@@ -17,7 +17,7 @@ namespace CS{
 	*
 	* @param	max_cs_queue_size_	キューの最大サイズ
 	*/
-	template Queue<clientdata>::Queue(int max_cs_queue_size_);
+	template Queue<send_message_vector>::Queue(int max_cs_queue_size_);
 	template Queue<csmng_message>::Queue(int max_cs_queue_size_);
 	template <typename T1>
 	Queue<T1>::Queue(int max_cs_queue_size_)
@@ -26,7 +26,7 @@ namespace CS{
 	}
 
 	/**
-	* @fn	void Queue::Push(clientdata data);
+	* @fn	void Queue::Push;
 	*
 	* @brief	キューイング処理
 	*
@@ -35,7 +35,7 @@ namespace CS{
 	*
 	* @param	data	キューへの入力データ
 	*/
-	template void Queue<clientdata>::Push(clientdata data);
+	template void Queue<send_message_vector>::Push(send_message_vector data);
 	template void Queue<csmng_message>::Push(csmng_message data);
 	template <typename T1>
 	void Queue<T1>::Push(T1 data) //エンキュー処理
@@ -59,7 +59,7 @@ namespace CS{
 	* @date	2018/03/12
 	*
 	*/
-	template int Queue<clientdata>::Size();
+	template int Queue<send_message_vector>::Size();
 	template int Queue<csmng_message>::Size();
 	template <typename T1>
 	int Queue<T1>::Size()
@@ -79,7 +79,7 @@ namespace CS{
 	*
 	* @return 要素数が0であればTrue, 0でなければFalseを返す
 	*/
-	template bool Queue<clientdata>::Empty();
+	template bool Queue<send_message_vector>::Empty();
 	template bool Queue<csmng_message>::Empty();
 	template <typename T1>
 	bool Queue<T1>::Empty()
@@ -89,7 +89,7 @@ namespace CS{
 	}
 
 	/**
-	* @fn	clientdata Queue::Pop();
+	* @fn	Queue::Pop();
 	*
 	* @brief	デキュー処理
 	*
@@ -98,7 +98,7 @@ namespace CS{
 	*
 	* @return	キューデータを出力して、キューから削除する。
 	*/
-	template clientdata Queue<clientdata>::Pop();
+	template send_message_vector Queue<send_message_vector>::Pop();
 	template csmng_message Queue<csmng_message>::Pop();
 	template <typename T1>
 	T1 Queue<T1>::Pop() //デキュー処理

@@ -174,62 +174,6 @@ namespace IS {
 		mtx.unlock();
 	}
 
-	void InformationSourceParser::createChangeidXML(const string &query, const int receptionPort, const string &key, string &result, const bool &getTcpSession)
-	{
-		XMLCh tempStr[BUF_MAX];
-		XMLCh tempStr2[BUF_MAX];
-		XMLString::transcode("Range", tempStr, BUF_MAX - 1);
-		DOMImplementation* impl = DOMImplementationRegistry::getDOMImplementation(tempStr);
-
-		XMLString::transcode("change_id", tempStr, BUF_MAX - 1);
-		DOMDocument*   doc = impl->createDocument(0, tempStr, 0);
-		DOMElement*   rootQuery = doc->getDocumentElement();
-
-		// サイズ情報
-		XMLString::transcode("size", tempStr, BUF_MAX - 1);
-		XMLString::transcode(replaceWord.c_str(), tempStr2, BUF_MAX - 1);
-		rootQuery->setAttribute(tempStr, tempStr2);
-
-		// キー情報
-		XMLString::transcode("key", tempStr, BUF_MAX - 1);
-		XMLString::transcode(key.c_str(), tempStr2, BUF_MAX - 1);
-		rootQuery->setAttribute(tempStr, tempStr2);
-
-		// sender情報
-		DOMElement*   sender = createElement(doc, "sender");
-		appendDomText(doc, sender, "");
-		rootQuery->appendChild(sender);
-
-		// destination情報
-		DOMElement*   destination = createElement(doc, "destination");
-		appendDomText(doc, destination, "");
-		rootQuery->appendChild(destination);
-
-		// body情報
-		DOMElement*   body = createElement(doc, "body");
-		appendDomText(doc, body, query);
-		rootQuery->appendChild(body);
-
-		if (receptionPort != 0) {
-			// port情報
-			DOMElement*   port = createElement(doc, "port");
-			appendDomText(doc, port, std::to_string(receptionPort));
-			rootQuery->appendChild(port);
-		}
-		if (getTcpSession) {
-			// TCP Sessionをサーバへ要求
-			DOMElement*   tcp = createElement(doc, "tcp_session");
-			appendDomText(doc, tcp, std::to_string(true));
-			rootQuery->appendChild(tcp);
-		}
-		outputXML(doc, result);
-		replaceSizeInfo(result);
-
-		// done with the document, must call release() to release the entire document resources
-		doc->release();
-		return;
-	}
-
 	/**
 	 * Query発行時のXML文字列を生成する
 	 *

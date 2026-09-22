@@ -60,6 +60,10 @@ namespace IS {
 		// Selectionは1つのtuplesetを使用
 		TupleSet& tupleset = ts.at(0);
 
+		if (tupleset.size() == 0) {
+			logger->debug("[" + this->type + "] tuple empty");
+			return true;
+		}
 		// DEBUG 与えられたタプル情報の出力
 		printInputInfo(tupleset, this->argument);
 
@@ -89,7 +93,7 @@ namespace IS {
 
 				for (unsigned int i = 0; i < paramList.size(); i++) {
 					//bool isCalc = false;
-					//REL_COMMENT logger->trace("[" + this->type + "] name:" + paramList.at(i));
+					logger->debug("[" + this->type + "] name:" + paramList.at(i));
 					int minIdx = -1;
 					int maxIdx = -1;
 					if (tupleset.getSchemaRef().isExistAttribute(paramList.at(i), minIdx, maxIdx)) {
@@ -155,7 +159,7 @@ namespace IS {
 				// 	logger->error("[" + this->type + "] attrList:" + attrStr);
 				// }
 				unsigned int adminAttrSize = tupleset.getSchemaRef().getAdminAttributeSize();
-				unsigned int adminStartIdx = tupleset.getSchemaRef().getAttributeSize() - adminAttrSize;
+				unsigned int adminStartIdx = tupleset.getSchemaRef().getAdminColumnStartIdx();
 				for (unsigned int i = 0; i < adminAttrSize; i++) {
 					string attrName = tupleset.getSchemaRef().getAttributeName(adminStartIdx + i);
 					int index = tupleset.getSchemaRef().getAttributeIdx(attrName);

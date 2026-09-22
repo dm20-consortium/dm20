@@ -671,7 +671,7 @@ namespace CS{
 		if(itr != u_map_.end()){
 			if(itr->second.at(0) == "0"){
 				//vector内の要素がすべて埋まっている
-				combined_str_.reserve(MSGSIZE*total_);
+				combined_str_.reserve(MSGSIZE * total_);
 				for(std::string str_ : u_map_[key_]){
 					combined_str_.append(str_);
 				}

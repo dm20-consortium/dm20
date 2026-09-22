@@ -57,6 +57,9 @@ g++ -std=c++14 send_object_info.cpp \
     -lxerces-c \
     -ldmclient \
     -ltuple \
+	-ldm2proto_is \
+	-ldm2proto_api \
+	-lprotobuf \
     -lcrypto \
     -lssl \
     -lz \
@@ -81,6 +84,9 @@ g++ -std=c++14 recv_object_info.cpp \
     -lxerces-c \
     -ldmclient \
     -ltuple \
+	-ldm2proto_is \
+	-ldm2proto_api \
+	-lprotobuf \
     -lcrypto \
     -lssl \
     -lz \

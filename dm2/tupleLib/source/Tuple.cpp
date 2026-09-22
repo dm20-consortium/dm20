@@ -672,6 +672,26 @@ namespace IS {
 		cout << "],type["  << Demangle(val.type()) << "]" << endl;
 	}
 
+	/**
+	 * any型データを文字列として返却する
+	 *
+	 * @author	Nagoya University
+	 * @date	2018/03/14
+	 *
+	 * @param	val	any型データ
+	 * @return	result	判定結果
+	 */
+
+	string Tuple::getDumpAny(any val)
+	{
+		StringUtil stringUtil;
+		string s = "value[";
+		s += stringUtil.getAnyString(val);
+		s += "],type[";
+		s += Demangle(val.type());
+		s += "]";
+		return s;
+	}
 
 	/**
 	 * テーブル名をセットする（DMI用）

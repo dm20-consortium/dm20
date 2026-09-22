@@ -61,8 +61,7 @@ namespace IS {
         void spin(const std::string& streamName);
         vector<IS::Tuple> TupleSetToTuple(IS::TupleSet &tplst);
         void yamlToMap(YAML::Node& readConfig, std::map<std::string, std::map<std::string, std::string>>& configMap);
-        void registerQuery(std::vector<RecvData> &dataVector);
-        std::vector<RecvData> prepareQuery(std::vector<std::string>& query);
+        void registerQuery(std::vector<std::string>& queryList);
         std::vector<int> _mngIdVector;
     };
 };

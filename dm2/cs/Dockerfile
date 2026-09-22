@@ -9,7 +9,8 @@ run apt-get update && \
     liblog4cxx-dev \
     libssl-dev
 
-copy . /dm20/cs/
+copy conf /dm20/conf
+copy cs /dm20/cs
 workdir /dm20/cs/
 
 run make clean

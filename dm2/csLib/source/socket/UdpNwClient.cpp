@@ -3,7 +3,7 @@ namespace CS{
 	/**
 	* @fn	addrinfo UdpNwClient::Init(std::string port_no, std::string dst_ip);
 	*
-	* @brief	UPD通信接続シーケンス(IPv4)
+	* @brief	Init 処理
 	*
 	* @author	Nagoya University
 	* @date	2018/03/14
@@ -15,15 +15,34 @@ namespace CS{
 	*/
 	addrinfo UdpNwClient::Init(std::string port_no, std::string dst_ip)
 	{
-		OpenSSL_add_all_algorithms();
 		port_no_ = port_no;
-		return InitClient(port_no, dst_ip);
+		return InitClient(port_no, dst_ip, -1);
 	}
 
 	/**
-	* @fn	addrinfo UdpNwClient::Init(std::string port_no, std::string dst_ip, std::string conf_dir_path);
+	* @fn	addrinfo UdpNwClient::Init(std::string port_no, std::string dst_ip, const int priority);
 	*
-	* @brief	UPD通信接続シーケンス(IPv6)
+	* @brief	Init 処理
+	*
+	* @author	Shinichi Kusayama
+	* @date	2026/07/14
+	*
+	* @param	port_no	ポート番号
+	* @param	dst_ip 	宛先IPアドレス
+	* @param	priority 	優先度
+	*
+	* @return	addrinfo構造体
+	*/
+	addrinfo UdpNwClient::Init(std::string port_no, std::string dst_ip, const int priority)
+	{
+		port_no_ = port_no;
+		return InitClient(port_no, dst_ip, priority);
+	}
+
+	/**
+	* @fn	addrinfo UdpNwClient::Init_path(std::string port_no, std::string dst_ip, std::string conf_dir_path);
+	*
+	* @brief	Init_path 処理（設定ディレクトリパス）
 	*
 	* @author	Nagoya University
 	* @date	2018/03/14
@@ -34,23 +53,52 @@ namespace CS{
 	*
 	* @return	addrinfo構造体
 	*/
-	addrinfo UdpNwClient::Init(std::string port_no, std::string dst_ip, std::string conf_dir_path)
+	addrinfo UdpNwClient::Init_path(std::string port_no, std::string dst_ip, std::string conf_dir_path)
 	{
 		port_no_ = port_no;
 		conf_dir_path_ = conf_dir_path;
-		return InitClient(port_no, dst_ip);
+		return InitClient(port_no, dst_ip, -1);
+	}
+	/**
+	* @fn	void UdpNwClient::Init(const std::string& fd_name, const std::string& port, const std::string& ip) 
+	*
+	* @brief	Init 処理（切り替え用）
+	*
+	* @author	Shinichi Kusayama
+	* @date     2026/6/4
+	*
+	* @param [in,out]	fd_name FDファイル名
+	* @param [in,out]	port	宛先ポート番号
+	* @param [in,out]	ip	宛先IPアドレス
+	*
+	*/
+	void UdpNwClient::Init(const std::string& fd_name, const std::string& port, const std::string& ip) 
+	{
+		Init(port, ip); // 既存呼び出し
 	}
 
-	//インタフェース名を引数とする	
+	/**
+	* @fn	addrinfo UdpNwClient::Init(std::string port_no, std::string dst_ip, std::string conf_dir_path);
+	*
+	* @brief	Init 処理 (IPv6)
+	*
+	* @author	Nagoya University
+	* @date	2018/03/14
+	*
+	* @param	port_no	ポート番号
+	* @param	dst_ip 	宛先IPアドレス
+	* @param	if_name 	インタフェース名
+	*
+	* @return	addrinfo構造体
+	*/
 	addrinfo UdpNwClient::Init_v6(std::string port_no, std::string dst_ip, std::string if_name)
 	{
 		port_no_ = port_no;
 		return InitClient_v6(port_no, dst_ip, if_name);
 	}
 
-
 	/**
-	* @fn	addrinfo UdpNwClient::InitClient(std::string port_no, std::string dst_ip);
+	* @fn	addrinfo UdpNwClient::InitClient(std::string port_no, std::string dst_ip, const int priority);
 	*
 	* @brief	UDP接続シーケンス 送信インタフェースが一つの場合
 	*
@@ -59,26 +107,31 @@ namespace CS{
 	*
 	* @param	port_no	ポート番号
 	* @param	dst_ip 	宛先IPアドレス
+	* @param	priority 	優先度
 	*
 	* @return	addrinfo構造体
 	*/
-	addrinfo UdpNwClient::InitClient(std::string port_no, std::string dst_ip){
-		hints = {0};
+	addrinfo UdpNwClient::InitClient(std::string port_no, std::string dst_ip, const int priority){
+		memset(&hints, 0, sizeof(hints));
 		// ToDo: IPv6で動作確認
 		//hints.ai_family = AF_UNSPEC; //IPv4/IPv6両方対応
 		hints.ai_socktype = SOCK_DGRAM; //UDP送信
-		sock_res = getaddrinfo(dst_ip.c_str(), port_no.c_str(), &hints, &res);
-			if(sock_res != 0){
-			std::cout << "FILE:" << __FILE__ <<  ", LINE:" << __LINE__ << " " << "getaddrinfo fail." << std::endl;
-			perror("getaddrinfo");
+		int ret = getaddrinfo(dst_ip.c_str(), port_no.c_str(), &hints, &res);
+			if (ret != 0) {
+			std::cerr << "FILE:" << __FILE__ <<  ", LINE:" << __LINE__ << " getaddrinfo failed: " << ret << " " << gai_strerror(ret) << std::endl;
 			exit(EXIT_FAILURE);
 		}
 		sockd = CreateSocket(res->ai_family, res->ai_socktype);
-		if(sockd < 0){
+		if (sockd < 0) {
 			close(sockd);
 			freeaddrinfo(res);
 			std::cout << "FILE:" << __FILE__ <<  ", LINE:" << __LINE__ << " " << "CreateSocket fail." << std::endl;
 			exit(EXIT_FAILURE);
+		}
+		if (priority >= 0) {
+			if (setsockopt(sockd, SOL_SOCKET, SO_PRIORITY, &priority, sizeof(priority)) < 0) {
+				perror("setsockopt");
+			}
 		}
 		return *res;
 	}
@@ -98,13 +151,13 @@ namespace CS{
 		std::string src_ip;
 		Socket dm2socket;
 		src_ip = dm2socket.GetIPifaddrs_v6(if_name);
-		if(src_ip.find(":") != std::string::npos){
+		if (src_ip.find(":") != std::string::npos) {
 			//std::cout  << "LINE:" << __LINE__ << " in UdpNwClient.cpp " << "送信元IPアドレスを一意に設定完了。" << std::endl;
-		}else{
+		} else {
 			std::cout  << "LINE:" << __LINE__ << " in UdpNwClient.cpp " << "送信元IPアドレスが不定。dm2.confのインタフェース名の指定を確認してください。" << std::endl;
 		}
 		int sockopt_res=0;		
-		hints = {0};
+		memset(&hints, 0, sizeof(hints));
 		hints.ai_family = AF_UNSPEC; //IPv4/IPv6両方対応
 		hints.ai_socktype = SOCK_DGRAM; //UDP送信
 
@@ -114,8 +167,8 @@ namespace CS{
 		memset(&ipi, 0, sizeof(ipi));
 		ipi.ipi6_ifindex = iface_id;
 
-		sock_res = getaddrinfo(dst_ip.c_str(), port_no.c_str(), &hints, &res);
-		if(sock_res != 0){
+		int ret = getaddrinfo(dst_ip.c_str(), port_no.c_str(), &hints, &res);
+		if (ret != 0) {
 			freeaddrinfo(res);
 			std::cout << "FILE:" << __FILE__ <<  ", LINE:" << __LINE__ << " " << "getaddrinfo fail." << std::endl;
 			perror("getaddrinfo");
@@ -123,11 +176,10 @@ namespace CS{
 		}
 
 		sockd = CreateSocket(res->ai_family, res->ai_socktype);
-		if(sockd < 0){
+		if (sockd < 0) {
 			close(sockd);
 			freeaddrinfo(res);
-			std::cout << "FILE:" << __FILE__ <<  ", LINE:" << __LINE__ << " " << "CreateSocket fail." << std::endl;
-			perror("CreateSocket");
+			std::cerr << "FILE:" << __FILE__ <<  ", LINE:" << __LINE__ << " getaddrinfo failed: " << ret << " " << gai_strerror(ret) << std::endl;
 			exit(EXIT_FAILURE);
 		}
 		
@@ -135,7 +187,7 @@ namespace CS{
 		memcpy(&ipi.ipi6_addr, src_ip.c_str(), sizeof(struct in6_addr));
 		
 		sockopt_res = setsockopt(sockd, IPPROTO_IPV6, IPV6_PKTINFO, &ipi, sizeof(ipi));
-		if(sockopt_res != 0){
+		if (sockopt_res != 0) {
 			std::cout << "FILE:" << __FILE__ <<  ", LINE:" << __LINE__ << " " << "setsockopt fail." << std::endl;
 			perror("setsockopt");
 			exit(EXIT_FAILURE);
@@ -144,6 +196,15 @@ namespace CS{
 		return *res;
 	}
 
+	/**
+	* @fn	void UdpNwClient::CloseSocketFd()
+	*
+	* @brief	ソケットクローズ
+	*
+ 	 * @author	Nagoya University
+     * @date	2018/03/14
+	*
+	*/
 	void UdpNwClient::CloseSocketFd(){
 		CloseSocket();
 	}
@@ -178,6 +239,38 @@ namespace CS{
 	*/
 	int UdpNwClient::Sendto(send_message &buf_, addrinfo &addr_){
 		int ret = Sendto(buf_, addr_, sizeof(buf_));
+		return ret;
+	}
+	/**
+	* @fn	int UdpNwClient::SendPacket(struct send_message &buf_)
+	*
+	* @brief	sendto送信(send_message型)
+	*
+	* @author	Shinichi Kusayama
+	* @date	2026/6/4
+	*
+	* @param [in,out]	buf_ 	送信メッセージバッファ
+	*
+	* @return	int sendtoの戻り値
+	*/
+	int UdpNwClient::SendPacket(struct send_message &buf_) {
+		int ret = Sendto(buf_, *res, sizeof(buf_));
+		return ret;
+	}
+	/**
+	* @fn	int UdpNwClient::SendPacket(struct send_message_vector &buf_)
+	*
+	* @brief	sendto送信(send_message_vector型)
+	*
+	* @author	Shinichi Kusayama
+	* @date	2026/6/4
+	*
+	* @param [in,out]	buf_ 	送信メッセージバッファ
+	*
+	* @return	int sendtoの戻り値
+	*/
+	int UdpNwClient::SendPacket(struct send_message_vector &buf_) {
+		int ret = SendtoDivision(buf_, *res, MSGSIZE);
 		return ret;
 	}
 }

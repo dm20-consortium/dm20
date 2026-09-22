@@ -1,0 +1,38 @@
+id: R001
+
+name: Basic send/receive
+
+purpose: |
+  dm2isに対して、ワンショットクエリを実行し、正しく結果が返却されることを確認する。
+
+precondition: |
+  dm2isが起動できること。
+  postgreSQLのテーブル「relationship」が登録されていること
+
+prepare:
+  database:
+    init_script: ../example/query/sample_rdb/sample.bash
+
+services:
+  - name: dm2is
+    description: IS (DBシステム) を起動する
+    command: dm2is -d conf
+
+steps:
+  - wait: 2
+
+  - run:
+      description: ワンショットクエリを実行する。テーブル名「relationship」
+      command: dm2mes -o "select * from relationship"
+
+  - wait: 2
+
+expect:
+   stdout:
+    description: ログに下記が出力されること
+    contains:
+      - relationship_id,rel_type
+
+cleanup:
+  stop:
+    - dm2is

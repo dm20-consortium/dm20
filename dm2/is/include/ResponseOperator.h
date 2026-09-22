@@ -30,9 +30,13 @@ namespace IS {
 		const string MyName = "Response";
 		LoggerPtr logger = Logger::getLogger("ResponseOperator");
 		StringUtil stringUtil;
-		//IS::InformationSourceParser &isp = IS::InformationSourceParser::get_instance();
 		IS::Settings &settings = IS::Settings::get_instance();
-		int sock = 0;
+		int tcpSock_ = 0;
+		int dtlsSock_ = 0;
+		int udpSock_ = -1;
+		bool udpSockInitialized_ = false;
+		struct sockaddr_in udpAddr_;
+
 		struct sockaddr_in addr;
 		SSL *ssl = NULL;
 		SSL *sslForRegisterQuery = NULL;
@@ -43,8 +47,10 @@ namespace IS {
 		string protocol = "";
 		bool isTCP = false;
 		bool exit_flag = false;
+		char compressFlg;
 		ErrorCode code = IS::ErrorCode::NO_ERR;
 		string msg;
+		bool isDynamicColumn = false;
 		// レスポンスなし時間
 		double totalProcessNoResTimeAVG = 0;
 		double totalProcessNoResTimeSlowest = 0;
@@ -65,9 +71,26 @@ namespace IS {
 		void hideColumn(TupleSet &tupleset);
 		void terminate(unsigned int mngId);
 		bool isSslShutdown(SSL *ssl);
+		bool checkPreCondition(const TupleSet& tupleset);
+		void addTimestamp(TupleSet& tupleset);
+		bool createResponse(TupleSet& tupleset, string& retXML, vector<string>& retXMLList);
+		void sendStreamResponse(const vector<string>& retXMLList);
+		bool checkSSLReturn(const int ret_arg);
+
+		bool initUdpSocket();
+		bool setDTLSsocket();
+		void resetDTLSsocket();
 	public:
+		// 返信種別
+		enum responseType {
+			QUERY_RESULT,		// 継続クエリ結果送信
+			RESPONSE_QUERY,		// クエリ登録応答
+			RESPONSE_CANCEL,	// クエリキャンセル応答
+		};		
+		responseType currentResponseType = QUERY_RESULT;
+		string protobufMessageName = "";	// protobufで送信する際の定義名
 		// UDP用コンストラクタ
-		ResponseOperator(const string &user, unsigned int mngId, const RecvData &data, int port);
+		ResponseOperator(const string &user, unsigned int mngId, const RecvData &data, int port, bool isDynamicColumn);
 		// TCP用コンストラクタ
 		ResponseOperator(const RecvData &data);
 		// TCP用コンストラクタ(管理番号あり)
@@ -79,12 +102,10 @@ namespace IS {
 		virtual ~ResponseOperator();
 
 		double getTotalProcessTimeAVG();
-		bool setDTLSsocket();
 		// 処理
 		virtual bool process(vector<IS::TupleSet>& ts);
-		virtual void process_close();
 
-		int TCPSend(const string &body);
+		int sendSystemResponse(const string &body);
 		void checkTerminate();
 	};
 }

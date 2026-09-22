@@ -14,7 +14,7 @@ using namespace log4cxx;
 
 // グローバルに共有（NwSender の起動に関わるパラメータ）
 vector<INwSender*> senders;			// インスタンス格納リスト
-vector<Queue<clientdata>*> queues;	// キュー
+vector<Queue<send_message_vector>*> queues;	// キュー
 vector<std::thread*> threads;		// スレッド
 std::mutex sender_mutex;
 
@@ -28,7 +28,7 @@ void AddNewSender(ProcRcvSettings& settings, uint count) {
     std::lock_guard<std::mutex> lock(sender_mutex);
 
     CS::INwSender* p_sender = new NwSender(settings, count);
-    Queue<clientdata>* p_queue = new Queue<clientdata>(MAX_QUEUE_SIZE);
+    Queue<send_message_vector>* p_queue = new Queue<send_message_vector>(MAX_QUEUE_SIZE);
 
     senders.push_back(p_sender);
     queues.push_back(p_queue);
@@ -210,7 +210,7 @@ int main(int argc, char *argv[])
 
 	// queuesの破棄
 	for(uint index = 0; index < queues.size(); index++) {
-		Queue<clientdata>* p_queue = queues[index];
+		Queue<send_message_vector>* p_queue = queues[index];
 		delete p_queue;
 	}
 	queues.clear();
@@ -272,10 +272,14 @@ bool ProcRcvSettings::load_dm2conf(const std::string &confDirPath)
 
 	if (!dm2util.chk_dm2conf_int_item("SEND_NETWORK_NUM", network_num, true)) return false;
 
+	if (!dm2util.chk_dm2conf_str_item("CS_PORT_NUMBER", cs_port_number, false)) cs_port_number = "";
+	
+	if (!dm2util.chk_dm2conf_str_item("INTERFACE_BY_IS_CS", interface_by_is_cs, false)) interface_by_is_cs = "";
+	
 	for (int count = 1; count < network_num + 1; count++) {
 		string item_str;
 		int item_int;
-		if (!dm2util.chk_dm2conf_str_item("INTERFACE_NAME_" + to_string(count), item_str, true)) return false;
+		if (!dm2util.chk_dm2conf_str_item("INTERFACE_NAME_" + to_string(count), item_str, false)) item_str = "";
 		interface_names.push_back(item_str);
 
 		if (!dm2util.chk_dm2conf_str_item("UDP_PORT_NUMBER_" + to_string(count), item_str, true)) return false;
@@ -314,6 +318,8 @@ bool ProcRcvSettings::load_dm2conf(const std::string &confDirPath)
 		if (!dm2util.chk_dm2conf_int_item("CS_PACKET_SIZE_" + to_string(count), item_int, true)) return false;
 		cs_packet_sizes.push_back(item_int);
 
+		if (!dm2util.chk_dm2conf_int_item("SOCKET_PRIORITY_" + to_string(count), item_int, false)) item_int = -1;
+		socket_priorities.push_back(item_int);
 	}
 	// DTLSの場合は、送信者の数（SEND_LISTの行数分）だけsettingを追加
 	int dtls_add_count = 0;

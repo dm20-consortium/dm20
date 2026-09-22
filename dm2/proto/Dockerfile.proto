@@ -1,11 +1,11 @@
-arg IMAGE_TAG=20.04
-from ubuntu:${IMAGE_TAG}
+ARG IMAGE_TAG=20.04
+FROM ubuntu:${IMAGE_TAG}
 
 # avoid hunging up
-env TZ=Asia/Tokyo
-run ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+ENV TZ=Asia/Tokyo
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
-run apt-get update \
+RUN apt-get update \
   && apt-get install -y \
     wget \
     build-essential \
@@ -14,13 +14,24 @@ run apt-get update \
   && rm -rf /var/lib/apt/lists/*
 
 # install protobuf
-workdir /
-run wget https://github.com/protocolbuffers/protobuf/releases/download/v21.12/protobuf-cpp-3.21.12.tar.gz && \
+WORKDIR /
+RUN wget https://github.com/protocolbuffers/protobuf/releases/download/v21.12/protobuf-cpp-3.21.12.tar.gz && \
   tar zxvf protobuf-cpp-3.21.12.tar.gz && \
   rm protobuf-cpp-3.21.12.tar.gz
-run mkdir protoc
-workdir /protobuf-3.21.12
-run ./configure --prefix=/usr/local --enable-python
-run pip install protobuf==3.20.3
-run make -j4
-run make install
+RUN mkdir protoc
+WORKDIR /protobuf-3.21.12
+RUN ./configure --prefix=/usr/local --enable-python
+RUN pip install protobuf==3.20.3
+RUN make -j4 && \
+	make install && \
+	rm -f \
+		/usr/local/lib/libprotobuf.a \
+		/usr/local/lib/libprotobuf-lite.a \
+		/usr/local/lib/libprotoc.a \
+		/usr/local/lib/libprotobuf.la \
+		/usr/local/lib/libprotobuf-lite.la \
+		/usr/local/lib/libprotoc.la \
+		/usr/local/lib/libprotobuf-lite.so \
+		/usr/local/lib/libprotobuf-lite.so.32 \
+		/usr/local/lib/libprotobuf-lite.so.32.0.12 && \
+	rm -rf /protobuf-3.21.12

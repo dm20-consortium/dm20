@@ -1,0 +1,23 @@
+2110	1	From Lane	f	t
+2110	2	Connecting Point	f	f
+2110	3	Boundary	f	f
+2110	4	To Lane	f	t
+9110	1	Base Lane	f	t
+9110	2	Connecting Point	f	f
+9110	3	intersection	f	f
+9110	4	Crossing Lane	f	t
+9120	1	Base Lane	f	t
+9120	2	Divider Line	f	f
+9120	3	Adjacent Lane	f	t
+9130	1	Base Lane	f	t
+9130	2	Connecting Point	f	f
+9130	3	Boundary	f	f
+9130	4	Departing Lane	f	t
+9210	1	Lane	f	t
+9210	2	Traffic Light	f	t
+9210	3	Stop Line	f	f
+9220	1	Lane	f	t
+9220	2	Traffic Sign	f	t
+9220	3	Stop line	f	f
+9230	1	Lane	f	t
+9230	2	Feature along with lane	f	t

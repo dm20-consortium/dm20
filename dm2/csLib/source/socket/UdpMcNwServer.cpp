@@ -80,7 +80,7 @@ namespace CS{
 	* @return	int ソケットID
 	*/
 	int UdpMcNwServer::InitServer(std::string port_no, std::string rcv_interface_name, std::string dst_multicast_ip, const int _IP_version){
-		hints = {0};
+		memset(&hints, 0, sizeof(hints));
 		hints.ai_family = AF_UNSPEC; //IPv4/IPv6両方対応
 		hints.ai_socktype = SOCK_DGRAM; //UDP送信
 		hints.ai_flags = AI_PASSIVE;
@@ -133,7 +133,7 @@ namespace CS{
 	 * @return int ソケットID
 	 */
 	int UdpMcNwServer::InitServer(std::string port_no, std::string rcv_interface_name_1, std::string rcv_interface_name_2, std::string dst_multicast_ip, const int _IP_version){
-		hints = {0};
+		memset(&hints, 0, sizeof(hints));
 		hints.ai_family = AF_UNSPEC; //IPv4/IPv6両方対応
 		hints.ai_socktype = SOCK_DGRAM; //UDP送信
 		hints.ai_flags = AI_PASSIVE;

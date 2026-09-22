@@ -104,7 +104,7 @@ int main(int argc, char *argv[])
     // クラス初期化
     LOG4CXX_INFO(logger, "ProcReceiver, NwSender生成");
     ProcSender *proc_sender = new ProcSender(settings);
-    Queue<clientdata>* p_queue = new Queue<clientdata>(MAX_QUEUE_SIZE);
+    Queue<send_message_vector>* p_queue = new Queue<send_message_vector>(MAX_QUEUE_SIZE);
 
 	// 初期設定ファイルに定義されたネットワーク情報の個数分NwReceiverを生成する
 	vector<INwReceiver*> receivers;
@@ -190,10 +190,14 @@ bool NwRcvSettings::load_dm2conf(const std::string &confDirPath)
 
 	if (!dm2util.chk_dm2conf_int_item("RECEIVE_NETWORK_NUM", network_num, true)) return false;
 
+	if (!dm2util.chk_dm2conf_str_item("IS_IP_ADDRESS", is_ip_address, false)) is_ip_address = "";
+
+	if (!dm2util.chk_dm2conf_str_item("IS_PORT_NUMBER", is_port_number, false)) is_port_number = "";
+
 	for (int count = 1; count < network_num + 1; count++) {
 		string item_str;
 		int item_int;
-		if (!dm2util.chk_dm2conf_str_item("INTERFACE_NAME_" + to_string(count), item_str, true)) return false;
+		if (!dm2util.chk_dm2conf_str_item("INTERFACE_NAME_" + to_string(count), item_str, false)) item_str = "";
 		interface_names.push_back(item_str);
 
 		if (!dm2util.chk_dm2conf_int_item("INTERFACE_IP_VER_" + to_string(count), item_int, true)) return false;
