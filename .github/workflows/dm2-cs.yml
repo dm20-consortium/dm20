@@ -1,15 +1,9 @@
 name: Build and Push dm2-cs
 
 on:
-  workflow_dispatch:
-    inputs:
-      version:
-        description: Docker image version
-        required: true
-        type: choice
-        options:
-          - v1.1.0
-        default: v1.1.0
+  push:
+    tags:
+      - 'v*.*.*'
 
 permissions:
   contents: read
@@ -23,7 +17,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
         with:
-          ref: ${{ inputs.version }}
+          ref: ${{ github.ref_name }}
 
       - name: Log in to GHCR
         uses: docker/login-action@v4
@@ -33,29 +27,33 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build secLib
+        working-directory: dm2
         run: |
-          cd dm2
           docker build \
+            -f secLib/Dockerfile \
             --build-arg IMAGE_TAG=20.04 \
             -t dm2/seclib:20.04 \
-            ./secLib
+            secLib/
 
       - name: Build csLib
+        working-directory: dm2
         run: |
-          cd dm2
           docker build \
+            -f csLib/Dockerfile \
             --build-arg IMAGE_TAG=20.04 \
             -t dm2/cslib:20.04 \
-            ./csLib
+            csLib/
 
+      # final image
       - name: Build dm2-cs
+        working-directory: dm2
         run: |
-          cd dm2
           docker build \
+            -f cs/Dockerfile \
             --build-arg IMAGE_TAG=20.04 \
-            -t ghcr.io/dm20-consortium/dm2-cs:${{ inputs.version }} \
-            ./cs
+            -t ghcr.io/dm20-consortium/dm2-cs:${{ github.ref_name }} \
+            ./
 
       - name: Push dm2-cs
         run: |
-          docker push ghcr.io/dm20-consortium/dm2-cs:${{ inputs.version }}
+          docker push ghcr.io/dm20-consortium/dm2-cs:${{ github.ref_name }}

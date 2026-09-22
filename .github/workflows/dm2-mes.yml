@@ -1,15 +1,9 @@
 name: Build and Push dm2-mes
 
 on:
-  workflow_dispatch:
-    inputs:
-      version:
-        description: Docker image version
-        required: true
-        type: choice
-        options:
-          - v1.1.0
-        default: v1.1.0
+  push:
+    tags:
+      - 'v*.*.*'
 
 permissions:
   contents: read
@@ -23,7 +17,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
         with:
-          ref: ${{ inputs.version }}
+          ref: ${{ github.ref_name }}
 
       - name: Log in to GHCR
         uses: docker/login-action@v4
@@ -60,6 +54,24 @@ jobs:
             -t dm2/commonlib:20.04 \
             commonLib/
 
+      - name: Build proto intermediate image
+        working-directory: dm2
+        run: |
+          docker build \
+            -f proto/Dockerfile.proto \
+            --build-arg IMAGE_TAG=20.04 \
+            -t dm2/protoc:20.04 \
+            proto/
+
+      - name: Build proto
+        working-directory: dm2
+        run: |
+          docker build \
+            -f proto/Dockerfile \
+            --build-arg IMAGE_TAG=20.04 \
+            -t dm2/proto:20.04 \
+            proto/
+
       - name: Build tupleLib
         working-directory: dm2
         run: |
@@ -67,7 +79,7 @@ jobs:
             -f tupleLib/Dockerfile \
             --build-arg IMAGE_TAG=20.04 \
             -t dm2/tuplelib:20.04 \
-            tupleLib/
+            ./
 
       - name: Build dmClientLib
         working-directory: dm2
@@ -76,7 +88,7 @@ jobs:
             -f dmClientLib/Dockerfile \
             --build-arg IMAGE_TAG=20.04 \
             -t dm2/dmclientlib:20.04 \
-            dmClientLib/
+            ./
 
       # final image
       - name: Build dm2-mes
@@ -85,9 +97,9 @@ jobs:
           docker build \
             -f apl/dm2mes/Dockerfile \
             --build-arg IMAGE_TAG=20.04 \
-            -t ghcr.io/dm20-consortium/dm2-mes:${{ inputs.version }} \
-            apl/dm2mes/
+            -t ghcr.io/dm20-consortium/dm2-mes:${{ github.ref_name }} \
+            ./
 
       - name: Push dm2-mes
         run: |
-          docker push ghcr.io/dm20-consortium/dm2-mes:${{ inputs.version }}
+          docker push ghcr.io/dm20-consortium/dm2-mes:${{ github.ref_name }}

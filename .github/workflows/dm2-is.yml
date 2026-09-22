@@ -1,15 +1,9 @@
 name: Build and Push dm2-is
 
 on:
-  workflow_dispatch:
-    inputs:
-      version:
-        description: Docker image version
-        required: true
-        type: choice
-        options:
-          - v1.1.0
-        default: v1.1.0
+  push:
+    tags:
+      - 'v*.*.*'
 
 permissions:
   contents: read
@@ -23,7 +17,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
         with:
-          ref: ${{ inputs.version }}
+          ref: ${{ github.ref_name }}
 
       - name: Log in to GHCR
         uses: docker/login-action@v4
@@ -60,24 +54,6 @@ jobs:
             -t dm2/commonlib:20.04 \
             commonLib/
 
-      - name: Build tupleLib
-        working-directory: dm2
-        run: |
-          docker build \
-            -f tupleLib/Dockerfile \
-            --build-arg IMAGE_TAG=20.04 \
-            -t dm2/tuplelib:20.04 \
-            tupleLib/
-
-      - name: Build dmClientLib
-        working-directory: dm2
-        run: |
-          docker build \
-            -f dmClientLib/Dockerfile \
-            --build-arg IMAGE_TAG=20.04 \
-            -t dm2/dmclientlib:20.04 \
-            dmClientLib/
-
       - name: Build proto intermediate image
         working-directory: dm2
         run: |
@@ -95,6 +71,24 @@ jobs:
             --build-arg IMAGE_TAG=20.04 \
             -t dm2/proto:20.04 \
             proto/
+
+      - name: Build tupleLib
+        working-directory: dm2
+        run: |
+          docker build \
+            -f tupleLib/Dockerfile \
+            --build-arg IMAGE_TAG=20.04 \
+            -t dm2/tuplelib:20.04 \
+            ./
+
+      - name: Build dmClientLib
+        working-directory: dm2
+        run: |
+          docker build \
+            -f dmClientLib/Dockerfile \
+            --build-arg IMAGE_TAG=20.04 \
+            -t dm2/dmclientlib:20.04 \
+            ./
 
       # dmi
       - name: Build ros2
@@ -128,9 +122,9 @@ jobs:
           docker build \
             -f is/Dockerfile \
             --build-arg IMAGE_TAG=20.04 \
-            -t ghcr.io/dm20-consortium/dm2-is:${{ inputs.version }} \
-            is/
+            -t ghcr.io/dm20-consortium/dm2-is:${{ github.ref_name }} \
+            ./
 
       - name: Push dm2-is
         run: |
-          docker push ghcr.io/dm20-consortium/dm2-is:${{ inputs.version }}
+          docker push ghcr.io/dm20-consortium/dm2-is:${{ github.ref_name }}
