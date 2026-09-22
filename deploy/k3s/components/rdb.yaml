@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: rdb
-          image: ghcr.io/dm20-consortium/dm2-rdb:v1.1.0
+          image: ghcr.io/dm20-consortium/dm2-rdb:v1.2.0
           ports:
             - containerPort: 5432
               protocol: TCP

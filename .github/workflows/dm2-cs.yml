@@ -52,8 +52,10 @@ jobs:
             -f cs/Dockerfile \
             --build-arg IMAGE_TAG=20.04 \
             -t ghcr.io/dm20-consortium/dm2-cs:${{ github.ref_name }} \
+            -t ghcr.io/dm20-consortium/dm2-cs:latest \
             ./
 
       - name: Push dm2-cs
         run: |
           docker push ghcr.io/dm20-consortium/dm2-cs:${{ github.ref_name }}
+          docker push ghcr.io/dm20-consortium/dm2-cs:latest

@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cs-recv
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cs-recv
+  template:
+    metadata:
+      labels:
+        app: cs-recv
+    spec:
+      containers:
+        - name: cs-recv
+          image: ghcr.io/dm20-consortium/dm2-cs:v1.2.0
+          ports:
+            - name: udp-55601
+              containerPort: 55601
+              protocol: UDP
+            - name: udp-55555
+              containerPort: 55555
+              protocol: UDP
+          command:
+            - dm2cs_recv
+            - -d
+            - /var/dm2/conf
+          volumeMounts:
+            - name: cs-conf
+              mountPath: /var/dm2/conf
+              readOnly: true
+      volumes:
+        - name: cs-conf
+          hostPath:
+            path: /var/dm2/conf
+            type: Directory
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cs-recv-service
+spec:
+  selector:
+    app: cs-recv
+  ports:
+    - name: udp-55601
+      protocol: UDP
+      port: 55601
+      targetPort: 55601
+    - name: udp-55555
+      protocol: UDP
+      port: 55555
+      targetPort: 55555
+      nodePort: 30555
+  type: NodePort

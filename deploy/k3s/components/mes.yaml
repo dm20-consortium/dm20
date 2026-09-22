@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mes
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mes
+  template:
+    metadata:
+      labels:
+        app: mes
+    spec:
+      containers:
+        - name: mes
+          image: ghcr.io/dm20-consortium/dm2-mes:v1.2.0
+          command:
+            - sleep
+            - infinity
+          volumeMounts:
+            - name: mes-data
+              mountPath: /var/dm2/data
+      volumes:
+        - name: mes-data
+          hostPath:
+            path: /var/dm2/data
+            type: Directory

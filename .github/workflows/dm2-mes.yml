@@ -98,8 +98,10 @@ jobs:
             -f apl/dm2mes/Dockerfile \
             --build-arg IMAGE_TAG=20.04 \
             -t ghcr.io/dm20-consortium/dm2-mes:${{ github.ref_name }} \
+            -t ghcr.io/dm20-consortium/dm2-mes:latest \
             ./
 
       - name: Push dm2-mes
         run: |
           docker push ghcr.io/dm20-consortium/dm2-mes:${{ github.ref_name }}
+          docker push ghcr.io/dm20-consortium/dm2-mes:latest

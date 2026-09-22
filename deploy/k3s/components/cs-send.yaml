@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cs-send
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cs-send
+  template:
+    metadata:
+      labels:
+        app: cs-send
+    spec:
+      containers:
+        - name: cs-send
+          image: ghcr.io/dm20-consortium/dm2-cs:v1.2.0
+          ports:
+            - name: udp-55601
+              containerPort: 55601
+              protocol: UDP
+          command:
+            - dm2cs_send
+            - -d
+            - /var/dm2/conf
+          volumeMounts:
+            - name: cs-conf
+              mountPath: /var/dm2/conf
+              readOnly: true
+      volumes:
+        - name: cs-conf
+          hostPath:
+            path: /var/dm2/conf
+            type: Directory
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cs-service
+spec:
+  selector:
+    app: cs-send
+  ports:
+    - name: udp-55601
+      protocol: UDP
+      port: 55601
+      targetPort: 55601
+  type: ClusterIP

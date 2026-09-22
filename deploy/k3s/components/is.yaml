@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: is
-          image: ghcr.io/dm20-consortium/dm2-is:v1.1.0
+          image: ghcr.io/dm20-consortium/dm2-is:v1.2.0
           ports:
             - name: tcp-9001
               containerPort: 9001
@@ -22,18 +22,35 @@ spec:
             - name: udp-9002
               containerPort: 9002
               protocol: UDP
+            - name: udp-55602
+              containerPort: 55602
+              protocol: UDP
           command:
-            - dm2is
-            - -d
-            - /dm20/deploy/k3s/conf
+            - /bin/sh
+            - -c
+            - |
+                echo "Waiting for dependencies..."
+
+                until getent hosts rdb-service; do
+                    echo "Waiting for rdb-service..."
+                    sleep 1
+                done
+
+                until getent hosts cs-service; do
+                    echo "Waiting for cs-service..."
+                    sleep 1
+                done
+
+                echo "Dependencies are ready."
+                exec dm2is -d /var/dm2/conf
           volumeMounts:
             - name: is-conf
-              mountPath: /dm20/deploy/k3s/conf
+              mountPath: /var/dm2/conf
               readOnly: true
       volumes:
         - name: is-conf
           hostPath:
-            path: /home/dm2/git/dm20/deploy/k3s/conf
+            path: /var/dm2/conf
             type: Directory
 
 ---
@@ -53,4 +70,8 @@ spec:
       protocol: UDP
       port: 9002
       targetPort: 9002
+    - name: udp-55602
+      protocol: UDP
+      port: 55602
+      targetPort: 55602
   type: ClusterIP
