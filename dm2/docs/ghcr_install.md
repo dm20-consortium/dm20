@@ -63,7 +63,7 @@ rdb-xxxxx        1/1     Running   1          xxxx
 kubectl get svc
 ```
 
-IS（内部で利用するRDB）、CS-recv、cs-sendは、k3s内で常駐するため、[dm2の実行例](../../example/command/README.md)に記載されているIS・CSに関わるコマンドの起動は不要となります。
+IS、CS-recv、cs-sendは、k3s内で常駐するため、[dm2の実行例](../../example/command/README.md)に記載されているIS・CSに関わるコマンドの起動は不要となります。
 
 `dm2mes`に関するコマンドのみ、下記の通り、Podにログインし、Pod内で、用途に応じた引数を指定して使用することになります。用途に応じてマニフェストをご自由に編集して下さい。
 
