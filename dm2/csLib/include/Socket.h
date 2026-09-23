@@ -100,15 +100,17 @@ namespace CS{
 		int Sendto(send_message &buf_, sockaddr_un &addr_, const int& send_size_);
 		int Sendto(send_message &buf_, addrinfo &addr_, const int& send_size_);
 		int Sendto(send_message &buf_, addrinfo &addr_, int send_size_, std::string udp_port_number_);
+		int Sendto(char *buf_, addrinfo &addr_, int send_size_, std::string udp_port_number_);
+
 		int SendtoEtM(send_message &buf_, addrinfo &addr_, int send_size_, std::string udp_port_number_, const std::string &aesKey);
 		int SendtoEtMonPki(send_message &buf_, addrinfo &addr_, int send_size_, std::string udp_port_number_, const std::string &aesKey);
-		int Sendto(char *buf_, addrinfo &addr_, int send_size_, std::string udp_port_number_);
 
 		int SendtoDivision(send_message_vector &buf_, addrinfo &addr_, int send_size_, std::string udp_port_number_, int socket_type, const std::string &aesKey);
 		int SendtoDivision(send_message_vector &buf_, addrinfo &addr_, int send_size_, std::string udp_port_number_);
-		std::vector<send_message> convertToSendMessage(const send_message_vector& src_, int send_size_);
 		int SendtoDivision(send_message_vector& buf_, sockaddr_un& addr_, const int& send_size_);
 		int SendtoDivision(send_message_vector& buf_, addrinfo& addr_, const int& send_size_);
+
+		std::vector<send_message> convertToSendMessage(const send_message_vector& src_, int send_size_);
 
 		int Getnameinfo(sockaddr_storage &ss_, char src_ip_[NI_MAXHOST]);
 

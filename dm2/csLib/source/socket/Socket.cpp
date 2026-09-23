@@ -319,7 +319,7 @@ namespace CS{
 	* @return	int sendtoの戻り値
 	*/
 	int Socket::Sendto(send_message &buf_, addrinfo &addr_, const int& send_size_){
-		return Sendto(buf_, addr_, send_size_, 0);
+		return sendto(socket_res_, &buf_, send_size_, 0, addr_.ai_addr, addr_.ai_addrlen);
 	}
 
 	/**

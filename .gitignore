@@ -53,6 +53,7 @@
 
 dm2/conf/is_conf/login_history.csv
 dm2/conf/is_func/**/*.so
+deploy/k3s/conf/is_conf/login_history.csv
 demo/conf_cloud/schema/copy/
 demo/conf_edge1/schema/copy/
 demo/conf_edge2/schema/copy/
