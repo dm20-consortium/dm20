@@ -49,6 +49,7 @@
 * ITS端末間の通信プラットフォームを構築したい場合は、[dm2のインストール](dm2/README.md)を参照して下さい。
 * インフラセンサーや車載センサーの情報をプラットフォーム上で交換したい場合は、[dmiのインストール](dmi/README.md)を参照して下さい。メッセージ仕様は、標準で[CooL4 API仕様](https://www.road-to-the-l4.go.jp/activity/theme04/pdf/CooL4_DataIntegrationPF_API_Spec_v100.pdf)をサポートしています。
 * プラットフォーム内の動作を見たい場合は、[demoのインストール](demo/README.md)を参照して下さい。路側センサーが生成した情報をクラウド経由で車両に届けるまでの動作を簡易的に模擬させたテストベッドを用意しています。
+* 緯度・経度を保存したデータを使って、地図上にプロットしたい場合は、[DM Web Viewer](viewer/web-viewer/README.md)を参照して下さい。
 
 ## 使用例
 * ROS2やUDPデータを使った使用例やアプリケーション開発方法について知りたい方は、[こちら](example/README.md)
