@@ -1,0 +1,52 @@
+# 地図の中心座標
+map_center: [35.154381, 136.966465] 
+
+# 地図のズーム倍率 (未定義の場合: 16)
+map_zoom: 16
+
+# 緯度・経度のスケール（未定義の場合: 10000000)
+coordinate_scale: 10000000
+
+rsu_point: {
+    nagoya-u: [35.154381, 136.966465]
+}
+
+rsu_zoom: {
+    nagoya-u: 16
+}
+
+rsu_idmap: {
+    nagoya-u: ["1"]
+}
+
+sig_idmap: {
+    nagoya-u: "10"
+}
+
+car_rsu:
+  distance_to_rsu: 190
+  distance_to_next_rsu: 205
+  min_distance: 45
+  min_bearing: 45
+  max_bearing: 225
+  min_bearing_diff: 70
+  car1:
+    rsus:
+      - nagoya-u
+
+# 信号の灯色情報（基本不変）
+trafic_light_color: { 
+    "3": red.png,
+    "5": blue.png,
+    "7": yellow.png
+}
+
+# UDPの情報
+server_ip: "localhost"
+server_port: 33333
+
+# 物標の種別情報（基本不変）
+object_kind: [question, car, train, motorcycle, bycycle, person, dog, trailer, flag] 
+object_kind_default: question
+
+sensor: {} # 空のまま
