@@ -89,13 +89,13 @@ libprotoc 3.21.12
 
 `PROTO_PATH` に、Protocol Buffersを `./configure --prefix` でインストールした場所を指定してビルドします。
 
-例えば、
+例えば、$HOME/protocにインストールする例を挙げます。
 
 ```bash
 ./configure --prefix=$HOME/protoc
 ```
 
-でインストールした場合は、
+上記パスにProtocol Buffersをインストールした場合は、
 
 ```bash
 make all PROTO_PATH=$HOME/protoc
@@ -103,6 +103,33 @@ sudo make install PROTO_PATH=$HOME/protoc
 sudo ldconfig
 ```
 
-としてビルドします。
+としてdm2をビルドします。
 
 正常にビルドが完了すれば、通常のビルド手順である[RDBの設定](README.md#rdbの設定)を行います。
+
+#### 2.4. dmiのビルドと実行
+
+2.3と同様にProtocol Buffersのインストールした場所を指定して、dmiをビルドします。
+
+```bash
+source /opt/ros/<ros_distro>/setup.bash
+colcon build --symlink-install --cmake-args -DDM2_PROTO_PATH=$HOME/protoc
+```
+
+ros2_dmi以外のCMakeパッケージにも、`DM2_PROTO_PATH`変数を渡すため、下記の警告が出力されますが、無視して下さい。
+
+```text
+CMake Warning:
+  Manually-specified variables were not used by the project:
+
+    DM2_PROTO_PATH
+```
+
+実行時には、`LD_LIBRARY_PATH`にProtocol Buffersのパスを追加した後に`ros2 launch`でdmiを起動します。
+
+```bash
+source ~/dm20/dmi/ros2/install/setup.bash 
+export LD_LIBRARY_PATH=$HOME/protoc/lib:$LD_LIBRARY_PATH
+ros2 launch ros2_dmi downloader.launch.py dm_user:=dm2sampleuser pass:=dm2samplepassword ip_addr:=127.0.0.1 
+```
+

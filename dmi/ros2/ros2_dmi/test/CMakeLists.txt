@@ -6,6 +6,7 @@ ament_target_dependencies(${PROJECT_NAME}_getter_objectid_test
   dm_object_info_msgs
 )
 target_link_libraries(${PROJECT_NAME}_getter_objectid_test
+  ${PROJECT_NAME}
   ${Boost_LIBRARIES}
   ${DM_LIBRARIES}
   ${islib_LIBRARIES}
@@ -16,6 +17,7 @@ ament_target_dependencies(${PROJECT_NAME}_getter_location_test
   dm_object_info_msgs
 )
 target_link_libraries(${PROJECT_NAME}_getter_location_test
+  ${PROJECT_NAME}
   ${Boost_LIBRARIES}
   ${DM_LIBRARIES}
   ${islib_LIBRARIES}
