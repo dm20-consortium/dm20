@@ -5,6 +5,7 @@ set -e
 TILE_URL=""
 ATTRIBUTION=""
 GRIDMAP_URL=""
+SCALE=""
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -22,6 +23,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         --tile-max-zoom)
             TILE_MAX_ZOOM="$2"
+            shift 2
+            ;;
+        --scale)
+            SCALE="$2"
             shift 2
             ;;
         *)
@@ -43,7 +48,14 @@ fi
 mkdir -p logs
 
 echo "Starting ws_server.py..."
-python3 ws_server.py > logs/ws_server.log 2>&1 &
+WS_SERVER_ARGS=()
+
+if [[ -n "$SCALE" ]]; then
+    WS_SERVER_ARGS+=(--coordinate-scale "$SCALE")
+fi
+
+python3 ws_server.py "${WS_SERVER_ARGS[@]}" > logs/ws_server.log 2>&1 &
+
 WS_SERVER_PID=$!
 echo "ws_server PID: $WS_SERVER_PID"
 
@@ -64,6 +76,7 @@ echo "Starting Streamlit..."
 streamlit run ws_client.py \
     --server.address 0.0.0.0 \
     --server.port 33013 \
+    --server.headless true \
     -- \
     --tile-url "$TILE_URL" \
     --attribution "$ATTRIBUTION" \

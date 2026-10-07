@@ -1,13 +1,10 @@
 # DM Web Viewer
 
-DM Web Viewerは、DM2.0PFで扱う物標情報をWebブラウザ上で可視化するためのWebベースのビューアです。
+---
 
-> **現在、ドキュメント拡充を進めています**
->
-> 現在、主にDM2.0PF上の物標情報を表示する方法をドキュメント化しています。
-> 今後、物標情報以外のCSVデータ単位による可視化についてもドキュメント化する予定です。
->
-> 近日中にアップデートを予定しています。
+DM Web Viewerは、DM2.0PFで扱う物標情報をWebブラウザ上で可視化するためのビューアです。
+
+物標情報以外のフォーマットで、緯度・経度を保存したCSVデータを可視化する事も可能です。
 
 ## 動作確認環境
 
@@ -48,7 +45,7 @@ mkdir -p /tmp/dm2-web-viewer/csv
 docker run --rm -it \
     -p 33013:33013 \
     -v /tmp/dm2-web-viewer/csv:/data/csv \
-    ghcr.io/dm20-consortium/dm2-web-viewer:v1.2.1 \
+    ghcr.io/dm20-consortium/dm2-web-viewer:latest \
     --tile-url ${TILE_URL}$ \
     --attribution ${TILE_COPYRIGHT}
 ```
@@ -61,35 +58,27 @@ docker run --rm -it \
 http://localhost:33013
 ```
 
-### 4. dm2のDBシステムの実行
+### 4. リプレイツールを使って、サンプルCSVファイルを読み込み、Webブラウザに表示させる
 
-先に[dm2のインストール](../../dm2/README.md)を済ませておいて下さい。
+リポジトリのルートディレクトリ/viewer/web-viewer/csv/sample/上にあるリプレイツールを使って、同ディレクトリにあるサンプルファイル`object_info_0_8_1_20260929_sample.csv`を取り込みます。
 
-DBシステムを起動します。引数にはリポジトリのルートディレクトリ/dm2/confディレクトリを指定して下さい。
+出力先は、[2.Dockerコンテナの起動](2-dockerコンテナの起動)で指定したパスを指定します。
 
-```bash
-dm2is -d ~/dm20/dm2/conf
-```
-
-### 5. DBシステムのログを出力
-
-DBシステムのログを出力します。出力先は、[2.Dockerコンテナの起動](#2-dockerコンテナの起動)で指定した出力パスです。
+出力ファイル名である`object_info_0_8_1_`date +"%Y%m%d"`.csv`は、Webビューア内で物標情報の当日の日付を参照するように設定されています。
 
 ```bash
-dm2mes -r -S object_info_0_8_1 >/tmp/dm2-web-viewer/csv/object_info_0_8_1_`date +"%Y%m%d"`.csv 
+bash replay_csv_realtime.sh object_info_0_8_1_sample1.csv 2 its stdout >> /tmp/dm2-web-viewer/csv/object_info_0_8_1_`date +"%Y%m%d"`.csv 
 ```
 
-### 6. サンプルCSVファイルをDBシステムへ取り込む
+### 5. Webブラウザで確認
 
-リポジトリのルートディレクトリ/viewer/web-viewer/csv/sample/上で、サンプルファイル`object_info_0_8_1_20260929_sample.csv`をDBシステムのインプットとして取り込みます。
+サンプルファイル`object_info_0_8_1_sample1.csv`に記録された生成時刻の時間軸、および緯度・経度の地点に沿って、物標がリプレイ表示される様子が確認できます。
 
-```bash
-dm2mes -S object_info_0_8_1 -f object_info_0_8_1_20260929_sample.csv -A 2 -a > /tmp/dm2-web-viewer/csv
-```
+## その他の使い方
 
-### 7. Webブラウザで確認
+- DM2.0PFのDBシステム上にある物標情報をWebビューアで可視化したい場合は、[こちら](docs/link_dm2.md)
 
-サンプルファイル`object_info_0_8_1_20260929_sample.csv`に記録された生成時刻の時間軸、および緯度・経度の地点に沿って、物標がリプレイ表示される様子が確認できます。
+- 物標情報以外のフォーマットで、緯度・経度を保存したCSVデータをWebビューアで可視化したい場合は、[こちら](docs/link_csv.md)
 
 ## OSS・ライセンス
 

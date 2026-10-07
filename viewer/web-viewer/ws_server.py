@@ -1,4 +1,5 @@
 import asyncio
+import argparse
 import json
 from multiprocessing import Queue
 import websockets
@@ -16,9 +17,9 @@ async def websocket_handler(websocket, path, queue: Queue):
     except websockets.exceptions.ConnectionClosed:
         print("WebSocket connection closed when radio button changed")
 
-async def main():
+async def main(coordinate_scale=None):
     queue = Queue()
-    start_collectors(queue)
+    start_collectors(queue, coordinate_scale)
 
     print("Starting WebSocket server on ws://0.0.0.0:8765")
     server = await websockets.serve(lambda ws, path: websocket_handler(ws, path, queue),
@@ -26,4 +27,13 @@ async def main():
     await server.wait_closed()
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--coordinate-scale",
+        type=int,
+        default=None,
+        help="Coordinate scale. Overrides the value in the configuration file."
+    )
+    args = parser.parse_args()
+
+    asyncio.run(main(args.coordinate_scale))

@@ -60,7 +60,7 @@ def load_icons():
     return icons
 
 # 種別からアイコンをセット
-def obj_set_icon(markers, object_type, object_subtype, object_id, information_source_list, lat, lon, min_ttc, config):
+def obj_set_icon(markers, object_type, object_subtype, object_id, information_source_list, lat, lon, min_ttc, config, scale):
     try:
         object_type = int(object_type)
         if 0 <= object_type < len(config["object_kind"]):
@@ -75,9 +75,8 @@ def obj_set_icon(markers, object_type, object_subtype, object_id, information_so
         icon_ = custom_kind
 
     icon_b64 = config["icons"][icon_]
-    scale = config.get("coordinate_scale", 10000000)
-    center_lat = int(lat)/scale
-    center_lon = int(lon)/scale
+    center_lat = float(lat)/scale
+    center_lon = float(lon)/scale
     #print("[obj_set_icon_on_lat_lon] marker added", object_id, center_lat, center_lon)
     x_size = 30
     y_size = 30
@@ -162,7 +161,7 @@ def obj_add_polygon_to_icon(polygons, obj_id, orientation_arg, length_arg, width
 #   0: 物標ID, 1: 時刻,  2: 種別, 3: 種別の信頼度, 4: サブ種別, 5: サブ種別の信頼度
 #   6: 緯度,   7: 経度   8: 速度, 9: 加速度
 #  10: 向き,  11: 長さ, 12: 幅,  13: 情報源のリスト,  14: 最小TTC
-def req_obj(markers, polygons, obj, config):
+def req_obj(markers, polygons, obj, config, scale):
     folder_path = os.path.join("templates", "images")
 
     for log in obj:
@@ -171,7 +170,7 @@ def req_obj(markers, polygons, obj, config):
         #    continue
         print(colms[0], colms[1])
         # 種別からアイコンを探し、マーカーにプロット
-        center_lat, center_lon = obj_set_icon(markers, colms[2], colms[4], colms[0], colms[13], colms[6], colms[7], colms[14], config)
+        center_lat, center_lon = obj_set_icon(markers, colms[2], colms[4], colms[0], colms[13], colms[6], colms[7], colms[14], config, scale)
 
         # 向き・長さ・幅から構成されるポリゴン情報をアイコンに付与
         obj_add_polygon_to_icon(polygons, colms[0], colms[10], colms[11], colms[12], center_lat, center_lon, colms[13], config)
@@ -489,7 +488,7 @@ def get_car_pos_and_rsu(car_pos_dict, markers, logs, cross, tracking_dic, config
     return rsus
 
 # マーカー生成処理
-def request_marker(car_pos_dict, logs, cross, signal_save_dic, tracking_dic, config):
+def request_marker(car_pos_dict, logs, cross, signal_save_dic, tracking_dic, config, scale):
     if len(list(logs.keys())) == 0:
         return "",[]
     
@@ -536,7 +535,7 @@ def request_marker(car_pos_dict, logs, cross, signal_save_dic, tracking_dic, con
     logs.clear()
     if len(obj) > 0 and not all_flag:
         # 物標情報のマーカー生成
-        req_obj(markers, polygons, tuple(obj), config)
+        req_obj(markers, polygons, tuple(obj), config, scale)
 
     return rsus, tuple(markers), tuple(polygons)
 
@@ -554,7 +553,7 @@ def get_center_point(car_pos_dict, cross, rsus, config):
 # UDP 受信でマーカー情報を取得し Queue に送信
 # 受信データは JSON 形式を想定：
 # [{"id":"m1","lat":35.001,"lng":135.001,"icon_idx":2}, ...]
-def udp_collector(queue: Queue, config, host="0.0.0.0", port=33333):
+def udp_collector(queue: Queue, config, scale, host="0.0.0.0", port=33333):
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.bind((host, port))
     cross = ""
@@ -586,7 +585,7 @@ def udp_collector(queue: Queue, config, host="0.0.0.0", port=33333):
             continue
         
         ### マーカー、ポリゴン生成
-        rsus, markers, polygons = request_marker(car_pos_dict, logs, cross, signal_save_dic, tracking_dic, config)
+        rsus, markers, polygons = request_marker(car_pos_dict, logs, cross, signal_save_dic, tracking_dic, config, scale)
         # 地図の中心位置を得る
         center_point = get_center_point(car_pos_dict, cross, rsus, config)
         if len(markers) > 0:
@@ -603,12 +602,16 @@ def udp_collector(queue: Queue, config, host="0.0.0.0", port=33333):
             counter = 0
             print("avg analyzed_time: {:.6f} sec".format((end - start) / 100))
 
-def start_collectors(queue: Queue):
-
+def start_collectors(queue: Queue, coordinate_scale=None):
     config = load_config()
     config["icons"] = load_icons()
+
+    scale = config.get("coordinate_scale", 10000000)
+    if coordinate_scale is not None:
+        scale = coordinate_scale
+    
     # UDP 受信プロセス
-    p2 = Process(target=udp_collector, args=(queue, config))
+    p2 = Process(target=udp_collector, args=(queue, config, scale))
     p2.daemon = True
     p2.start()
 
