@@ -142,7 +142,7 @@ namespace test_util {
   QueryResult CreateIsNulls_s() {
     QueryResult o;
     const auto name_list = CreateNameList_s();
-    for (const auto name : name_list) {
+    for (const auto& name : name_list) {
       o[name] = "0";
     }
     return o;
@@ -211,7 +211,7 @@ namespace test_util {
     const std::string& light_info_max_time_to_change_11) {
     QueryResult o;
     const auto name_list = CreateNameList_s();
-    for (const auto name : name_list) {
+    for (const auto& name : name_list) {
       if (name == "crp_id") o[name] = crp_id;
       else if (name == "id") o[name] = id;
       else if (name == "time") o[name] = time;

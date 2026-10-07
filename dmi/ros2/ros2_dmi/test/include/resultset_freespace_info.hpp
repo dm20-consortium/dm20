@@ -138,7 +138,7 @@ namespace test_util {
   QueryResult CreateIsNulls_f() {
     QueryResult o;
     const auto name_list = CreateNameList_f();
-    for (const auto name : name_list) {
+    for (const auto& name : name_list) {
       o[name] = "0";
     }
     return o;
@@ -205,7 +205,7 @@ namespace test_util {
     const std::string& information_source_list) {
     QueryResult o;
     const auto name_list = CreateNameList_f();
-    for (const auto name : name_list) {
+    for (const auto& name : name_list) {
       if (name == "id") o[name] = id;
       else if (name == "time") o[name] = time;
       else if (name == "existency") o[name] = existency;

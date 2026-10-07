@@ -197,7 +197,7 @@ namespace test_util {
   QueryResult CreateIsNulls_o() {
     QueryResult o;
     const auto name_list = CreateNameList_o();
-    for (const auto name : name_list) {
+    for (const auto& name : name_list) {
       o[name] = "0";
     }
     return o;
@@ -211,7 +211,7 @@ namespace test_util {
   QueryResult CreateDatas_o(
     const std::string& id,
     const std::string& time,
-    const std::string& revision,
+    //const std::string& revision,
     const std::string& object_class_id_0,
     const std::string& object_class_confidence_0,
     const std::string& object_class_subclass_type_0,
@@ -233,10 +233,10 @@ namespace test_util {
     const std::string& latitude,
     const std::string& longitude,
     const std::string& altitude,
-    const std::string& projective_srid,
-    const std::string& prc_x,
-    const std::string& prc_y,
-    const std::string& prc_z,
+    //const std::string& projective_srid,
+    //const std::string& prc_x,
+    //const std::string& prc_y,
+    //const std::string& prc_z,
     const std::string& crp_id,
     const std::string& dx_crp,
     const std::string& dy_crp,
@@ -272,7 +272,7 @@ namespace test_util {
     const std::string& width_accuracy,
     const std::string& height_value,
     const std::string& height_accuracy,
-    const std::string& static_status,
+    //const std::string& static_status,
     const std::string& shift_position,
     const std::string& steering_angle_front,
     const std::string& steering_angle_rear,
@@ -288,18 +288,18 @@ namespace test_util {
     const std::string& electronic_stability_control_system,
     const std::string& lane_keeping_assist_system,
     const std::string& lane_departure_warning_system,
-    const std::string& vehicle_size_type,
-    const std::string& tracking_status,
-    const std::string& detection_count,
-    const std::string& lost_count,
-    const std::string& object_age,
+    //const std::string& vehicle_size_type,
+    //const std::string& tracking_status,
+    //const std::string& detection_count,
+    //const std::string& lost_count,
+    //const std::string& object_age,
     const std::string& vehicle_role,
     const std::string& vehicle_extended_info,
     const std::string& towing_vehicle,
     const std::string& information_source_list) {
     QueryResult o;
     const auto name_list = CreateNameList_o();
-    for (const auto name : name_list) {
+    for (const auto& name : name_list) {
       if (name == "object_id") o[name] = id;
       else if (name == "time") o[name] = time;
       else if (name == "object_class_id_0") o[name] = object_class_id_0;
@@ -504,7 +504,7 @@ namespace test_util {
       datas_list.push_back(CreateDatas_o(
         input.map["object_id"][i],
         input.map["time"][i],
-        input.map["revision"][i],
+        //input.map["revision"][i],
         input.map["object_class_id_0"][i],
         input.map["object_class_confidence_0"][i],
         input.map["object_class_subclass_type_0"][i],
@@ -526,10 +526,10 @@ namespace test_util {
         input.map["latitude"][i],
         input.map["longitude"][i],
         input.map["altitude"][i],
-        input.map["projective_srid"][i],
-        input.map["prc_x"][i],
-        input.map["prc_y"][i],
-        input.map["prc_z"][i],
+        //input.map["projective_srid"][i],
+        //input.map["prc_x"][i],
+        //input.map["prc_y"][i],
+        //input.map["prc_z"][i],
         input.map["crp_id"][i],
         input.map["dx_crp"][i],
         input.map["dy_crp"][i],
@@ -565,7 +565,7 @@ namespace test_util {
         input.map["width_accuracy"][i],
         input.map["height_value"][i],
         input.map["height_accuracy"][i],
-        input.map["static_status"][i],
+        //input.map["static_status"][i],
         input.map["shift_position"][i],
         input.map["steering_angle_front"][i],
         input.map["steering_angle_rear"][i],
@@ -581,11 +581,11 @@ namespace test_util {
         input.map["electronic_stability_control_system"][i],
         input.map["lane_keeping_assist_system"][i],
         input.map["lane_departure_warning_system"][i],
-        input.map["vehicle_size_type"][i],
-        input.map["tracking_status"][i],
-        input.map["detection_count"][i],
-        input.map["lost_count"][i],
-        input.map["object_age"][i],
+        //input.map["vehicle_size_type"][i],
+        //input.map["tracking_status"][i],
+        //input.map["detection_count"][i],
+        //input.map["lost_count"][i],
+        //input.map["object_age"][i],
         input.map["vehicle_role"][i],
         input.map["vehicle_extended_info"][i],
         input.map["towing_vehicle"][i],

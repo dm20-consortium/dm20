@@ -31,7 +31,7 @@ namespace test_util {
   QueryResult CreateIsNulls_objectid() {
     QueryResult o;
     const auto name_list = CreateNameList_objectid();
-    for (const auto name : name_list) {
+    for (const auto& name : name_list) {
       o[name] = "0";
     }
     return o;
@@ -46,7 +46,7 @@ namespace test_util {
     const std::string& information_source_list) {
     QueryResult o;
     const auto name_list = CreateNameList_objectid();
-    for (const auto name : name_list) {
+    for (const auto& name : name_list) {
       if (name == "information_source_list") o[name] = information_source_list;
       else o[name] = "0";
     }

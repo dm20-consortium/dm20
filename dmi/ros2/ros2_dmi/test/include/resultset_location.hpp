@@ -84,7 +84,7 @@ namespace test_util {
   QueryResult CreateIsNulls_location() {
     QueryResult o;
     const auto name_list = CreateNameList_location();
-    for (const auto name : name_list) {
+    for (const auto& name : name_list) {
       o[name] = "0";
     }
     return o;
@@ -124,7 +124,7 @@ namespace test_util {
     const std::string& test_altitude_accuracy) {
     QueryResult o;
     const auto name_list = CreateNameList_location();
-    for (const auto name : name_list) {
+    for (const auto& name : name_list) {
       if (name == "test_geodetic_srid") o[name] = test_geodetic_srid;
       else if (name == "test_latitude") o[name] = test_latitude;
       else if (name == "test_longitude") o[name] = test_longitude;
