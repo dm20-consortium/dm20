@@ -42,12 +42,12 @@ TILE_COPYRIGHT="&copy; OpenStreetMap contributors"
 
 ```bash
 mkdir -p /tmp/dm2-web-viewer/csv
-docker run --rm -it \
-    -p 33013:33013 \
+docker run --pull always --rm -it \
+    -p 33013:33013 -p 8765:8765 -p 33333:33333/udp \
     -v /tmp/dm2-web-viewer/csv:/data/csv \
     ghcr.io/dm20-consortium/dm2-web-viewer:latest \
-    --tile-url ${TILE_URL}$ \
-    --attribution ${TILE_COPYRIGHT}
+    --tile-url "${TILE_URL}" \
+    --attribution "${TILE_COPYRIGHT}"
 ```
 
 ### 3. Webブラウザの起動
