@@ -8,11 +8,13 @@ map_zoom: 16
 coordinate_scale: 10000000
 
 rsu_point: {
-    nagoya-u: [35.154381, 136.966465]
+    nagoya-u: [35.154381, 136.966465],
+    all_kashiwanoha: [35.895889, 139.94183]
 }
 
 rsu_zoom: {
-    nagoya-u: 16
+    nagoya-u: 16,
+    all_kashiwanoha: 16
 }
 
 rsu_idmap: {

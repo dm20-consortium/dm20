@@ -483,8 +483,8 @@ def get_car_pos_and_rsu(car_pos_dict, markers, logs, cross, tracking_dic, config
             closest = tracking_dic[cross]["closest"]
             rsus = [closest] if closest != "" else []
     else:
-        # ビューア（app.py）上で選択されたRSUの名前をセット
-        rsus.append(cross.replace("all","").replace("position",""))
+        # ビューア（ws_client.py）上で選択されたRSUの名前をセット
+        rsus.append(cross)
     return rsus
 
 # マーカー生成処理
@@ -513,7 +513,11 @@ def request_marker(car_pos_dict, logs, cross, signal_save_dic, tracking_dic, con
                     sig.append(s)
             all_flag = True
     else:
-        for rsu in rsus:
+        if cross.startswith("all"):
+            target_rsus = list(logs.keys())
+        else:
+            target_rsus = rsus
+        for rsu in target_rsus:
             if rsu not in logs:
                 print(f"[request_marker] Warning: key is not found in logs. key: {rsu}")
                 continue
