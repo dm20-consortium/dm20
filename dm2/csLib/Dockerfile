@@ -1,18 +1,17 @@
-arg IMAGE_TAG=20.04
-from dm2/seclib:${IMAGE_TAG}
+ARG IMAGE_TAG=24.04
+FROM dm2/seclib:${IMAGE_TAG}
 
-run apt-get update && \
-  apt-get install -y \
-    build-essential \
-    g++ \
-    liblog4cxx-dev \
-    libssl-dev \
-    libev-dev
+ENV DEBIAN_FRONTEND=noninteractive
 
-copy . /dm20/csLib/
-workdir /dm20/csLib/
+RUN apt-get update && \
+  apt-get install -y --no-install-recommends \
+    libev-dev \
+  && rm -rf /var/lib/apt/lists/*
 
-run make clean
-run make all
-run make install
-run ldconfig
+COPY . /dm20/csLib/
+WORKDIR /dm20/csLib/
+
+RUN make clean
+RUN make all
+RUN make install
+RUN ldconfig

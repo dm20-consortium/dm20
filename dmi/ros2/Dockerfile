@@ -1,43 +1,49 @@
-arg IMAGE_TAG=20.04
+ARG IMAGE_TAG=24.04
+ARG ROS_DISTRO=jazzy
 
-from dm2/proto:${IMAGE_TAG} as proto-image
-from dm2/dmclientlib:${IMAGE_TAG} as dmclient-image
-from ros:foxy
+FROM dm2/proto:${IMAGE_TAG} AS proto-image
+FROM dm2/dmclientlib:${IMAGE_TAG} AS dmclient-image
 
-arg ROS_APT_SOURCE_VERSION=1.1.0
+FROM ros:${ROS_DISTRO}
 
-copy ./dm_msgs /opt/ws/src/dm_msgs
-copy ./ros2_dmi /opt/ws/src/ros2_dmi
-copy ./cmake /opt/ws/src/cmake
+ARG IMAGE_TAG
+ARG ROS_DISTRO
 
-copy --from=dmclient-image /usr/local/include/is /usr/local/include/is
-copy --from=dmclient-image /usr/local/lib/*.a /usr/local/lib/
+ENV DEBIAN_FRONTEND=noninteractive
 
-run apt-get -o Acquire::AllowInsecureRepositories=true update && apt-get install -y curl
-run curl -L -o /tmp/ros2-apt-source.deb "https://github.com/ros-infrastructure/ros-apt-source/releases/download/${ROS_APT_SOURCE_VERSION}/ros2-apt-source_${ROS_APT_SOURCE_VERSION}.$(. /etc/os-release && echo $VERSION_CODENAME)_all.deb"
-run apt-get install /tmp/ros2-apt-source.deb
-run rm /etc/apt/sources.list.d/ros2-snapshots.list
+ARG ROS_APT_SOURCE_VERSION=1.1.0
 
-run apt-get update && \
-  apt-get install -y \
-    ros-foxy-cyclonedds \
-    ros-foxy-rmw-cyclonedds-cpp \
-    libboost-all-dev \
-    libxerces-c-dev \
-    libgeos++-dev
+COPY ./dm_msgs /opt/ws/src/dm_msgs
+COPY ./ros2_dmi /opt/ws/src/ros2_dmi
+COPY ./cmake /opt/ws/src/cmake
 
-env RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+COPY --from=dmclient-image /usr/local/include/is /usr/local/include/is
+COPY --from=dmclient-image /usr/local/lib/*.a /usr/local/lib/
 
-copy --from=proto-image /usr/local/bin/protoc /usr/local/bin/protoc
-copy --from=proto-image /usr/local/lib/libdm2proto* /usr/local/lib/
-copy --from=proto-image /usr/local/lib/libprotobuf* /usr/local/lib/
-copy --from=proto-image /usr/local/include/is /usr/local/include/is
-copy --from=proto-image /usr/local/include/google /usr/local/include/google
+# protobuf
+COPY --from=proto-image /usr/bin/protoc /usr/bin/protoc
+COPY --from=proto-image /usr/local/lib/libdm2proto* /usr/local/lib/
+COPY --from=proto-image /usr/lib/x86_64-linux-gnu/libprotobuf* /usr/lib/x86_64-linux-gnu/
+COPY --from=proto-image /usr/local/include/is /usr/local/include/is
+COPY --from=proto-image /usr/include/google /usr/include/google
 
-workdir /opt/ws
-run ldconfig
-run bash -c "source /opt/ros/foxy/setup.bash && colcon build --symlink-install"
+RUN ldconfig
 
-copy ./entrypoint.sh /
+# ROS2 build
+WORKDIR /opt/ws
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        libboost-dev \
+        libboost-system-dev \
+        libboost-thread-dev \
+        libboost-regex-dev \
+        libxerces-c-dev \
+        libgeos++-dev \
+    && rm -rf /var/lib/apt/lists/*
+    
+RUN bash -c "source /opt/ros/${ROS_DISTRO}/setup.bash && colcon build --symlink-install"
+
+COPY ./entrypoint.sh /
 RUN chmod +x /entrypoint.sh
-entrypoint ["/entrypoint.sh"]
+
+ENTRYPOINT ["/entrypoint.sh"]

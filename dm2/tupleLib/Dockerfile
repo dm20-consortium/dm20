@@ -1,13 +1,17 @@
-arg IMAGE_TAG=20.04
-from dm2/proto:${IMAGE_TAG} as proto-image
-FROM ubuntu:${IMAGE_TAG}
+ARG IMAGE_TAG=24.04
+FROM dm2/proto:${IMAGE_TAG} AS proto-image
+FROM dm2/base:${IMAGE_TAG}
+
+ARG CPLUS_VER=c++17
 
 # avoid hunging up
-env TZ=Asia/Tokyo
-run ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+ENV TZ=Asia/Tokyo
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
-run apt-get update \
-  && apt-get install -y \
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends \
     make \
     build-essential g++ \
     zlib1g-dev \
@@ -15,23 +19,24 @@ run apt-get update \
     pkg-config \
   && rm -rf /var/lib/apt/lists/*
 
-copy --from=proto-image /usr/local/bin/protoc /usr/local/bin/protoc
-copy --from=proto-image /usr/local/lib/libdm2proto* /usr/local/lib/
-copy --from=proto-image /usr/local/lib/libprotobuf* /usr/local/lib/
-copy --from=proto-image /usr/local/include/is /usr/local/include/is
-copy --from=proto-image /usr/local/include/google /usr/local/include/google
-COPY --from=proto-image /usr/local/lib/pkgconfig/protobuf.pc /usr/local/lib/pkgconfig/
+# protobuf
+COPY --from=proto-image /usr/bin/protoc /usr/bin/protoc
+COPY --from=proto-image /usr/local/lib/libdm2proto* /usr/local/lib/
+COPY --from=proto-image /usr/lib/x86_64-linux-gnu/libprotobuf* /usr/lib/x86_64-linux-gnu/
+COPY --from=proto-image /usr/local/include/is /usr/local/include/is
+COPY --from=proto-image /usr/include/google /usr/include/google
+COPY --from=proto-image /usr/lib/x86_64-linux-gnu/pkgconfig/protobuf.pc /usr/lib/x86_64-linux-gnu/pkgconfig/
 
-run ldconfig
+RUN ldconfig
 
-copy common.mk /tmp/common.mk
-copy tupleLib /tmp/tupleLib
-workdir /tmp/tupleLib/
+COPY common.mk /tmp/common.mk
+COPY tupleLib /tmp/tupleLib
+WORKDIR /tmp/tupleLib/
 
-run make clean
-run make all
-run make install
-run ldconfig
+RUN make clean
+RUN make all CPLUS_VER=${CPLUS_VER}
+RUN make install
+RUN ldconfig
 
-workdir /
-run rm -rf /tmp/tupleLib
+WORKDIR /
+RUN rm -rf /tmp/tupleLib

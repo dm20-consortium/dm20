@@ -1,8 +1,7 @@
-# Ubuntu 20.04想定のCMakeListsである
 cmake_minimum_required (VERSION 3.10)
 project(dm2is CXX)
 
-set(CMAKE_CXX_FLAGS "-std=c++14 -MMD -MP -O3 -Wextra -Winit-self -Wall -Wno-deprecated-declarations -Wno-shift-count-overflow -Wno-misleading-indentation -Wno-unused-variable -Wno-missing-field-initializers -Wno-unused-parameter -Wno-maybe-uninitialized")
+set(CMAKE_CXX_FLAGS "-std=c++17 -MMD -MP -O3 -Wextra -Winit-self -Wall -Wno-deprecated-declarations -Wno-shift-count-overflow -Wno-misleading-indentation -Wno-unused-variable -Wno-missing-field-initializers -Wno-unused-parameter -Wno-maybe-uninitialized")
 set(CMAKE_INCLUDE_CURRENT_DIR_IN_INTERFACE ON)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake)
 

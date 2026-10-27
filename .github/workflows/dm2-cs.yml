@@ -12,6 +12,10 @@ permissions:
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        ubuntu_version: ['22.04', '24.04']
 
     steps:
       - name: Checkout
@@ -31,8 +35,8 @@ jobs:
         run: |
           docker build \
             -f secLib/Dockerfile \
-            --build-arg IMAGE_TAG=20.04 \
-            -t dm2/seclib:20.04 \
+            --build-arg IMAGE_TAG=${{ matrix.ubuntu_version }} \
+            -t dm2/seclib:${{ matrix.ubuntu_version }} \
             secLib/
 
       - name: Build csLib
@@ -40,22 +44,37 @@ jobs:
         run: |
           docker build \
             -f csLib/Dockerfile \
-            --build-arg IMAGE_TAG=20.04 \
-            -t dm2/cslib:20.04 \
+            --build-arg IMAGE_TAG=${{ matrix.ubuntu_version }} \
+            -t dm2/cslib:${{ matrix.ubuntu_version }} \
             csLib/
 
-      # final image
       - name: Build dm2-cs
         working-directory: dm2
         run: |
+          IMAGE=ghcr.io/dm20-consortium/dm2-cs
+          VERSION=${{ github.ref_name }}
+          OS=${{ matrix.ubuntu_version }}
           docker build \
             -f cs/Dockerfile \
-            --build-arg IMAGE_TAG=20.04 \
-            -t ghcr.io/dm20-consortium/dm2-cs:${{ github.ref_name }} \
-            -t ghcr.io/dm20-consortium/dm2-cs:latest \
+            --build-arg IMAGE_TAG="${OS}" \
+            -t "${IMAGE}:${VERSION}-ubuntu${OS}" \
             ./
 
-      - name: Push dm2-cs
+      - name: Push OS-specific version and latest
         run: |
-          docker push ghcr.io/dm20-consortium/dm2-cs:${{ github.ref_name }}
-          docker push ghcr.io/dm20-consortium/dm2-cs:latest
+          IMAGE=ghcr.io/dm20-consortium/dm2-cs
+          VERSION=${{ github.ref_name }}
+          OS=${{ matrix.ubuntu_version }}
+          docker tag "${IMAGE}:${VERSION}-ubuntu${OS}" "${IMAGE}:latest-ubuntu${OS}"
+          docker push "${IMAGE}:${VERSION}-ubuntu${OS}"
+          docker push "${IMAGE}:latest-ubuntu${OS}"
+
+      - name: Push default version and latest (Ubuntu 24.04)
+        if: matrix.ubuntu_version == '24.04'
+        run: |
+          IMAGE=ghcr.io/dm20-consortium/dm2-cs
+          VERSION=${{ github.ref_name }}
+          docker tag "${IMAGE}:${VERSION}-ubuntu24.04" "${IMAGE}:${VERSION}"
+          docker tag "${IMAGE}:${VERSION}-ubuntu24.04" "${IMAGE}:latest"
+          docker push "${IMAGE}:${VERSION}"
+          docker push "${IMAGE}:latest"

@@ -80,9 +80,16 @@ IF (NOT DEFINED GEOS_INCLUDE_DIR OR NOT DEFINED GEOS_LIBRARY OR NOT DEFINED GEOS
       "${GEOS_CONFIG_LIBS}" )
 
     ## remove prefix -l because we need the pure name
-    IF (GEOS_LIB_NAME_WITH_PREFIX)
-      STRING(REGEX REPLACE "(^ )-l(.*)" "\\2" GEOS_LIBRARY ${GEOS_LIB_NAME_WITH_PREFIX} )
-    ENDIF (GEOS_LIB_NAME_WITH_PREFIX)
+    # Find GEOS C++ library
+    FIND_LIBRARY(GEOS_LIBRARY
+      NAMES geos geos-3
+      PATHS
+        ${GEOS_PREFIX}/lib
+        ${GEOS_PREFIX}/lib/x86_64-linux-gnu
+        /usr/local/lib
+        /usr/lib/x86_64-linux-gnu
+        /usr/lib
+    )
 
   ELSE(DEFINED GEOS_CONFIG)
     MESSAGE("FindGEOS.cmake: geos-config not found. Please set it manually. GEOS_CONFIG=${GEOS_CONFIG}")

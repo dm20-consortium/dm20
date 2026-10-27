@@ -1,60 +1,64 @@
-# docker build -t dm2mes:latest .
-arg IMAGE_TAG=20.04
-from dm2/proto:${IMAGE_TAG} as proto-image
-from dm2/tuplelib:${IMAGE_TAG} as tuplelib-image
-from dm2/seclib:${IMAGE_TAG} as seclib-image
-from dm2/commonlib:${IMAGE_TAG} as commonlib-image
-from dm2/dmclientlib:${IMAGE_TAG} as dmclientlib-image
-from dm2/dmclientlib:${IMAGE_TAG} as dmclientlib-image
+ARG IMAGE_TAG=24.04
+FROM dm2/proto:${IMAGE_TAG} AS proto-image
+FROM dm2/tuplelib:${IMAGE_TAG} AS tuplelib-image
+FROM dm2/seclib:${IMAGE_TAG} AS seclib-image
+FROM dm2/commonlib:${IMAGE_TAG} AS commonlib-image
+FROM dm2/dmclientlib:${IMAGE_TAG} AS dmclientlib-image
+FROM dm2/dmclientlib:${IMAGE_TAG} AS dmclientlib-image
 
-copy --from=seclib-image /dm20/secLib /dm20/secLib
-copy --from=seclib-image /usr/local/lib/libdm2security.a /usr/local/lib/
+ARG CPLUS_VER=c++17
+
+COPY --from=seclib-image /dm20/secLib /dm20/secLib
+COPY --from=seclib-image /usr/local/lib/libdm2security.a /usr/local/lib/
 
 # avoid hunging up
-env TZ=Asia/Tokyo
-run ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+ENV TZ=Asia/Tokyo
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
+ENV DEBIAN_FRONTEND=noninteractive
 
 # required libraries
-run apt-get update && \
-  apt-get install -y \
+RUN apt-get update && \
+  apt-get install -y --no-install-recommends \
     wget \
     zlib1g-dev \
     libzstd-dev \
     libgeos++-dev \
-    libgeos-c1v5 \
     libxerces-c-dev \
     libssl-dev \
-    libpqxx-6.4 \
     libpq-dev \
     libpqxx-dev \
     liblog4cxx-dev \
     pkg-config \
   && rm -rf /var/lib/apt/lists/*
 
-copy --from=tuplelib-image /usr/local/include/is /usr/local/include/is
-copy --from=tuplelib-image /usr/local/lib/libtuple.a /usr/local/lib/
-copy --from=proto-image /usr/local/bin/protoc /usr/local/bin/protoc
-copy --from=proto-image /usr/local/lib/libdm2proto* /usr/local/lib/
-copy --from=proto-image /usr/local/lib/libprotobuf* /usr/local/lib/
-copy --from=proto-image /usr/local/include/is /usr/local/include/is
-copy --from=proto-image /usr/local/include/google /usr/local/include/google
-copy --from=commonlib-image /dm20/commonLib /tmp/commonLib
-copy --from=commonlib-image /dm20/csLib /tmp/csLib
-copy --from=commonlib-image /usr/local/lib/libdm2SocketInterface.so /usr/local/lib/libdm2SocketInterface.so
-#copy --from=dmclientlib-image /usr/local/include/is /usr/local/include/is
-#copy --from=dmclientlib-image /usr/local/lib/libtuple.a /usr/local/lib/libtuple.a
-#copy --from=dmclientlib-image /usr/local/lib/libdmclient.a /usr/local/lib/libdmclient.a
-run ldconfig
+COPY --from=tuplelib-image /usr/local/include/is /usr/local/include/is
+COPY --from=tuplelib-image /usr/local/lib/libtuple.a /usr/local/lib/
 
-copy common.mk /tmp/common.mk
-copy apl/dm2mes /tmp/apl/dm2mes
+# protobuf
+COPY --from=proto-image /usr/bin/protoc /usr/bin/protoc
+COPY --from=proto-image /usr/local/lib/libdm2proto* /usr/local/lib/
+COPY --from=proto-image /usr/lib/x86_64-linux-gnu/libprotobuf* /usr/lib/x86_64-linux-gnu
+COPY --from=proto-image /usr/local/include/is /usr/local/include/is
+COPY --from=proto-image /usr/include/google /usr/include/google
+
+COPY --from=commonlib-image /dm20/commonLib /tmp/commonLib
+COPY --from=commonlib-image /dm20/csLib /tmp/csLib
+COPY --from=commonlib-image /usr/local/lib/libdm2SocketInterface.so /usr/local/lib/libdm2SocketInterface.so
+#COPY --from=dmclientlib-image /usr/local/include/is /usr/local/include/is
+#COPY --from=dmclientlib-image /usr/local/lib/libtuple.a /usr/local/lib/libtuple.a
+#COPY --from=dmclientlib-image /usr/local/lib/libdmclient.a /usr/local/lib/libdmclient.a
+RUN ldconfig
+
+COPY common.mk /tmp/common.mk
+COPY apl/dm2mes /tmp/apl/dm2mes
 workdir /tmp/apl/dm2mes/
 
 
-run make clean
-run make all
-run make install
-run ldconfig
+RUN make clean
+RUN make all CPLUS_VER=${CPLUS_VER}
+RUN make install
+RUN ldconfig
 
 workdir /
-run rm -rf /dm20/apl
+RUN rm -rf /dm20/apl

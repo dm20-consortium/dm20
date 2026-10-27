@@ -1,0 +1,41 @@
+ARG IMAGE_TAG=22.04
+FROM ubuntu:${IMAGE_TAG}
+
+# avoid hunging up
+ENV TZ=Asia/Tokyo
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends \
+    ca-certificates \
+	wget \
+    build-essential \
+    cmake \
+	&& update-ca-certificates \	
+	&& rm -rf /var/lib/apt/lists/*
+
+# install protobuf
+WORKDIR /
+RUN wget https://github.com/protocolbuffers/protobuf/releases/download/v21.12/protobuf-cpp-3.21.12.tar.gz && \
+  tar zxvf protobuf-cpp-3.21.12.tar.gz && \
+  rm protobuf-cpp-3.21.12.tar.gz
+RUN mkdir protoc
+WORKDIR /protobuf-3.21.12
+RUN ./configure \
+  --prefix=/usr \
+  --libdir=/usr/lib/x86_64-linux-gnu
+RUN make -j4 && \
+	make install && \
+	rm -f \
+		/usr/lib/x86_64-linux-gnu/libprotobuf.a \
+		/usr/lib/x86_64-linux-gnu/libprotobuf-lite.a \
+		/usr/lib/x86_64-linux-gnu/libprotoc.a \
+		/usr/lib/x86_64-linux-gnu/libprotobuf.la \
+		/usr/lib/x86_64-linux-gnu/libprotobuf-lite.la \
+		/usr/lib/x86_64-linux-gnu/libprotoc.la \
+		/usr/lib/x86_64-linux-gnu/libprotobuf-lite.so \
+		/usr/lib/x86_64-linux-gnu/libprotobuf-lite.so.32 \
+		/usr/lib/x86_64-linux-gnu/libprotobuf-lite.so.32.0.12 && \
+	rm -rf /protobuf-3.21.12

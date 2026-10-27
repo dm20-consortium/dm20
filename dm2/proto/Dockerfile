@@ -1,19 +1,19 @@
 # docker build -t dm2/is:latest .
-arg IMAGE_TAG=20.04
-from dm2/protoc:${IMAGE_TAG} as protoc-image
+ARG IMAGE_TAG=24.04
+FROM dm2/protoc:${IMAGE_TAG} AS protoc-image
 
 # avoid hunging up
-env TZ=Asia/Tokyo
-run ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+ENV TZ=Asia/Tokyo
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
-run apt-get update \
+RUN apt-get update \
   && apt-get install -y \
-    pkg-config
+    build-essential pkg-config cmake
 
 # build proto files
-copy . /dm20/proto
-run rm -rf /dm20/proto/build
-workdir /dm20/proto/build
-run cmake .. && make -j4 install
+COPY . /dm20/proto
+RUN rm -rf /dm20/proto/build
+WORKDIR /dm20/proto/build
+RUN cmake .. && make -j4 install
 
-workdir /
+WORKDIR /

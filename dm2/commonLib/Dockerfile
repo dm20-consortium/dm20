@@ -1,18 +1,20 @@
-arg IMAGE_TAG=20.04
-# docker build -t dm2/commonlib:latest .
-from dm2/cslib:${IMAGE_TAG}
+ARG IMAGE_TAG=24.04
+FROM dm2/cslib:${IMAGE_TAG}
 
-run apt-get update && \
-  apt-get install -y \
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && \
+  apt-get install -y --no-install-recommends \
     build-essential \
     g++ \
     liblog4cxx-dev \
-    libssl-dev
+    libssl-dev \
+  && rm -rf /var/lib/apt/lists/*
 
-copy . /dm20/commonLib/
-workdir /dm20/commonLib/
+COPY . /dm20/commonLib/
+WORKDIR /dm20/commonLib/
 
-run make clean
-run make all
-run make install
-run ldconfig
+RUN make clean
+RUN make all
+RUN make install
+RUN ldconfig

@@ -29,17 +29,17 @@ bash build.bash
 ```bash
 PROJECT_DIR=~/dm20
 function dm2cs_send () {
-  docker run -it --init --rm --net host --name cs_send -v ${PROJECT_DIR}/dm2/conf:/tmp/conf dm2/cs:20.04 dm2cs_send -d /tmp/conf;
+  docker run -it --init --rm --net host --name cs_send -v ${PROJECT_DIR}/dm2/conf:/tmp/conf dm2/cs:latest dm2cs_send -d /tmp/conf;
 }
 function dm2cs_recv () {
-  docker run -it --init --rm --net host --name cs_recv -v ${PROJECT_DIR}/dm2/conf:/tmp/conf dm2/cs:20.04 dm2cs_recv -d /tmp/conf;
+  docker run -it --init --rm --net host --name cs_recv -v ${PROJECT_DIR}/dm2/conf:/tmp/conf dm2/cs:latest dm2cs_recv -d /tmp/conf;
 }
 function dm2is () {
-  docker run --init --rm --net host --name rdb -e POSTGRES_PASSWORD=postgres dm2/rdb:20.04 > /dev/null 2>&1 &
-  docker run -it --init --rm --net host --name is -v ${PROJECT_DIR}/dm2/conf:/tmp/conf dm2/is:20.04 dm2is -d /tmp/conf
+  docker run --init --rm --net host --name rdb -e POSTGRES_PASSWORD=postgres dm2/rdb:latest > /dev/null 2>&1 &
+  docker run -it --init --rm --net host --name is -v ${PROJECT_DIR}/dm2/conf:/tmp/conf dm2/is:latest dm2is -d /tmp/conf
 }
 function dm2mes () {
-  docker run -i --rm --net host dm2/dm2mes:20.04 stdbuf -oL dm2mes "$@";
+  docker run -i --rm --net host dm2/dm2mes:latest stdbuf -oL dm2mes "$@";
 }
 ```
 

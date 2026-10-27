@@ -1,21 +1,23 @@
-arg IMAGE_TAG=20.04
-# docker build -t cs:latest .
-from dm2/cslib:${IMAGE_TAG}
+ARG IMAGE_TAG=24.04
+FROM dm2/cslib:${IMAGE_TAG}
 
-run apt-get update && \
-  apt-get install -y \
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && \
+  apt-get install -y --no-install-recommends \
     build-essential \
     g++ \
     liblog4cxx-dev \
-    libssl-dev
+    libssl-dev \
+  && rm -rf /var/lib/apt/lists/*
 
-copy conf /dm20/conf
-copy cs /dm20/cs
-workdir /dm20/cs/
+COPY conf /dm20/conf
+COPY cs /dm20/cs
+WORKDIR /dm20/cs/
 
-run make clean
-run make all
-run make install
-run ldconfig
+RUN make clean
+RUN make all
+RUN make install
+RUN ldconfig
 
-workdir /dm20/cs/bin
+WORKDIR /dm20/cs/bin

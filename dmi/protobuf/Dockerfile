@@ -1,10 +1,14 @@
-arg IMAGE_TAG=20.04
+ARG IMAGE_TAG=24.04
 
-from dm2/dmclientlib:${IMAGE_TAG} as dmlib-image
-from dm2/proto:${IMAGE_TAG} as base
+FROM dm2/dmclientlib:${IMAGE_TAG} AS dmlib-image
+FROM dm2/proto:${IMAGE_TAG} AS base
 
-run apt-get update && \
-  apt-get install -y \
+ARG CPLUS_VER=17
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
     cmake \
     build-essential \
     libboost-all-dev \
@@ -17,36 +21,35 @@ run apt-get update && \
     libzstd-dev \
   && rm -rf /var/lib/apt/lists/*
 
-copy --from=dmlib-image /usr/local/lib/* /usr/local/lib/
-copy --from=dmlib-image /usr/local/include/is /usr/local/include/is
+COPY --from=dmlib-image /usr/local/lib/* /usr/local/lib/
+COPY --from=dmlib-image /usr/local/include/is /usr/local/include/is
 
 # ---- build stage ----
-from base as builder
+FROM base AS builder
 
-copy ./ccam_cool4_sensor_io /tmp/dmi/ccam_cool4_sensor_io
-copy ./protobuf_dmi /tmp/dmi/protobuf_dmi
-copy ./cmake /tmp/dmi/cmake
+COPY ./ccam_cool4_sensor_io /tmp/dmi/ccam_cool4_sensor_io
+COPY ./protobuf_dmi /tmp/dmi/protobuf_dmi
+COPY ./cmake /tmp/dmi/cmake
 
-workdir /tmp/dmi/
-run set -e && \
+WORKDIR /tmp/dmi/
+RUN set -e && \
   for dir in ccam_cool4_sensor_io protobuf_dmi; do \
     cd /tmp/dmi/${dir} && \
     echo "try to build ${dir}" && \
     rm -rf build && \
     mkdir build && \
     cd build && \
-    cmake .. && \
+    cmake -DCPLUS_VER=${CPLUS_VER} .. && \
     make -j$(nproc) && \
     make install && \
     ldconfig; \
   done
 
 # ---- runtime stage ----
-from base as runtime
+FROM base AS runtime
 
-copy --from=builder /usr/local/lib/lib*.so /usr/local/lib/
-copy --from=builder /usr/local/include/google /usr/local/include/google
-copy --from=builder /usr/local/include/ccam_cool4_sensor_io /usr/local/include/ccam_cool4_sensor_io
-copy --from=builder /usr/local/include/protobuf_dmi /usr/local/include/protobuf_dmi
-copy --from=builder /usr/local/bin/* /usr/local/bin/
-run ldconfig
+COPY --from=builder /usr/local/lib/lib*.so /usr/local/lib/
+COPY --from=builder /usr/local/include/ccam_cool4_sensor_io /usr/local/include/ccam_cool4_sensor_io
+COPY --from=builder /usr/local/include/protobuf_dmi /usr/local/include/protobuf_dmi
+COPY --from=builder /usr/local/bin/* /usr/local/bin/
+RUN ldconfig

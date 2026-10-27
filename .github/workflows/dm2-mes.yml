@@ -13,6 +13,11 @@ jobs:
   build-and-push:
     runs-on: ubuntu-latest
 
+    strategy:
+      fail-fast: false
+      matrix:
+        ubuntu_version: ['22.04', '24.04']
+
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -32,8 +37,8 @@ jobs:
         run: |
           docker build \
             -f secLib/Dockerfile \
-            --build-arg IMAGE_TAG=20.04 \
-            -t dm2/seclib:20.04 \
+            --build-arg IMAGE_TAG=${{ matrix.ubuntu_version }} \
+            -t dm2/seclib:${{ matrix.ubuntu_version }} \
             secLib/
 
       - name: Build csLib
@@ -41,8 +46,8 @@ jobs:
         run: |
           docker build \
             -f csLib/Dockerfile \
-            --build-arg IMAGE_TAG=20.04 \
-            -t dm2/cslib:20.04 \
+            --build-arg IMAGE_TAG=${{ matrix.ubuntu_version }} \
+            -t dm2/cslib:${{ matrix.ubuntu_version }} \
             csLib/
 
       - name: Build commonLib
@@ -50,17 +55,17 @@ jobs:
         run: |
           docker build \
             -f commonLib/Dockerfile \
-            --build-arg IMAGE_TAG=20.04 \
-            -t dm2/commonlib:20.04 \
+            --build-arg IMAGE_TAG=${{ matrix.ubuntu_version }} \
+            -t dm2/commonlib:${{ matrix.ubuntu_version }} \
             commonLib/
 
       - name: Build proto intermediate image
         working-directory: dm2
         run: |
           docker build \
-            -f proto/Dockerfile.proto \
-            --build-arg IMAGE_TAG=20.04 \
-            -t dm2/protoc:20.04 \
+            -f proto/Dockerfile.proto.${{ matrix.ubuntu_version }} \
+            --build-arg IMAGE_TAG=${{ matrix.ubuntu_version }} \
+            -t dm2/protoc:${{ matrix.ubuntu_version }} \
             proto/
 
       - name: Build proto
@@ -68,8 +73,8 @@ jobs:
         run: |
           docker build \
             -f proto/Dockerfile \
-            --build-arg IMAGE_TAG=20.04 \
-            -t dm2/proto:20.04 \
+            --build-arg IMAGE_TAG=${{ matrix.ubuntu_version }} \
+            -t dm2/proto:${{ matrix.ubuntu_version }} \
             proto/
 
       - name: Build tupleLib
@@ -77,8 +82,9 @@ jobs:
         run: |
           docker build \
             -f tupleLib/Dockerfile \
-            --build-arg IMAGE_TAG=20.04 \
-            -t dm2/tuplelib:20.04 \
+            --build-arg IMAGE_TAG=${{ matrix.ubuntu_version }} \
+            --build-arg CPLUS_VER=c++17 \
+            -t dm2/tuplelib:${{ matrix.ubuntu_version }} \
             ./
 
       - name: Build dmClientLib
@@ -86,8 +92,9 @@ jobs:
         run: |
           docker build \
             -f dmClientLib/Dockerfile \
-            --build-arg IMAGE_TAG=20.04 \
-            -t dm2/dmclientlib:20.04 \
+            --build-arg IMAGE_TAG=${{ matrix.ubuntu_version }} \
+            --build-arg CPLUS_VER=c++17 \
+            -t dm2/dmclientlib:${{ matrix.ubuntu_version }} \
             ./
 
       # final image
@@ -96,12 +103,30 @@ jobs:
         run: |
           docker build \
             -f apl/dm2mes/Dockerfile \
-            --build-arg IMAGE_TAG=20.04 \
-            -t ghcr.io/dm20-consortium/dm2-mes:${{ github.ref_name }} \
-            -t ghcr.io/dm20-consortium/dm2-mes:latest \
+            --build-arg IMAGE_TAG=${{ matrix.ubuntu_version }} \
+            --build-arg CPLUS_VER=c++17 \
+            -t ghcr.io/dm20-consortium/dm2-mes:${{ github.ref_name }}-ubuntu${{ matrix.ubuntu_version }} \
             ./
 
-      - name: Push dm2-mes
+      - name: Push OS-specific version
         run: |
-          docker push ghcr.io/dm20-consortium/dm2-mes:${{ github.ref_name }}
-          docker push ghcr.io/dm20-consortium/dm2-mes:latest
+          docker push ghcr.io/dm20-consortium/dm2-mes:${{ github.ref_name }}-ubuntu${{ matrix.ubuntu_version }}
+
+      - name: Push OS-specific latest
+        run: |
+          IMAGE=ghcr.io/dm20-consortium/dm2-mes
+          VERSION=${{ github.ref_name }}
+          OS=${{ matrix.ubuntu_version }}
+          docker tag "${IMAGE}:${VERSION}-ubuntu${OS}" "${IMAGE}:latest-ubuntu${OS}"
+          docker push "${IMAGE}:latest-ubuntu${OS}"
+
+      # Keep legacy tags on Ubuntu 24.04 only
+      - name: Push version and latest
+        if: matrix.ubuntu_version == '24.04'
+        run: |
+          IMAGE=ghcr.io/dm20-consortium/dm2-mes
+          VERSION=${{ github.ref_name }}
+          docker tag "${IMAGE}:${VERSION}-ubuntu24.04" "${IMAGE}:${VERSION}"
+          docker tag "${IMAGE}:${VERSION}-ubuntu24.04" "${IMAGE}:latest"
+          docker push "${IMAGE}:${VERSION}"
+          docker push "${IMAGE}:latest"
