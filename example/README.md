@@ -17,6 +17,7 @@ dm2のコマンドによる操作方法、クエリの記述方法、アプリ�
 ## ROS2トピックとDM2.0 Platformの連携 ([DMIのインストール](../dmi/README.md)が必要です)
 ---
 1. [物標情報のROSトピックを生成して、DM2.0 Platformを通してsubscribe/publishする](ros2/object_info.md)
+2. [V2X E2E Simulator上のROSトピックをDM2.0 Platformに取り込む](example/ros2/V2X_E2E_SIM.md)
 
 ## UDP / TCPデータとDM2.0 Platformの連携 ([DMIのインストール](../dmi/README.md)が必要です)
 ---

@@ -32,20 +32,20 @@ ROS2端末とDM端末（DM2.0をインストールした端末）との連携動
 疎通確認するだけであれば、下記の通り、コメントアウトを外すだけで問題ありません。
 
 ```text
- ros2:
-   subscriber:
-     object_info:
-       targetTable: object_info_0_8_1
-       topicName: /object_info/local
-       topicType: ObjectInfoArray
-       logIntervalMilliSecond: 300000
-   publisher:
-     object_info:
-       targetTable: object_info_0_8_1
-       topicName: /object_info/dm
-       topicType: ObjectInfoArray
-       logIntervalMilliSecond: 300000
-       query: master object_info_0_8_1 select * from object_info_0_8_1 [range 300 msec]
+  ros2:
+    subscriber:
+      object_info:
+        targetTable: object_info_0_8_1
+        topicName: /object_info/local
+        topicType: ObjectInfoArray
+        logIntervalMilliSecond: 300000
+    publisher:
+      object_info:
+        targetTable: object_info_0_8_1
+        topicName: /object_info/dm
+        topicType: ObjectInfoArray
+        logIntervalMilliSecond: 300000
+        query: master object_info_0_8_1 select * from object_info_0_8_1 [range 300 msec]
 ```
 
 DM2.0 PlatformのDBシステムを起動します。Dockerイメージで構築した場合のROS2DMIは、DBシステム内から動的ライブラリとして呼び出されるため、起動コマンドはありません。

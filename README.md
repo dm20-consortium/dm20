@@ -30,6 +30,9 @@
 * 導入実績
   * 経済産業省による自動運転レベル4等先進モビリティサービス研究開発・社会実装プロジェクト（[RoAD to the L4](https://www.road-to-the-l4.go.jp/)）のテーマ4（[CooL4](https://www.road-to-the-l4.go.jp/activity/theme04/)）での社会実装実績あり
   * 千葉県柏市柏の葉地域の道路インフラ装置に取り付けた路側センサーの情報を自動運転バスへ提供
+* シミュレーション環境との連携
+  * [V2X E2E Simulator](https://tlab-wide.github.io/V2X_E2E_Simulator/latest/)との連携に対応
+  * シミュレータが生成する物標情報や信号情報をROS2経由でDM2.0に取り込み、仮想環境を利用したインフラ協調型システムの開発・検証が可能
 
 ![全体構成](docs/images/overview.png)
 
@@ -53,6 +56,7 @@
 
 ## 使用例
 * ROS2やUDPデータを使った使用例やアプリケーション開発方法について知りたい方は、[こちら](example/README.md)
+* [V2X E2E Simulator](https://tlab-wide.github.io/V2X_E2E_Simulator/latest/)との連携方法について知りたい方は、[こちら](example/ros2/V2X_E2E_SIM.md)
 
 ## プラットフォームの開発活動
 DM2.0 Platform は、名古屋大学・同志社大学および複数の企業・非営利組織が共同で開発してきた成果です。現在も開発活動を進めており、コンソーシアム型の共同研究組織として活動を続けています。使用中に軽微な問題を見つけた場合は遠慮なく報告して構いませんが、機能に関する要望やPRを求める場合、まずは我々のコンソーシアムへの参加をご検討下さい。詳細は[こちら](https://www.nces.i.nagoya-u.ac.jp/cav-dm2/index.html)。

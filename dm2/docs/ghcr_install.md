@@ -15,7 +15,7 @@ dm2では、主要なコンポーネントについてGitHub Container Registry 
 | コンポーネント | GHCRパッケージ |
 | ------- | --------- |
 | MES (DMメッセンジャー)    | `dm2-mes` |
-| IS (DBシステム)      | `dm2-is`  |
+| IS (DBシステム, DMIを含む)      | `dm2-is`  |
 | RDB (IS内で利用するRDB)    | `dm2-rdb` |
 | CS (通信部)     | `dm2-cs`  |
 
