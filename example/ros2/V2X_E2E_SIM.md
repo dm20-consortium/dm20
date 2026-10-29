@@ -18,9 +18,9 @@ V2X E2E Simulatorは、AWSIMをベースとしたV2Xシミュレーション環�
 
 ## 3 導入手順
 
-### 3.1 V2X E2E Simulatorのインストール
+### 3.1 V2X E2E Simulatorの起動
 
-- [V2X E2E Simulator 公式ドキュメント](https://tlab-wide.github.io/V2X_E2E_Simulator/latest/)のQuick Start Demoを参照して下さい。
+- [V2X E2E Simulator 公式ドキュメント](https://tlab-wide.github.io/V2X_E2E_Simulator/latest/)のQuick Start Demoを参照し、デモが実行できる状態にして下さい。
 
 - 実行ファイルに実行権限を付与し、起動します。2026年10月の最新版`Version3.1.2`を例にすると、下記のコマンドになります。
 
@@ -39,7 +39,7 @@ chmod +x v2s_e2e_sim_v3.1.2.x86_64
 
 ### 3.2 DM2.0のDBシステムの起動
 
-DM2.0のインストール方法について、ここではGitHub Container Registry (GHCR)を利用した手順を紹介します。その他のインストール方法は[こちら](../../dm2/README.md#インストール)
+DM2.0のインストール方法について、ここではGitHub Container Registry (GHCR)を利用した手順を紹介します。
 
 Dockerがインストールされている環境にて、下記コマンドでDockerイメージを取得します。
 
@@ -63,7 +63,7 @@ cd ~/dm20/dm2/conf
 cp for_V2X_E2E_Sim/dmiConf.yml .
 ```
 
-書き換えている内容は以下の通りです。物標情報と信号情報の`topicName`をV2X E2E Simulatorがパブリッシュするトピック名に合わせています。
+上記で書き換えた内容は以下の通りです。物標情報と信号情報の`topicName`をV2X E2E Simulatorがパブリッシュするトピック名に合わせています。
 
 ```text
   ros2:
@@ -110,3 +110,28 @@ docker run -it --rm --net host \
     ghcr.io/dm20-consortium/dm2-mes:latest \
     stdbuf -oL dm2mes -r -S signal_info -w 50
 ```
+
+### 3.4 DM Web Viewerによる表示
+
+DM Web Viewerを使って、Webブラウザ上で表示する事が可能です。
+
+[DM Web Viewerのクイックスタート](../../viewer/web-viewer/README.md#クイックスタート)の手順1～3を実施します。
+
+DMメッセンジャーの出力先を、DM Web Viewerのクイックスタート手順2で指定したパスに設定します。
+
+```bash
+docker run -it --rm --net host \
+    ghcr.io/dm20-consortium/dm2-mes:latest \
+    stdbuf -oL dm2mes -r -S object_info_0_8_1 -w 50 > /tmp/dm2-web-viewer/csv/object_info_0_8_1_`date +"%Y%m%d"`.csv 
+```
+
+下記のように、Webブラウザ上でV2X E2E Simulatorの物標情報が表示されます。
+
+![DMWebViewer視点](images/dm_view1.png)
+
+
+### 4 複数端末を使った構成
+
+- 端末を2台以上用意することで、V2X E2E Simulatorが生成した物標情報や信号情報を別の端末に送信する事が可能です。
+- 2台のDM端末間の通信動作例については、[こちら](../../example/README.md)
+
