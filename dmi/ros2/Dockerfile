@@ -39,6 +39,8 @@ RUN apt-get update && \
         libboost-regex-dev \
         libxerces-c-dev \
         libgeos++-dev \
+        ros-${ROS_DISTRO}-rmw-cyclonedds-cpp \
+        ros-${ROS_DISTRO}-topic-tools \
     && rm -rf /var/lib/apt/lists/*
     
 RUN bash -c "source /opt/ros/${ROS_DISTRO}/setup.bash && colcon build --symlink-install"

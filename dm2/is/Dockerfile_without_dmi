@@ -1,25 +1,27 @@
-# docker build -t dm2/is:latest .
-arg IMAGE_TAG=20.04
+ARG IMAGE_TAG=24.04
 
-from dm2/proto:${IMAGE_TAG} as proto-image
-from dm2/seclib:${IMAGE_TAG} as seclib-image
-from dm2/commonlib:${IMAGE_TAG} as commonlib-image
-from dm2/tuplelib:${IMAGE_TAG} as tuplelib-image
+FROM dm2/proto:${IMAGE_TAG} as proto-image
+FROM dm2/seclib:${IMAGE_TAG} as seclib-image
+FROM dm2/commonlib:${IMAGE_TAG} as commonlib-image
+FROM dm2/tuplelib:${IMAGE_TAG} as tuplelib-image
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+ARG CPLUS_VER=c++17
 
 # avoid hunging up
-env TZ=Asia/Tokyo
-run ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+ENV TZ=Asia/Tokyo
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 # required libraries
-run apt-get update && \
-  apt-get install -y \
+RUN apt-get update && \
+  apt-get install -y --no-install-recommends \
     cmake \
     zlib1g-dev \
     libzstd-dev \
     libgeos++-dev \
     libxerces-c-dev \
     libssl-dev \
-    libpqxx-6.4 \
     libpq-dev \
     libpqxx-dev \
     liblog4cxx-dev \
@@ -31,23 +33,24 @@ run apt-get update && \
 
 
 # build is
-copy --from=seclib-image /dm20/secLib /dm20/secLib
-copy --from=seclib-image /usr/local/lib/libdm2security.a /usr/local/lib/
-copy --from=commonlib-image /dm20/commonLib /dm20/commonLib
-copy --from=commonlib-image /dm20/csLib /dm20/csLib
-copy --from=commonlib-image /usr/local/lib/*.so /usr/local/lib/
-copy --from=proto-image /usr/local/bin/protoc /usr/local/bin/protoc
-copy --from=proto-image /usr/local/lib/libdm2proto* /usr/local/lib/
-copy --from=proto-image /usr/local/lib/libprotobuf* /usr/local/lib/
-copy --from=proto-image /usr/local/include/is /usr/local/include/is
-copy --from=proto-image /usr/local/include/google /usr/local/include/google
+COPY --from=seclib-image /dm20/secLib /dm20/secLib
+COPY --from=seclib-image /usr/local/lib/libdm2security.a /usr/local/lib/
+COPY --from=commonlib-image /dm20/commonLib /dm20/commonLib
+COPY --from=commonlib-image /dm20/csLib /dm20/csLib
+COPY --from=commonlib-image /usr/local/lib/*.so /usr/local/lib/
+# protobuf
+COPY --from=proto-image /usr/bin/protoc /usr/bin/protoc
+COPY --from=proto-image /usr/local/lib/libdm2proto* /usr/local/lib/
+COPY --from=proto-image /usr/lib/x86_64-linux-gnu/libprotobuf* /usr/lib/x86_64-linux-gnu
+COPY --from=proto-image /usr/local/include/is /usr/local/include/is
+COPY --from=proto-image /usr/include/google /usr/include/google
 
-run ldconfig
-copy . /dm20/is
-run rm -rf /dm20/is/build
-workdir /dm20/is/build
-run cmake -DROS2_WORKSPACE_DIR=/opt/ws ..
-run make -j4 install
-run ldconfig
+RUN ldconfig
+COPY . /dm20/is
+RUN rm -rf /dm20/is/build
+WORKDIR /dm20/is/build
+RUN cmake -DROS2_WORKSPACE_DIR=/opt/ws ..
+RUN make -j4 install
+RUN ldconfig
 
-workdir /
+WORKDIR /
