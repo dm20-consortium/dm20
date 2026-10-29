@@ -86,27 +86,52 @@ echo hello, dm2 | dm2mes -i is-service
 インストール後、下記コマンドでDockerイメージを取得します。
 
 ```bash
-docker pull ghcr.io/dm20-consortium/dm2-cs:v1.2.0
-docker pull ghcr.io/dm20-consortium/dm2-is:v1.2.0
-docker pull ghcr.io/dm20-consortium/dm2-rdb:v1.2.0
-docker pull ghcr.io/dm20-consortium/dm2-mes:v1.2.0
+docker pull ghcr.io/dm20-consortium/dm2-cs:latest
+docker pull ghcr.io/dm20-consortium/dm2-is:latest
+docker pull ghcr.io/dm20-consortium/dm2-rdb:latest
+docker pull ghcr.io/dm20-consortium/dm2-mes:latest
 ```
+
+- dm2-is、dm2-cs、dm2-mesについて、Ubuntuバージョン別のDockerイメージを提供します。
+- `latest` は、Ubuntu 24.04です。
+- dm2-rdb（PostgreSQL／PostGIS）は、Ubuntuバージョンに依存しない共通イメージとして提供します。
+
+以下は、`v1.2.4`リリース時に生成されるタグとコンテナ内のOSの一覧です。
+
+| タグ | コンテナ内のOS |
+|---|---|
+| `latest` | Ubuntu 24.04 |
+| `v1.2.4` | Ubuntu 24.04 |
+| `latest-ubuntu22.04` | Ubuntu 22.04 |
+| `latest-ubuntu24.04` | Ubuntu 24.04 |
+| `v1.2.4-ubuntu22.04` | Ubuntu 22.04 |
+| `v1.2.4-ubuntu24.04` | Ubuntu 24.04 |
 
 - イメージ構築後は、docker runコマンドを使って試すことができますが、[dm2の実行例](../../example/README.md)はホスト上でソースコードからビルドした後のコマンド例となるため、~/.bashrcに下記の関数を登録しておくことで、差異を無くす事ができます。`-v`は、「コンテナ間で設定ファイルやログ、FDファイルを共有するためのオプション」です。`PROJECT_DIR`は、適宜、書き換えて下さい。
 
 ```bash
 PROJECT_DIR=~/dm20
 function dm2cs_send () {
-  docker run -it --init --rm --net host --name cs_send -v ${PROJECT_DIR}/dm2/conf:/tmp/conf ghcr.io/dm20-consortium/dm2-cs:v1.2.0 dm2cs_send -d /tmp/conf;
+  docker run -it --init --rm --net host --name cs_send -v ${PROJECT_DIR}/dm2/conf:/tmp/conf \
+    ghcr.io/dm20-consortium/dm2-cs:latest \
+    dm2cs_send -d /tmp/conf;
 }
 function dm2cs_recv () {
-  docker run -it --init --rm --net host --name cs_recv -v ${PROJECT_DIR}/dm2/conf:/tmp/conf ghcr.io/dm20-consortium/dm2-cs:v1.2.0 dm2cs_recv -d /tmp/conf;
+  docker run -it --init --rm --net host --name cs_recv -v ${PROJECT_DIR}/dm2/conf:/tmp/conf \
+    ghcr.io/dm20-consortium/dm2-cs:latest \
+    dm2cs_recv -d /tmp/conf;
 }
 function dm2is () {
-  docker run --init --rm --net host --name rdb -e POSTGRES_PASSWORD=postgres ghcr.io/dm20-consortium/dm2-rdb:v1.2.0 > /dev/null 2>&1 &
-  docker run -it --init --rm --net host --name is -v ${PROJECT_DIR}/dm2/conf:/tmp/conf ghcr.io/dm20-consortium/dm2-is:v1.2.0 dm2is -d /tmp/conf
+  docker run --init --rm --net host --name rdb -e POSTGRES_PASSWORD=postgres \
+    ghcr.io/dm20-consortium/dm2-rdb:latest \
+    > /dev/null 2>&1 &
+  docker run -it --init --rm --net host --name is -v ${PROJECT_DIR}/dm2/conf:/tmp/conf \
+    ghcr.io/dm20-consortium/dm2-is:latest \
+    dm2is -d /tmp/conf
 }
 function dm2mes () {
-  docker run -i --rm --net host ghcr.io/dm20-consortium/dm2-mes:v1.2.0 stdbuf -oL dm2mes "$@";
+  docker run -i --rm --net host \
+    ghcr.io/dm20-consortium/dm2-mes:latest \
+    stdbuf -oL dm2mes "$@";
 }
 ```

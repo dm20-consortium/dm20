@@ -29,6 +29,15 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Build base
+        working-directory: dm2
+        run: |
+          docker build \
+            -f base/Dockerfile \
+            --build-arg IMAGE_TAG=${{ matrix.ubuntu_version }} \
+            -t dm2/base:${{ matrix.ubuntu_version }} \
+            base/
 
       - name: Build secLib
         working-directory: dm2
