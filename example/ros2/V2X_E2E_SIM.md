@@ -35,7 +35,7 @@ chmod +x v2s_e2e_sim_v3.1.2.x86_64
 
 - 右のUIから`Top View`を選択することで、俯瞰視点に切り替える事が可能です。
 
-![俯瞰視点](images/Top_view1.png)
+![俯瞰視点](images/Top_View1.png)
 
 ### 3.2 DM2.0のDBシステムの起動
 
