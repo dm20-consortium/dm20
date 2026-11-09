@@ -15,7 +15,7 @@ TIME_ROLLBACK_THRESHOLD = 10000   # 10秒以上過去へ戻ったら新しいリ
 
 # yamlファイルロード
 def load_yaml():
-    file_path = os.path.join("setting", "tracking.yaml")
+    file_path = os.path.join("conf", "web-viewer.yaml")
     with open(file_path, encoding='utf-8')as f:
         yaml_doc = yaml.safe_load(f)
     return yaml_doc
@@ -148,7 +148,7 @@ def make_message(rec_dict, config):
     message = bytes(json.dumps({
         **area_data
         }), 'utf-8')
-    #print(f"[make_message] result:{message}")
+    print(f"[make_message] result:{message}")
     return message
 
 ### メイン処理
@@ -156,7 +156,7 @@ if __name__ == "__main__":
     # udpによるメッセージ送信先
     server_address = "localhost"
     server_port = 33333
-    sh_log_command = "sh ./script/check_for_master.sh"
+    sh_log_command = "sh ./conf/filter_dm2_csv.sh"
     yaml_doc = load_yaml()
 
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)

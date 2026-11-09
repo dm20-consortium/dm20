@@ -36,6 +36,8 @@ viewer/web-viewer/__pycache__/
 *.py[cod]
 viewer/web-viewer/logs/
 viewer/web-viewer/csv/
+viewer/web-viewer/conf_test/
+viewer/web-viewer/sample_test/
 
 # ===================================================
 # Object dependency files

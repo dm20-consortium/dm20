@@ -75,13 +75,13 @@ footer.stAppFooter {
 #st.set_page_config(layout="wide")
 st.header("DM Web Viewer", divider="rainbow")
 
-file_path = os.path.join("setting", "tracking.yaml")
+file_path = os.path.join("conf", "web-viewer.yaml")
 
 with open(file_path, encoding="utf-8") as f:
     config = yaml.safe_load(f)
 rsu_point = config["rsu_point"]
-rsu_zoom = config["rsu_zoom"]
 zoom = config.get("map_zoom", 16)
+rsu_zoom = config.get("rsu_zoom", {})
 
 # radioの選択肢
 choices = list(rsu_point.keys())
@@ -103,7 +103,7 @@ if choice != st.session_state.last_choice:
 rsu_info = rsu_point[choice]
 center_lat = rsu_info[0]
 center_lon = rsu_info[1]
-initial_zoom = rsu_zoom[choice]
+initial_zoom = rsu_zoom.get(choice, zoom)
     
 html = """
 <!DOCTYPE html>
@@ -118,6 +118,25 @@ html = """
     <style>
         body { margin: 0; padding: 0; }
         #map { width: 100%; height: 100vh; }
+        /* 信号マーカー */
+        .signal-marker {
+            background: transparent;
+            border: none;
+        }
+
+        /* 信号画像とラベルのコンテナ */
+        .signal-container {
+            position: relative;
+        }
+
+        /* 信号の残秒数ラベル */
+        .signal-label {
+            position: absolute;
+            left: 100%;
+            top: 0;
+            margin-left: 5px;
+            white-space: nowrap;
+        }
     </style>
 </head>
 <body>
@@ -145,6 +164,37 @@ html = """
         __GRIDMAP_JS__
 
         const markers = {};
+        // ズームレベルに応じた信号アイコンの倍率
+        function getSignalScale(zoom) {
+            return Math.max(0.5, Math.min(2.0, 1 + (zoom - 20) * 0.25));
+        }
+        function createSignalIcon(m) {
+            const width = m.x || 100;
+            const height = m.y || 60;
+
+            // 一定以上のZoomでラベル表示
+            const showLabel = map.getZoom() >= 19;
+
+            const labelHtml = (showLabel && m.label)
+                ? `<div class="signal-label">${m.label}</div>`
+                : "";
+
+            const html = `
+                <div class="signal-container">
+                    <img src="${m.icon}"
+                        style="width:${width}px; height:${height}px;">
+                    ${labelHtml}
+                </div>
+            `;
+
+            return L.divIcon({
+                html: html,
+                className: "signal-marker",
+                iconSize: [width, height],
+                iconAnchor: [width / 2, height / 2]
+            });
+        }
+
         const polygonMap = {};
 
         const ws = new WebSocket("ws://localhost:8765");
@@ -181,22 +231,26 @@ html = """
 
             if (data.markers) {
                 data.markers.forEach(m => {
-                    if(!(m.icon)){
-                        if (markers[m.id]) {
-                            markers[m.id].setLatLng([m.lat, m.lng]);
-                        } else {
-                            markers[m.id] = L.marker([m.lat,m.lng], {icon: busMarker}).addTo(map);
-                        }
-                        return;
+                    let icon;
+
+                    if (m.icon && m.id.startsWith("s")) {
+                        icon = createSignalIcon(m);
+                    } else if (m.icon) {
+                        icon = L.icon({
+                            iconUrl: m.icon,
+                            iconSize: [m.x, m.y]
+                        });
+                    } else {
+                        icon = busMarker;
                     }
+
                     if (markers[m.id]) {
                         markers[m.id].setLatLng([m.lat, m.lng]);
-                        markers[m.id].setIcon(L.icon({iconUrl:m.icon,iconSize:[m.x,m.y]}));
+                        markers[m.id].setIcon(icon);
                     } else {
-                        markers[m.id] = L.marker([m.lat,m.lng], {icon:L.icon({iconUrl:m.icon,iconSize:[m.x,m.y]})}).addTo(map);
-                    }
-                    if (m.label) {
-                        markers[m.id + "L"] = L.marker([m.lat+0.000035, m.lng-0.00021], {icon: L.divIcon({html:m.label})}).addTo(map);
+                        markers[m.id] = L.marker([m.lat, m.lng], {
+                            icon: icon
+                        }).addTo(map);
                     }
                 });
             }

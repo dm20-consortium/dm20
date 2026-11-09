@@ -9,6 +9,7 @@ RUN apt-get update && \
     apt-get install -y \
         python3 \
         python3-pip \
+        gawk \
         ca-certificates && \
     rm -rf /var/lib/apt/lists/*
 

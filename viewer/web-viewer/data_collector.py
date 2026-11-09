@@ -21,7 +21,7 @@ from object_info_custom import get_custom_object_size_color
 
 # コンフィグファイル読み込み
 def load_config():
-    file_path = os.path.join("setting", "tracking.yaml")
+    file_path = os.path.join("conf", "web-viewer.yaml")
 
     with open(file_path, encoding="utf-8") as f:
         config = yaml.safe_load(f)
@@ -276,8 +276,9 @@ def set_current_signal_marker(markers, signal, idkey, now_its, all_flag, config)
                 "y":30,
                 "label": ""
             }
-            if not all_flag and not display_signal_only:
-                message = '<div style="width: 90px; height: 70px; font-size: 25px;  border:2px solid #000000;color: black;"> Min:{}\n Max:{}</div>'.format(display_min,display_max)
+            #if not all_flag and not display_signal_only:
+            if not display_signal_only:
+                message = '<div style="width: 90px; height: 70px; font-size: 25px;  border:2px solid #000000;color: black;"> Min:{}<br> Max:{}</div>'.format(display_min,display_max)
                 signal_dic.update({
                     "label": message,
                     "x": 100,
@@ -295,14 +296,18 @@ def set_current_signal_marker(markers, signal, idkey, now_its, all_flag, config)
 #  [想定する入力リスト]
 #   0: 交差点ID, 1: 信号灯器グループID, 2: 時刻, 3: 灯色1の色, 
 #   (オプション) 4: 灯色1の最小残秒数, 5: 灯色2の最大残秒数, 6: 灯色2, ...
-def req_signal(markers, sig, trafic_dict, all_flag, config):
+def req_signal(markers, sig, trafic_dict, all_flag, config, cross):
     JST = timezone(timedelta(hours=+9), 'JST')
     now_unix = int(float(datetime.now(JST).timestamp()) * 1000)
     now_its = now_unix - 1072915195000
     # 最新の信号情報に更新
     sig_update_trafic_dict_latest(sig, trafic_dict)
 
+    target_id = config.get("sig_idmap", {}).get(cross)
     for idkey in trafic_dict.keys():
+        # 選択された交差点だけ表示
+        if not cross.startswith("all") and str(idkey) != str(target_id):
+            continue
         for key in trafic_dict[idkey].keys():
             signal = trafic_dict[idkey][key]
             #print(f'[req_signal] idkey: {idkey}, signal_id_list: {key}')
@@ -422,36 +427,37 @@ def set_rsu_if_busstop_nearby(cross, position, tracking_dic, rsu_point, rsus, ro
 
 
 # センサーの検知範囲をセット
-def set_sensor_detection_range(rsu_idmap, rsu, fg, config):
-    if rsu not in rsu_idmap:
+def set_sensor_detection_range(rsu_idmap, rsu, fg, config, all_flag):
+    if "sensor" not in config.keys():
         return
-    target_rsuid_list = rsu_idmap[rsu]
-    if "sensor" in config.keys():
-        for rsu_id in config["sensor"].keys():
-            if rsu_id in target_rsuid_list:
-                for sensor_id in config["sensor"][rsu_id].keys():
-                    location = []
-                    lat = config["sensor"][rsu_id][sensor_id]["pos"][0]/10000000
-                    lot = config["sensor"][rsu_id][sensor_id]["pos"][1]/10000000
-                    lat_loc = (config["sensor"][rsu_id][sensor_id]["area_lat"])
-                    lot_loc = (config["sensor"][rsu_id][sensor_id]["area_lon"])
-                    for i in range(0,len(lat_loc)):
-                        x = lot_loc[i] / 100
-                        y = lat_loc[i] / 100 
-                        distance = sqrt(x**2 + y**2)
-                        bearing = degrees(atan2(x, y)) % 360
-                        new_point = geodesic(meters=distance).destination((lat, lot), bearing)
+    if not all_flag and rsu not in rsu_idmap:
+        return
+    for rsu_id in config["sensor"].keys():
+        if not all_flag and rsu_id not in rsu_idmap[rsu]:
+            continue
+        for sensor_id in config["sensor"][rsu_id].keys():
+            location = []
+            lat = config["sensor"][rsu_id][sensor_id]["pos"][0]/10000000
+            lot = config["sensor"][rsu_id][sensor_id]["pos"][1]/10000000
+            lat_loc = (config["sensor"][rsu_id][sensor_id]["area_lat"])
+            lot_loc = (config["sensor"][rsu_id][sensor_id]["area_lon"])
+            for i in range(0,len(lat_loc)):
+                x = lot_loc[i] / 100
+                y = lat_loc[i] / 100 
+                distance = sqrt(x**2 + y**2)
+                bearing = degrees(atan2(x, y)) % 360
+                new_point = geodesic(meters=distance).destination((lat, lot), bearing)
 
-                        location.append([round(new_point.latitude,8), round(new_point.longitude,8)])
-                    location.append(location[0])
-                    fg.append({
-                        "id": "s" + rsu_id + sensor_id,
-                        "coords": location,
-                        "strokeColor": config["sensor"][rsu_id][sensor_id]["color"],
-                        "strokeWidth": 2,
-                        "fillColor": config["sensor"][rsu_id][sensor_id]["color"],
-                        "fillOpacity": 0.1
-                    })
+                location.append([round(new_point.latitude,8), round(new_point.longitude,8)])
+            location.append(location[0])
+            fg.append({
+                "id": "s" + rsu_id + sensor_id,
+                "coords": location,
+                "strokeColor": config["sensor"][rsu_id][sensor_id]["color"],
+                "strokeWidth": 2,
+                "fillColor": config["sensor"][rsu_id][sensor_id]["color"],
+                "fillOpacity": 0.1
+            })
     return
 
 # 自車の位置と、RSUの選択
@@ -501,43 +507,42 @@ def request_marker(car_pos_dict, logs, cross, signal_save_dic, tracking_dic, con
     sig = []
     free = []
 
+    if cross.startswith("all"):
+        all_flag = True
+    
     # 自車の位置と、RSUの選択
     rsus = get_car_pos_and_rsu(car_pos_dict, markers, logs, cross, tracking_dic, config)
-    if len(rsus) == 0:
-        # 広域視点で描画するように、自車位置と信号をセット
-        for key in logs.keys():
-            if key == "pos" or key == "router":
-                continue
-            if "sig" in logs[key]:
-                for s in tuple(logs[key]["sig"]):
-                    sig.append(s)
-            all_flag = True
+    if all_flag:
+        target_rsus = list(logs.keys())
     else:
-        if cross.startswith("all"):
-            target_rsus = list(logs.keys())
-        else:
-            target_rsus = rsus
-        for rsu in target_rsus:
-            if rsu not in logs:
-                print(f"[request_marker] Warning: key is not found in logs. key: {rsu}")
-                continue
-            # センサーの検知範囲をセット
-            set_sensor_detection_range(config["rsu_idmap"], rsu, polygons, config)
-            if "obj" in logs[rsu]:
-                obj.extend(logs[rsu]["obj"])
-            if "sig" in logs[rsu]: 
-                sig.extend(logs[rsu]["sig"])
-            if "free" in logs[rsu]: 
-                free.extend(logs[rsu]["free"])
+        target_rsus = rsus
+    for rsu in target_rsus:
+        if rsu not in logs:
+            print(f"[request_marker] Warning: key is not found in logs. key: {rsu}")
+            print(logs)
+            continue
+        # センサーの検知範囲をセット
+        set_sensor_detection_range(config["rsu_idmap"], rsu, polygons, config, all_flag)
+        if "obj" in logs[rsu]:
+            obj.extend(logs[rsu]["obj"])
+        if "sig" in logs[rsu]: 
+            sig.extend(logs[rsu]["sig"])
+        if "free" in logs[rsu]: 
+            free.extend(logs[rsu]["free"])
 
     # 信号情報マーカー処理（毎回表示させるため、件数チェックなし）
-    req_signal(markers, tuple(sig), signal_save_dic, all_flag, config)
+    print("sig ******** start")
+    print(tuple(sig))
+    print("sig ******** end")
+    print("req_signal ******** start")
+    req_signal(markers, tuple(sig), signal_save_dic, all_flag, config, cross)
+    print("req_signal ******** end")
 
     if len(free) > 0:
         # フリースペース情報のマーカー生成
         req_free(polygons, tuple(free))    
     logs.clear()
-    if len(obj) > 0 and not all_flag:
+    if len(obj) > 0:
         # 物標情報のマーカー生成
         req_obj(markers, polygons, tuple(obj), config, scale)
 
@@ -564,11 +569,17 @@ def udp_collector(queue: Queue, config, scale, host="0.0.0.0", port=33333):
     car_pos_dict = {}
     print(f"[UDPCollector] Listening on {host}:{port}")
 
+    # 信号情報の初期化処理
     signal_save_dic = copy.deepcopy(config["trafic_dict"])
+    signal_id = 1
+    for id_key in signal_save_dic:
+        for key in signal_save_dic[id_key]:
+            signal = signal_save_dic[id_key][key]
+            signal["latest"] = "NONE"
+            signal["id"] = str(signal_id)
+            signal_id += 1
+    print(signal_save_dic)
 
-    for id_key in signal_save_dic.keys():
-        for key in signal_save_dic[id_key].keys():
-            signal_save_dic[id_key][key]["latest"] = "NONE"
     tracking_dic = {}
 
     counter = 0

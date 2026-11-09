@@ -1,0 +1,86 @@
+# 地図の中心座標
+map_center: [35.154381, 136.966465] 
+
+# 地図のズーム倍率 (未定義の場合: 16)
+map_zoom: 16
+
+# 緯度・経度のスケール（未定義の場合: 10000000)
+coordinate_scale: 10000000
+
+rsu_point: 
+    nagoya-u: [35.154381, 136.966465]
+    all_kashiwanoha: [35.895889, 139.94183]
+
+rsu_zoom: 
+    nagoya-u: 16,
+    all_kashiwanoha: 16
+
+rsu_idmap: 
+    nagoya-u: ["1"]
+
+sig_idmap: 
+    nagoya-u: "10"
+
+
+car_rsu:
+  distance_to_rsu: 190
+  distance_to_next_rsu: 205
+  min_distance: 45
+  min_bearing: 45
+  max_bearing: 225
+  min_bearing_diff: 70
+  car1:
+    rsus:
+      - nagoya-u
+
+# 信号の灯色情報（基本不変）
+trafic_light_color: 
+    "3": red.png
+    "5": blue.png
+    "7": yellow.png
+
+# 信号の位置情報
+trafic_dict:
+    "1":
+        "[17|18|19|0|0|0|0|0]":
+            position: [35.9000352, 139.9370781]
+        "[51|49|50|0|0|0|0|0]":
+            position: [35.8999216, 139.9376270]
+    "2":
+        "[17|18|19|20|0|0|0|0]":
+            position: [35.8981765, 139.9493766]
+        "[34|35|36|33|0|0|0|0]":
+            position: [35.8979565, 139.9498766]
+    "790529":
+        "[34|35|33|0|0|0|0|0]":
+            position: [35.9009233, 139.9388210]
+        "[51|49|50|0|0|0|0|0]":
+            position: [35.9009230, 139.9396710]
+        "[17|18|19|0|0|0|0|0]":
+            position: [35.9006630, 139.9384710]
+    "794625":
+        "[17|18|19|0|0|0|0|0]":
+            position: [35.89446289, 139.949638]
+        "[34|35|33|0|0|0|0|0]":
+            position: [35.89462513, 139.9498285]
+        "[51|49|50|0|0|0|0|0]":
+            position: [35.89425764, 139.9498653]
+    "798721":
+        "[17|18|19|0|0|0|0|0]":
+            position: [35.8960550, 139.9416000]
+        "[34|35|33|0|0|0|0|0]":
+            position: [35.8962500, 139.9417000]
+        "[51|49|50|0|0|0|0|0]":
+            position: [35.8959000, 139.9419008]
+
+
+# UDPの情報
+server_ip: "localhost"
+server_port: 33333
+
+# 物標の種別情報（基本不変）
+object_kind: [question, car, train, motorcycle, bycycle, person, dog, trailer, flag] 
+object_kind_default: question
+
+sensor: {}
+
