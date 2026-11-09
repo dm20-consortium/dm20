@@ -41,10 +41,9 @@ TILE_COPYRIGHT="&copy; OpenStreetMap contributors"
 以下のコマンドでWeb Viewerを起動します。
 
 ```bash
-mkdir -p /tmp/dm2-web-viewer/csv
 docker run --pull always --rm -it \
     -p 33013:33013 -p 8765:8765 -p 33333:33333/udp \
-    -v /tmp/dm2-web-viewer/csv:/data/csv \
+    -v /tmp:/tmp \
     ghcr.io/dm20-consortium/dm2-web-viewer:latest \
     --tile-url "${TILE_URL}" \
     --attribution "${TILE_COPYRIGHT}"
@@ -67,7 +66,7 @@ http://localhost:33013
 出力ファイル名である`object_info_0_8_1_`date +"%Y%m%d"`.csv`は、Webビューア内で物標情報の当日の日付を参照するように設定されています。
 
 ```bash
-bash replay_csv_realtime.sh object_info_0_8_1_sample1.csv 2 its stdout >> /tmp/dm2-web-viewer/csv/object_info_0_8_1_`date +"%Y%m%d"`.csv 
+bash replay_csv_realtime.sh object_info_0_8_1_sample1.csv 2 its stdout >> /tmp/object_info_0_8_1_`date +"%Y%m%d"`.csv 
 ```
 
 ### 5. Webブラウザで確認
