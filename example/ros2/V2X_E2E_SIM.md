@@ -139,8 +139,11 @@ docker run -it --rm --net host \
 
 下記のように、Webブラウザ上でV2X E2E Simulatorの信号情報が表示されます。
 
-![DMWebViewer視点](images/dm_view4.png)
+![DMWebViewer視点_信号](images/dm_view4.png)
 
+- Zoomレベルを19以上にする事で、信号情報に含まれる残秒数を表示する事が可能です。Zoomレベルを上げる方法は、[こちら](docs/local-map-tile-server.md)
+
+![DMWebViewer視点_信号詳細](images/dm_view2.png)
 
 ### 4 複数端末を使った構成
 
