@@ -117,17 +117,29 @@ DM Web Viewerを使って、Webブラウザ上で表示する事が可能です�
 
 [DM Web Viewerのクイックスタート](../../viewer/web-viewer/README.md#クイックスタート)の手順1～3を実施します。
 
-DMメッセンジャーの出力先を、DM Web Viewerのクイックスタート手順2で指定したパスに設定します。
+物標情報のDMメッセンジャーの出力先を、DM Web Viewerのクイックスタート手順2で指定したパスに設定します。
 
 ```bash
 docker run -it --rm --net host \
     ghcr.io/dm20-consortium/dm2-mes:latest \
-    stdbuf -oL dm2mes -r -S object_info_0_8_1 -w 50 > /tmp/dm2-web-viewer/csv/object_info_0_8_1_`date +"%Y%m%d"`.csv 
+    stdbuf -oL dm2mes -r -S object_info_0_8_1 -w 100 > /tmp/dm2-web-viewer/csv/object_info_0_8_1_`date +"%Y%m%d"`.csv 
 ```
 
 下記のように、Webブラウザ上でV2X E2E Simulatorの物標情報が表示されます。
 
 ![DMWebViewer視点](images/dm_view1.png)
+
+信号情報のDMメッセンジャーの出力先を、DM Web Viewerのクイックスタート手順2で指定したパスに設定します。
+
+```bash
+docker run -it --rm --net host \
+    ghcr.io/dm20-consortium/dm2-mes:latest \
+    stdbuf -oL dm2mes -r -S signal_info -w 50 > /tmp/dm2-web-viewer/csv/signal_info_`date +"%Y%m%d"`.csv 
+```
+
+下記のように、Webブラウザ上でV2X E2E Simulatorの信号情報が表示されます。
+
+![DMWebViewer視点](images/dm_view4.png)
 
 
 ### 4 複数端末を使った構成

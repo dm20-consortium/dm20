@@ -79,6 +79,8 @@ bash replay_csv_realtime.sh object_info_0_8_1_sample1.csv 2 its stdout >> /tmp/o
 
 - 物標情報以外のフォーマットで、緯度・経度を保存したCSVデータをWebビューアで可視化したい場合は、[こちら](docs/link_csv.md)
 
+- 信号情報に含まれる残秒数を確認する場合は、ローカル上で地図タイルサーバを構築する事でZoomレベルを上げる事が可能です。詳しくは、[こちら](./local-map-tile-server.md)
+
 ## OSS・ライセンス
 
 DM Web Viewerでは、複数のOSSおよびオープンソースライブラリを使用しています。
