@@ -168,21 +168,25 @@ html = """
         function getSignalScale(zoom) {
             return Math.max(0.5, Math.min(2.0, 1 + (zoom - 20) * 0.25));
         }
+
+        // 信号アイコンとラベルを一体化
         function createSignalIcon(m) {
-            const width = m.x || 100;
-            const height = m.y || 60;
+            const zoom = map.getZoom();
+            const scale = getSignalScale(zoom);
 
-            // 一定以上のZoomでラベル表示
-            const showLabel = map.getZoom() >= 19;
+            // Zoomレベルに応じてサイズ変更
+            const width = Math.round((m.x || 100) * scale);
+            const height = Math.round((m.y || 60) * scale);
 
-            const labelHtml = (showLabel && m.label)
+            // Zoom 19以上でラベル表示
+            const labelHtml = (m.label && zoom >= 19)
                 ? `<div class="signal-label">${m.label}</div>`
                 : "";
 
             const html = `
                 <div class="signal-container">
                     <img src="${m.icon}"
-                        style="width:${width}px; height:${height}px;">
+                        style="display:block; width:${width}px; height:${height}px;">
                     ${labelHtml}
                 </div>
             `;
