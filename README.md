@@ -31,7 +31,7 @@
   * 経済産業省による自動運転レベル4等先進モビリティサービス研究開発・社会実装プロジェクト（[RoAD to the L4](https://www.road-to-the-l4.go.jp/)）のテーマ4（[CooL4](https://www.road-to-the-l4.go.jp/activity/theme04/)）での社会実装実績あり
   * 千葉県柏市柏の葉地域の道路インフラ装置に取り付けた路側センサーの情報を自動運転バスへ提供
 * シミュレーション環境との連携
-  * 協調型レベル4自動運転シナリオを評価するために設計されたシミュレータ[V2X E2E Simulator](https://tlab-wide.github.io/V2X_E2E_Simulator/latest/)との[連携に対応](example/ros2/V2X_E2E_SIM.md)
+  * 協調型レベル4自動運転シナリオを評価するために設計されたシミュレータ[V2X E2E Simulator](https://tlab-wide.github.io/V2X_E2E_Simulator/latest/)と[連携可能](example/ros2/V2X_E2E_SIM.md)
 
 ![全体構成](docs/images/overview.png)
 
