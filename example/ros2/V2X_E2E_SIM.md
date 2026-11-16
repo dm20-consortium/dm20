@@ -141,7 +141,7 @@ docker run -it --rm --net host \
 
 ![DMWebViewer視点_信号](images/dm_view4.png)
 
-- Zoomレベルを19以上にする事で、信号情報に含まれる残秒数を表示する事が可能です。Zoomレベルを上げる方法は、[こちら](docs/local-map-tile-server.md)
+- Zoomレベルを19以上にする事で、信号情報に含まれる残秒数を表示する事が可能です。Zoomレベルを上げる方法は、[こちら](../../viewer/web-viewer/docs/local-map-tile-server.md)
 
 ![DMWebViewer視点_信号詳細](images/dm_view3.png)
 
